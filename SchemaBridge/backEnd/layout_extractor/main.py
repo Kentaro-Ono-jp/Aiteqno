@@ -4,13 +4,14 @@ import glob
 import datetime
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
 from analyze import analyze_image
 
 # 読み込み対象
 LAYOUT_FILE = os.path.join("output", "layout_a4_portrait.json")
 PDF_OUTPUT = os.path.join("output", "layout_preview.pdf")
 
-def draw_layout_on_pdf(layout_data, output_pdf):
+def draw_layout_on_pdf(layout_data, output_pdf, debug_image=None, include_debug_page=True):
     # A4サイズ（595x842 pt）
     c = canvas.Canvas(output_pdf, pagesize=A4)
     page_width, page_height = A4
@@ -23,6 +24,9 @@ def draw_layout_on_pdf(layout_data, output_pdf):
             xs += [l["x1"], l["x2"]]; ys += [l["y1"], l["y2"]]
         for b in ld.get("boxes", []):
             xs += [b["x"], b["x"] + b["w"]]; ys += [b["y"], b["y"] + b["h"]]
+        size_info = ld.get("size") or {}
+        xs.append(size_info.get("w", 0))
+        ys.append(size_info.get("h", 0))
         return (max(xs) if xs else 1, max(ys) if ys else 1)
     max_x, max_y = _max_xy_from_layout(layout_data)
 
@@ -38,26 +42,6 @@ def draw_layout_on_pdf(layout_data, output_pdf):
     # 画像座標(x, y_top) → PDF座標(xp, yp)
     def to_pdf_xy(x, y):
         return (ox + x * scale, page_height - (oy + y * scale))
-
-    # --- 描画ポリシー ---
-    # 1) boxes を先に枠として描画
-    # 2) lines は「短い線分（文字ストローク等）」を除外して描画
-    #    - 絶対閾値: 100px 以上
-    #    - 相対閾値: 画像幅の 5% 以上
-    min_len_abs = 100.0
-    min_len_rel = max_x * 0.05
-    min_len = max(min_len_abs, min_len_rel)
-
-    # boxes（外枠・区画）
-    # boxes（外枠・区画）
-    for b in layout_data.get("boxes", []):
-        c.setStrokeColorRGB(0, 0, 0)
-        c.setLineWidth(1.0)
-        x1p, y1p = to_pdf_xy(b["x"], b["y"])
-        x2p, y2p = to_pdf_xy(b["x"] + b["w"], b["y"] + b["h"])
-        rx, ry = min(x1p, x2p), min(y1p, y2p)
-        rw, rh = abs(x2p - x1p), abs(y2p - y1p)
-        c.rect(rx, ry, rw, rh, stroke=1, fill=0)
 
     # --- analyze.py で前処理済みなら、そのまま線を描画 ---
     if layout_data.get("pre_filtered"):
@@ -146,11 +130,64 @@ def draw_layout_on_pdf(layout_data, output_pdf):
                 x2p, y2p = to_pdf_xy(x2, y)
                 c.line(x1p, y1p, x2p, y2p)
 
-
     c.setFillColorRGB(0.3, 0.3, 0.3)
     c.setFont("Helvetica", 8)
-    c.drawString(20, 20, f"A4 layout preview (scale={scale:.3f}, margin={margin}pt)")
-    c.showPage()
+    c.drawString(20, 20, f"A4 layout template (scale={scale:.3f}, margin={margin}pt)")
+
+    if include_debug_page:
+        c.showPage()
+
+        size_info = layout_data.get("size") or {}
+        src_w = size_info.get("w", max_x)
+        src_h = size_info.get("h", max_y)
+
+        # 背景に原稿を配置（存在すれば）
+        reader = None
+        if debug_image and os.path.isfile(debug_image):
+            try:
+                reader = ImageReader(debug_image)
+            except Exception:
+                reader = None
+
+        content_w = max_x * scale
+        base_x = (page_width - content_w) / 2.0
+        base_y = margin
+
+        if reader is not None:
+            c.drawImage(reader, base_x, base_y, width=src_w * scale, height=src_h * scale, preserveAspectRatio=True, mask="auto")
+
+        # デバッグ用線（淡い色）
+        c.saveState()
+        c.setStrokeColorRGB(0.0, 0.5, 1.0)
+        c.setLineWidth(0.8)
+        c.setDash(4, 3)
+        for l in layout_data.get("lines", []):
+            x1, y1 = to_pdf_xy(l["x1"], l["y1"])
+            x2, y2 = to_pdf_xy(l["x2"], l["y2"])
+            c.line(x1, y1, x2, y2)
+        c.restoreState()
+
+        # デバッグ用ボックス（淡い赤）
+        if layout_data.get("boxes"):
+            c.saveState()
+            c.setStrokeColorRGB(1.0, 0.3, 0.3)
+            c.setLineWidth(0.7)
+            c.setDash(2, 2)
+            for b in layout_data.get("boxes", []):
+                x1p, y1p = to_pdf_xy(b["x"], b["y"])
+                x2p, y2p = to_pdf_xy(b["x"] + b["w"], b["y"] + b["h"])
+                rx, ry = min(x1p, x2p), min(y1p, y2p)
+                rw, rh = abs(x2p - x1p), abs(y2p - y1p)
+                c.rect(rx, ry, rw, rh, stroke=1, fill=0)
+            c.restoreState()
+
+        c.setFillColorRGB(0.3, 0.3, 0.3)
+        c.setFont("Helvetica", 8)
+        label = "Debug overlay"
+        if debug_image and os.path.isfile(debug_image):
+            label += f" / source: {os.path.basename(debug_image)}"
+        c.drawString(20, 20, f"{label} (scale={scale:.3f})")
+
     c.save()
 
 def main():
@@ -207,7 +244,12 @@ def main():
     out_dir = os.path.dirname(PDF_OUTPUT) or "."
     os.makedirs(out_dir, exist_ok=True)
     try:
-        draw_layout_on_pdf(layout_data, PDF_OUTPUT)
+        draw_layout_on_pdf(
+            layout_data,
+            PDF_OUTPUT,
+            debug_image=TARGET_IMAGE,
+            include_debug_page=True,
+        )
         print(f"✅ PDFを出力しました → {PDF_OUTPUT}")
     except PermissionError:
         ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
