@@ -85,8 +85,11 @@ def detect_layout(image_path, output_json):
     print(f"✅ layout.json を出力しました → {output_json}")
 
 if __name__ == "__main__":
+    from io_paths import find_repo_root  # 既存ユーティリティを流用
     here = os.path.dirname(os.path.abspath(__file__))
+    repo_root = find_repo_root(here)  # "SchemaBridge" を上方探索
+
     detect_layout(
-        os.path.join(here, "input", "form_blank_testClinic_v1.png"),
-        os.path.join(here, "output", "layout_a4_portrait.json")
+        os.path.join(repo_root, "input", "form_blank_testClinic_v1.png"),
+        os.path.join(repo_root, "output", "layout_a4_portrait.json")
     )
