@@ -1,0 +1,21 @@
+# --- Text files: normalize to LF ---
+*.py    text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.txt   text eol=lf
+
+# --- Binary files: never change line endings ---
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.pdf   binary
+
+# Fonts (in case they appear)
+*.ttf   binary
+*.otf   binary
+*.woff  binary
+*.woff2 binary
