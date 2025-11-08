@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import cv2, numpy as np
 
 def _deskew(gray):
     edges = cv2.Canny(gray, 50, 150, apertureSize=3)
@@ -72,7 +73,7 @@ def _extract_text_boxes(binimg, line_mask):
     return boxes
 
 def _detect_short_vertical_ticks(gray, binimg, h_lines):
-    import cv2, numpy as np
+    
     # 小さめの縦カーネルで縦成分のみ抽出
     H, W = binimg.shape
     ky_small = max(5, H // 200)
