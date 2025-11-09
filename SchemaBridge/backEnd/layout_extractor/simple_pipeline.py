@@ -37,14 +37,33 @@ def run(
         page_size = _resolve_page_size(target_image)
 
     # 解析
-    layout_data = analyze_image(target_image)
+    analyzed = analyze_image(target_image)
 
     pdf_path = None
     png_path = None
     layout_json_path = None
     schema_layout_json_path = None
 
-    # プレビュー生成
+    # 正規化済み layout.json を唯一の描画ソースとして再読込
+    import json
+    if layout_json_path and os.path.isfile(layout_json_path):
+        with open(layout_json_path, "r", encoding="utf-8") as f:
+            layout_data = json.load(f)
+    else:
+        layout_data = {"size": analyzed.get("size"), "lines": analyzed.get("lines", []), "boxes": analyzed.get("boxes", [])}
+
+    # ★ ここで schema_layout.json を読み込み、boxes をマージ（赤枠の復活）
+    if schema_layout_json_path and os.path.isfile(schema_layout_json_path):
+        try:
+            with open(schema_layout_json_path, "r", encoding="utf-8") as f:
+                schema_data = json.load(f)
+            if isinstance(schema_data, dict) and "boxes" in schema_data:
+                layout_data["boxes"] = schema_data.get("boxes") or []
+        except Exception:
+            # 読み込み失敗時はスルー（boxes未設定でも描画は継続）
+            pass
+
+    # プレビュー生成（描画は常に正規化済みlayout.jsonベース）
     if save_pdf:
         from io_paths import ensure_output_dir
         from viewport import Viewport

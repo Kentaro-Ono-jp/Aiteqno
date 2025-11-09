@@ -142,21 +142,15 @@ def render_layout(layout_data: dict, backend, vp: Viewport, debug_image: Optiona
         bw, bh = (src_w * vp.scale, src_h * vp.scale)
         backend.draw_image(bx, by, bw, bh, debug_image)
 
-    # --- ここから罫線描画：SOT（layout_data["lines"]）を共通利用 ---
-    # 1) 実運用の黒実線（デフォルトで常に描く）
+    # --- ここから罫線描画：layout.json（正規化済み）の lines を黒実線で描く ---
     for l in layout_data.get("lines", []):
         x1t, y1t = vp.map_top(l["x1"], l["y1"])
         x2t, y2t = vp.map_top(l["x2"], l["y2"])
         backend.draw_line(x1t, y1t, x2t, y2t, stroke=(0.0, 0.0, 0.0), dash=None, width=0.8)
 
-    # 2) デバッグオーバーレイ（青点線：罫線）
-    if layout_data.get("debug_overlay_lines", layout_data.get("debug_overlay", True)):
-        for l in layout_data.get("lines", []):
-            x1t, y1t = vp.map_top(l["x1"], l["y1"])
-            x2t, y2t = vp.map_top(l["x2"], l["y2"])
-            backend.draw_line(x1t, y1t, x2t, y2t, stroke=(0.0, 0.5, 1.0), dash=(4, 3), width=0.8)
+    # （青のデバッグ線は廃止）
 
-    # 3) デバッグオーバーレイ（赤点線：OCR対象ボックス）※新設フラグで制御
+    # デバッグオーバーレイ（赤点線：OCR対象ボックス）は維持
     if layout_data.get("debug_overlay_boxes", True):
         for b in layout_data.get("boxes", []):
             x1t, y1t = vp.map_top(b["x"], b["y"])
