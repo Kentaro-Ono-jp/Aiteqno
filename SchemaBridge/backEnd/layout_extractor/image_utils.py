@@ -3,11 +3,15 @@ import cv2
 import numpy as np
 
 def binarize(gray):
-    """適応的に二値化して罫線抽出に適したビットマップを返す"""
+    """帳票の“太い罫線”と文字を安定抽出するための素直な二値化（Otsu＋軽平滑）"""
     if len(gray.shape) == 3:
         gray = cv2.cvtColor(gray, cv2.COLOR_BGR2GRAY)
-    # Otsu + 反転（黒=線）
-    _, th = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+    # ノイズ抑制（軽い平滑のみ）
+    blur = cv2.GaussianBlur(gray, (3, 3), 0)
+
+    # Otsu（線・文字＝黒側）→反転で「黒=線/文字」にそろえる
+    _, th = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
     return th
 
 def extract_line_masks(thresh, hor_len=60, ver_len=60):

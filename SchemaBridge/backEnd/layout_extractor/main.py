@@ -4,12 +4,11 @@ sys.dont_write_bytecode = True
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
 # main.py（薄いエントリポイント）
-from reportlab.lib.pagesizes import A4
 from pipeline import run_pipeline  # 追加：責務はpipelineへ
 
 def main():
-    # 既定：input配下のデフォルト/最新PNGを選び、PDF/PNGを出力
-    target_image, pdf_path, png_path = run_pipeline(image_path=None, save_pdf=True, save_png=True, page_size=A4)
+    # 既定：input配下のデフォルト/最新PNGを選び、PDF/PNGを出力（ページサイズは入力画像）
+    target_image, pdf_path, png_path = run_pipeline(image_path=None, save_pdf=True, save_png=True, page_size=None)
     print(f"🔎 Using image: {target_image}")
     if pdf_path:
         print(f"✅ PDFを出力しました → {pdf_path}")

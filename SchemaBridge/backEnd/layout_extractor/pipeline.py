@@ -15,7 +15,7 @@ draw_* (loaded, ...)
 # ★ 相対 → 同階層の絶対インポートに統一
 from io_paths import (
     find_repo_root, resolve_input_dir, choose_target_image,
-    DEFAULT_PDF_OUTPUT, DEFAULT_LAYOUT_JSON, ensure_output_dir
+    DEFAULT_PDF_OUTPUT
 )
 from renderers import draw_layout_on_pdf, draw_layout_on_png
 
@@ -25,10 +25,9 @@ from analyze import analyze_image  # 将来: layout.jsonとschema.json保存へ�
 def run_pipeline(image_path: Optional[str] = None,
                  save_pdf: bool = True,
                  save_png: bool = True,
-                 page_size=A4) -> Tuple[str, Optional[str], Optional[str]]:
+                 page_size=None) -> Tuple[str, Optional[str], Optional[str]]:
     """
-    画像1枚を解析してレイアウトをPDF/PNGに可視化する。
-    将来はここで layout.json / schema.json 読み出し→描画、に切り替えられる。
+    入力画像サイズをそのままページサイズに採用して可視化する（縮小・余白なし）。
     Returns: (target_image, pdf_path or None, png_path or None)
     """
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -44,8 +43,12 @@ def run_pipeline(image_path: Optional[str] = None,
     pdf_path = os.path.join(base_root, "output", "layout_preview.pdf") if save_pdf else None
     png_path = None
 
+    # 新設：個別フラグ（明示的に使う）
+    layout_data.setdefault("debug_overlay_lines", True)
+    layout_data.setdefault("debug_overlay_boxes", True)
+
+    # layout_data を描画（page_size=None で入力画像寸法が使われる / margin=0 は関数既定値）
     if save_pdf:
-        ensure_output_dir(pdf_path)
         try:
             draw_layout_on_pdf(layout_data, pdf_path, debug_image=target_image, page_size=page_size)
         except PermissionError:

@@ -5,3 +5,7 @@ SchemaBridge/backEnd/layout_extractor/output/
 SchemaBridge/backEnd/layout_extractor/__pycache__/
 SchemaBridge/backEnd/layout_extractor/*.pdf
 *.pyc
+output/*.pdf
+output/*.png
+*.zip
+input/*.png

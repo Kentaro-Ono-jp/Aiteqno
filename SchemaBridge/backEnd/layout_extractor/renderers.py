@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 from viewport import Viewport  # 同階層
 
 def _max_xy_from_layout(layout_data):
@@ -79,13 +79,49 @@ class _PngRenderer:
         except Exception:
             pass
 
+    def _dash_line(self, x1, y1, x2, y2, color, width, dash):
+        # 単純なパターン描画（dash=(on, off) を繰り返す）
+        import math
+        on, off = dash if dash else (0, 0)
+        total = math.hypot(x2 - x1, y2 - y1)
+        if total == 0:
+            return
+        dx, dy = (x2 - x1) / total, (y2 - y1) / total
+        pos = 0.0
+        on = max(1, int(round(on)))
+        off = max(1, int(round(off)))
+        while pos < total:
+            seg_on = min(on, int(total - pos))
+            x_start = x1 + dx * pos
+            y_start = y1 + dy * pos
+            x_end   = x1 + dx * (pos + seg_on)
+            y_end   = y1 + dy * (pos + seg_on)
+            self.draw.line((x_start, y_start, x_end, y_end), fill=color, width=width)
+            pos += on + off
+
     def draw_line(self, x1, y1, x2, y2, stroke=(0, 0, 0), dash: Optional[Tuple[int, int]] = None, width=1):
-        self.draw.line((x1, y1, x2, y2), fill=tuple(int(255*c) for c in stroke), width=int(round(width)))
+        color = tuple(int(255*c) for c in stroke)
+        width = int(round(width))
+        if dash:
+            self._dash_line(x1, y1, x2, y2, color, width, dash)
+        else:
+            self.draw.line((x1, y1, x2, y2), fill=color, width=width)
 
     def draw_rect(self, x, y, w, h, stroke=(0, 0, 0), dash: Optional[Tuple[int, int]] = None, width=1, fill=None):
-        self.draw.rectangle((x, y, x + w, y + h),
-                            outline=tuple(int(255*c) for c in stroke),
-                            width=int(round(width)))
+        color = tuple(int(255*c) for c in stroke)
+        width = int(round(width))
+        if fill is not None:
+            # 今回は塗りつぶしは使っていないので従来通り
+            self.draw.rectangle((x, y, x + w, y + h), outline=color, width=width, fill=tuple(int(255*c) for c in fill))
+        else:
+            if dash:
+                # 矩形を4辺のダッシュ線で描く
+                self._dash_line(x, y, x + w, y,     color, width, dash)
+                self._dash_line(x + w, y, x + w, y + h, color, width, dash)
+                self._dash_line(x + w, y + h, x, y + h, color, width, dash)
+                self._dash_line(x, y + h, x, y,     color, width, dash)
+            else:
+                self.draw.rectangle((x, y, x + w, y + h), outline=color, width=width)
 
     def draw_text(self, x, y, text, size=8, color=(0.3, 0.3, 0.3)):
         try:
@@ -106,15 +142,26 @@ def render_layout(layout_data: dict, backend, vp: Viewport, debug_image: Optiona
         bw, bh = (src_w * vp.scale, src_h * vp.scale)
         backend.draw_image(bx, by, bw, bh, debug_image)
 
+    # --- ここから罫線描画：SOT（layout_data["lines"]）を共通利用 ---
+    # 1) 実運用の黒実線（デフォルトで常に描く）
     for l in layout_data.get("lines", []):
         x1t, y1t = vp.map_top(l["x1"], l["y1"])
         x2t, y2t = vp.map_top(l["x2"], l["y2"])
-        backend.draw_line(x1t, y1t, x2t, y2t, stroke=(0.0, 0.5, 1.0), dash=(4, 3), width=0.8)
+        backend.draw_line(x1t, y1t, x2t, y2t, stroke=(0.0, 0.0, 0.0), dash=None, width=0.8)
 
-    for b in layout_data.get("boxes", []):
-        x1t, y1t = vp.map_top(b["x"], b["y"])
-        w, h = (b["w"] * vp.scale, b["h"] * vp.scale)
-        backend.draw_rect(x1t, y1t, w, h, stroke=(1.0, 0.3, 0.3), dash=(2, 2), width=0.7)
+    # 2) デバッグオーバーレイ（青点線：罫線）
+    if layout_data.get("debug_overlay_lines", layout_data.get("debug_overlay", True)):
+        for l in layout_data.get("lines", []):
+            x1t, y1t = vp.map_top(l["x1"], l["y1"])
+            x2t, y2t = vp.map_top(l["x2"], l["y2"])
+            backend.draw_line(x1t, y1t, x2t, y2t, stroke=(0.0, 0.5, 1.0), dash=(4, 3), width=0.8)
+
+    # 3) デバッグオーバーレイ（赤点線：OCR対象ボックス）※新設フラグで制御
+    if layout_data.get("debug_overlay_boxes", True):
+        for b in layout_data.get("boxes", []):
+            x1t, y1t = vp.map_top(b["x"], b["y"])
+            w, h = (b["w"] * vp.scale, b["h"] * vp.scale)
+            backend.draw_rect(x1t, y1t, w, h, stroke=(1.0, 0.3, 0.3), dash=(2, 2), width=0.7)
 
     line_h = 12
     gap = 2
@@ -127,22 +174,35 @@ def render_layout(layout_data: dict, backend, vp: Viewport, debug_image: Optiona
     backend.draw_text(20, y1, label_main, size=8, color=(0.3, 0.3, 0.3))
     backend.draw_text(20, y2, label_dbg,  size=8, color=(0.3, 0.3, 0.3))
 
-def draw_layout_on_pdf(layout_data, output_pdf, debug_image=None, page_size=A4, margin=20.0):
+def draw_layout_on_pdf(layout_data, output_pdf, debug_image=None, page_size=None, margin=0.0):
+    # 入力画像の寸法をページサイズに採用（A4前提でも縮小をかけない）
+    if page_size is None:
+        if debug_image and os.path.isfile(debug_image):
+            with Image.open(debug_image) as im:
+                page_size = (float(im.width), float(im.height))
+        else:
+            size_info = layout_data.get("size") or {}
+            page_size = (float(size_info.get("w", A4[0])), float(size_info.get("h", A4[1])))
+
     page_width, page_height = page_size
-    # ★ 相対 → 同階層の絶対
-    # from .viewport import Viewport
     max_x, max_y = _max_xy_from_layout(layout_data)
-    vp = Viewport(page_width, page_height, margin, max_x, max_y)
+    vp = Viewport(page_width, page_height, margin, max_x, max_y, fit="none")
     renderer = _PdfRenderer(output_pdf, page_size=page_size)
     render_layout(layout_data, renderer, vp, debug_image)
     renderer.save()
 
-def draw_layout_on_png(layout_data, output_png, debug_image=None, page_size=A4, margin=20.0):
+def draw_layout_on_png(layout_data, output_png, debug_image=None, page_size=None, margin=0.0):
+    if page_size is None:
+        if debug_image and os.path.isfile(debug_image):
+            with Image.open(debug_image) as im:
+                page_size = (float(im.width), float(im.height))
+        else:
+            size_info = layout_data.get("size") or {}
+            page_size = (float(size_info.get("w", A4[0])), float(size_info.get("h", A4[1])))
+
     page_width, page_height = page_size
-    # ★ 相対 → 同階層の絶対
-    # from .viewport import Viewport
     max_x, max_y = _max_xy_from_layout(layout_data)
-    vp = Viewport(page_width, page_height, margin, max_x, max_y)
+    vp = Viewport(page_width, page_height, margin, max_x, max_y, fit="none")
     renderer = _PngRenderer(page_size=page_size)
     render_layout(layout_data, renderer, vp, debug_image)
     renderer.save(output_png)

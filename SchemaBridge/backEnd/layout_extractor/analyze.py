@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import cv2, numpy as np
+from image_utils import binarize
 
 def _deskew(gray):
     edges = cv2.Canny(gray, 50, 150, apertureSize=3)
@@ -21,86 +21,109 @@ def _deskew(gray):
     return desk, angle
 
 def _extract_line_masks(gray):
-    # 二値化
-    binimg = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)[1]
+    # Otsuベースの素直な二値化
+    binimg = binarize(gray)
     h, w = binimg.shape
-    # 罫線用モルフォロジ（水平方向・垂直方向）
-    kx = max(15, w//60)   # 画像依存の自動サイズ
-    ky = max(15, h//60)
+
+    # “長い罫線”だけを抽出（短線救済はやらない）
+    kx = max(15, w // 50)   # 横罫用
+    ky = max(15, h // 50)   # 縦罫用
     h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kx, 1))
     v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, ky))
     h_lines = cv2.morphologyEx(binimg, cv2.MORPH_OPEN, h_kernel, iterations=1)
     v_lines = cv2.morphologyEx(binimg, cv2.MORPH_OPEN, v_kernel, iterations=1)
+
+    # 軽い閉演算でギャップを詰める（太線優先なので小さめ）
+    h_lines = cv2.morphologyEx(h_lines, cv2.MORPH_CLOSE, np.ones((1, 3), np.uint8), iterations=1)
+    v_lines = cv2.morphologyEx(v_lines, cv2.MORPH_CLOSE, np.ones((3, 1), np.uint8), iterations=1)
+
     line_mask = cv2.bitwise_or(h_lines, v_lines)
     return line_mask, h_lines, v_lines, binimg
 
-def _lines_to_segments(mask, orientation="h"):
-    # 細線化に近い縮小
-    skel = cv2.ximgproc.thinning(mask) if hasattr(cv2, "ximgproc") else mask
-    # Probabilistic Hough（短いゴミ抑制）
-    min_len = int(0.08 * (mask.shape[1] if orientation=="h" else mask.shape[0]))
-    lines = cv2.HoughLinesP(skel, 1, np.pi/180, threshold=80,
-                            minLineLength=min_len, maxLineGap=10)
-    segs = []
-    if lines is not None:
-        for x1,y1,x2,y2 in lines[:,0,:]:
-            if orientation=="h" and abs(y2-y1) <= 3:
-                segs.append({"x1":int(min(x1,x2)),"y1":int(y1),
-                             "x2":int(max(x1,x2)),"y2":int(y2)})
-            elif orientation=="v" and abs(x2-x1) <= 3:
-                segs.append({"x1":int(x1),"y1":int(min(y1,y2)),
-                             "x2":int(x2),"y2":int(max(y1,y2))})
-    return segs
+def _extract_short_verticals(gray):
+    """
+    短い縦線（~20–80px）専用の救済検出。
+    既存の“長い罫線”検出で落ちる短線を Otsu→Canny→HoughLinesP で拾う。
+    """
+    th = binarize(gray)
+    edges = cv2.Canny(th, 50, 150, apertureSize=3)
+    H, W = th.shape[:2]
 
-def _extract_text_boxes(binimg, line_mask):
-    # 罫線を除去したテキスト領域に限定
-    no_lines = cv2.bitwise_and(binimg, cv2.bitwise_not(line_mask))
-    # 文字をブロック化（膨張→開閉）
-    k = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
-    merged = cv2.dilate(no_lines, k, iterations=1)
-    merged = cv2.morphologyEx(merged, cv2.MORPH_CLOSE, k, iterations=1)
-    cnts,_ = cv2.findContours(merged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    boxes=[]
-    H,W = binimg.shape
-    for c in cnts:
-        x,y,w,h = cv2.boundingRect(c)
-        area=w*h
-        if area<200 or h<10 or w<10:     # 極小ノイズは除外
-            continue
-        if w>0.95*W or h>0.95*H:         # ほぼ全面は除外
-            continue
-        boxes.append({"x":int(x),"y":int(y),"w":int(w),"h":int(h)})
-    return boxes
+    # 低しきい値 + 短線向け最小長
+    min_len = max(18, int(0.012 * H))   # 画像高さ1480なら ≈18px
+    max_len = int(0.20 * H)             # 過度な長線はここでは扱わない
+    lines = cv2.HoughLinesP(
+        edges, 1, np.pi / 180,
+        threshold=30,                   # 検出感度を高める
+        minLineLength=min_len,
+        maxLineGap=3
+    )
 
-def _detect_short_vertical_ticks(gray, binimg, h_lines):
-    
-    # 小さめの縦カーネルで縦成分のみ抽出
-    H, W = binimg.shape
-    ky_small = max(5, H // 200)
-    v_small = cv2.getStructuringElement(cv2.MORPH_RECT, (1, ky_small))
-    v_mask = cv2.morphologyEx(binimg, cv2.MORPH_OPEN, v_small, iterations=1)
-
-    # 端点が水平線(h_lines)に接している縦線だけを拾う
-    min_len = max(10, H // 120)                    # 短い縦棒も拾う
-    lines = cv2.HoughLinesP(v_mask, 1, np.pi/180, 30,
-                            minLineLength=min_len, maxLineGap=4)
     segs = []
     if lines is None:
         return segs
 
-    # 端点が水平線に近いかを確認（±2px）
-    h_pad = cv2.dilate(h_lines, cv2.getStructuringElement(cv2.MORPH_RECT, (5,5)), 1)
-    for x1,y1,x2,y2 in lines[:,0,:]:
-        if abs(x2 - x1) > 3:  # ほぼ縦のみ
+    for x1, y1, x2, y2 in lines[:, 0, :]:
+        # ほぼ縦のみ通す（水平成分が大きいものは除外）
+        if abs(x2 - x1) > abs(y2 - y1) * 0.25:
             continue
-        y_top, y_bot = (y1, y2) if y1 < y2 else (y2, y1)
-        # 端点近傍の水平線ヒット
-        ok_top = h_pad[max(0, y_top-2):y_top+3, max(0, x1-2):x1+3].any()
-        ok_bot = h_pad[max(0, y_bot-2):y_bot+3, max(0, x1-2):x1+3].any()
-        if ok_top or ok_bot:
-            segs.append({"x1": int(x1), "y1": int(y_top),
-                         "x2": int(x2), "y2": int(y_bot)})
+        length = max(abs(y2 - y1), abs(x2 - x1))
+        if length < min_len or length > max_len:
+            continue
+        segs.append({"x1": int(x1), "y1": int(y1), "x2": int(x2), "y2": int(y2)})
     return segs
+
+def _lines_to_segments(mask, orientation="h"):
+    skel = cv2.ximgproc.thinning(mask) if hasattr(cv2, "ximgproc") else mask
+
+    H, W = mask.shape[:2]
+    if orientation == "h":
+        min_len = max(120, int(0.18 * W))   # 太い横罫に寄せてさらに長さで絞る
+        angle_ok = lambda x1,y1,x2,y2: abs(y2 - y1) <= max(1, int(0.07 * abs(x2 - x1)))
+        hough_threshold, max_gap = 140, 6
+    else:
+        min_len = max(100, int(0.12 * H))   # 縦も「長線のみ」
+        angle_ok = lambda x1,y1,x2,y2: abs(x2 - x1) <= max(1, int(0.07 * abs(y2 - y1)))
+        hough_threshold, max_gap = 140, 6
+
+    lines = cv2.HoughLinesP(skel, 1, np.pi/180, threshold=hough_threshold,
+                            minLineLength=min_len, maxLineGap=max_gap)
+    segs = []
+    if lines is not None:
+        for x1,y1,x2,y2 in lines[:,0,:]:
+            if not angle_ok(x1,y1,x2,y2):
+                continue
+            segs.append({"x1": int(x1), "y1": int(y1), "x2": int(x2), "y2": int(y2)})
+    return segs
+
+def _extract_text_boxes(binimg, line_mask):
+    """
+    文字だけを対象に安定抽出：
+      1) line_mask を除去してテキスト専用マスクを作成
+      2) 軽く膨張して単語/行を連結
+      3) 輪郭抽出→面積/高さ/縦横比でフィルタ
+    """
+    text_only = cv2.bitwise_and(binimg, cv2.bitwise_not(line_mask))
+
+    # 連結（行単位に寄せる）
+    text_dil = cv2.dilate(text_only, np.ones((3, 3), np.uint8), iterations=1)
+
+    contours, _ = cv2.findContours(text_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    h, w = binimg.shape[:2]
+    boxes = []
+    for cnt in contours:
+        x, y, ww, hh = cv2.boundingRect(cnt)
+        area = ww * hh
+        # 面積/高さ/縦横比で安定化（帳票の見出し～本文帯を想定）
+        if area < 80 or area > (w * h * 0.25):
+            continue
+        if hh < 10 or hh > 120:
+            continue
+        ratio = ww / max(hh, 1)
+        if ratio < 0.5 or ratio > 15:
+            continue
+        boxes.append({"x": int(x), "y": int(y), "w": int(ww), "h": int(hh)})
+    return boxes
 
 def analyze_image(image_path):
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
@@ -109,17 +132,33 @@ def analyze_image(image_path):
     gray, _ = _deskew(img)
     line_mask, h_lines, v_lines, binimg = _extract_line_masks(gray)
     # 罫線セグメント
-    # 罫線セグメント
     h_segs = _lines_to_segments(h_lines, "h")
     v_segs = _lines_to_segments(v_lines, "v")
-    # 追加：水平線と接する短い縦棒も抽出
-    v_ticks = _detect_short_vertical_ticks(gray, binimg, h_lines)
 
-    # 設問側のブロック
+    # 短い縦線の救済検出（~20–80px）を追加
+    short_vs = _extract_short_verticals(gray)
+
+    # 既存の縦線と“ほぼ同じ位置”の重複は捨て、短線のみをマージ
+    merged_vs = []
+    def _near(a, b, t=6):
+        return abs(a - b) <= t
+
+    for s in short_vs:
+        dup = False
+        for l in v_segs:
+            same_x = _near(s["x1"], l["x1"]) and _near(s["x2"], l["x2"])
+            close_y = _near(s["y1"], l["y1"], 20) or _near(s["y2"], l["y2"], 20)
+            if same_x and close_y:
+                dup = True
+                break
+        if not dup:
+            merged_vs.append(s)
+    v_segs = v_segs + merged_vs
+
     text_boxes = _extract_text_boxes(binimg, line_mask)
     return {
         "size": {"w": int(gray.shape[1]), "h": int(gray.shape[0])},
-        "lines": h_segs + v_segs + v_ticks,   # ← 追加分を連結
+        "lines": h_segs + v_segs,
         "boxes": text_boxes,
-        "pre_filtered": True                  # 描画側の長さフィルタをスキップさせるフラグ
+        "pre_filtered": True
     }
