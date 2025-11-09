@@ -10,3 +10,4 @@ output/*.png
 *.zip
 input/*.png
 output/*.json
+codex.patch
