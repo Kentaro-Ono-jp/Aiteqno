@@ -3,7 +3,7 @@ import os
 import json
 from typing import Any, Dict, List, Optional
 
-def _normalize_lines(lines: List[Dict[str, int]], pos_tol: int = 2) -> List[Dict[str, int]]:
+def _normalize_lines(lines: List[Dict[str, int]], pos_tol: int = 3) -> List[Dict[str, int]]:
     """
     Detect and merge duplicated axis-aligned line segments that only differ by a
     few pixels so that layout.json does not double-draw nearly identical lines.
@@ -24,66 +24,148 @@ def _normalize_lines(lines: List[Dict[str, int]], pos_tol: int = 2) -> List[Dict
             if x1 > x2:
                 x1, x2 = x2, x1
                 y1, y2 = y2, y1
-            mid_y = round((y1 + y2) / 2)
-            y1 = y2 = mid_y
-        else:
-            if y1 > y2:
-                x1, x2 = x2, x1
-                y1, y2 = y2, y1
-            mid_x = round((x1 + x2) / 2)
-            x1 = x2 = mid_x
+            mid_y = (y1 + y2) / 2.0
+            return {"x1": x1, "y1": mid_y, "x2": x2, "y2": mid_y}
 
-        return {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
+        if y1 > y2:
+            x1, x2 = x2, x1
+            y1, y2 = y2, y1
+        mid_x = (x1 + x2) / 2.0
+        return {"x1": mid_x, "y1": y1, "x2": mid_x, "y2": y2}
 
-    def _is_duplicate(a: Dict[str, int], b: Dict[str, int], orient: str) -> bool:
-        if orient == "h":
-            if abs(a["y1"] - b["y1"]) > pos_tol:
-                return False
-            # overlap on x
-            return not (a["x2"] < b["x1"] - pos_tol or b["x2"] < a["x1"] - pos_tol)
-        else:
-            if abs(a["x1"] - b["x1"]) > pos_tol:
-                return False
-            # overlap on y
-            return not (a["y2"] < b["y1"] - pos_tol or b["y2"] < a["y1"] - pos_tol)
+    def _merge_axis(segments: List[Dict[str, float]], orient: str) -> List[Dict[str, int]]:
+        def _coord(seg: Dict[str, float]) -> float:
+            return seg["y1"] if orient == "h" else seg["x1"]
 
-    # 1) orient & canonicalize
-    prepared: List[Dict[str, int]] = []
-    for seg in (lines or []):
-        orient = _orientation(seg)
-        canon = _canonical(seg, orient)
-        canon["orient"] = orient  # annotate
-        prepared.append(canon)
+        def _start(seg: Dict[str, float]) -> float:
+            return seg["x1"] if orient == "h" else seg["y1"]
 
-    # 2) sweep duplicates and average them
-    merged: List[Dict[str, int]] = []
-    buckets: List[Dict[str, Any]] = []  # track counts per merged item
-    for cand in prepared:
-        orient = cand["orient"]
-        matched = False
-        for idx, entry in enumerate(buckets):
-            if entry["orient"] != orient:
-                continue
-            current = merged[idx]
-            if _is_duplicate(current, cand, orient):
-                count = entry["count"] + 1
-                if orient == "h":
-                    current["x1"] = int(round((current["x1"] * entry["count"] + cand["x1"]) / count))
-                    current["x2"] = int(round((current["x2"] * entry["count"] + cand["x2"]) / count))
-                    current["y1"] = current["y2"] = int(round((current["y1"] * entry["count"] + cand["y1"]) / count))
+        def _end(seg: Dict[str, float]) -> float:
+            return seg["x2"] if orient == "h" else seg["y2"]
+
+        groups: List[Dict[str, Any]] = []
+
+        for seg in segments:
+            coord = _coord(seg)
+            start = _start(seg)
+            end = _end(seg)
+            length = max(abs(end - start), 1.0)
+
+            best_idx: Optional[int] = None
+            best_diff: Optional[float] = None
+            for idx, group in enumerate(groups):
+                diff = abs(group["coord"] - coord)
+                if diff <= pos_tol and (best_diff is None or diff < best_diff):
+                    best_idx = idx
+                    best_diff = diff
+
+            if best_idx is None:
+                group = {"coord": coord, "weight": length, "segments": []}
+                groups.append(group)
+            else:
+                group = groups[best_idx]
+                total = group["weight"] + length
+                group["coord"] = (group["coord"] * group["weight"] + coord * length) / total
+                group["weight"] = total
+
+            group["segments"].append({
+                "x1": seg["x1"],
+                "y1": seg["y1"],
+                "x2": seg["x2"],
+                "y2": seg["y2"],
+                "_coord": coord,
+                "_length": length,
+            })
+
+        merged_segments: List[Dict[str, int]] = []
+
+        for group in groups:
+            ordered = sorted(
+                group["segments"],
+                key=lambda seg: (_start(seg), _end(seg)),
+            )
+
+            current: Optional[Dict[str, float]] = None
+            for seg in ordered:
+                coord = seg["_coord"]
+                start = _start(seg)
+                end = _end(seg)
+                length = seg["_length"]
+
+                if current is None:
+                    current = {
+                        "start": start,
+                        "end": end,
+                        "weight": length,
+                        "coord_sum": coord * length,
+                    }
+                    continue
+
+                if start <= current["end"] + pos_tol:
+                    current["coord_sum"] += coord * length
+                    current["weight"] += length
+                    current["start"] = min(current["start"], start)
+                    current["end"] = max(current["end"], end)
                 else:
-                    current["y1"] = int(round((current["y1"] * entry["count"] + cand["y1"]) / count))
-                    current["y2"] = int(round((current["y2"] * entry["count"] + cand["y2"]) / count))
-                    current["x1"] = current["x2"] = int(round((current["x1"] * entry["count"] + cand["x1"]) / count))
-                entry["count"] = count
-                matched = True
-                break
-        if not matched:
-            merged.append({"x1": cand["x1"], "y1": cand["y1"], "x2": cand["x2"], "y2": cand["y2"]})
-            buckets.append({"orient": orient, "count": 1})
+                    merged_segments.append({
+                        "orient": orient,
+                        "start": current["start"],
+                        "end": current["end"],
+                        "coord": current["coord_sum"] / current["weight"],
+                    })
+                    current = {
+                        "start": start,
+                        "end": end,
+                        "weight": length,
+                        "coord_sum": coord * length,
+                    }
 
-    # 3) strip helper fields and return
-    return [{"x1": m["x1"], "y1": m["y1"], "x2": m["x2"], "y2": m["y2"]} for m in merged]
+            if current is not None:
+                merged_segments.append({
+                    "orient": orient,
+                    "start": current["start"],
+                    "end": current["end"],
+                    "coord": current["coord_sum"] / current["weight"],
+                })
+
+        cleaned: List[Dict[str, int]] = []
+        for seg in merged_segments:
+            if seg["orient"] == "h":
+                y = int(round(seg["coord"]))
+                cleaned.append({
+                    "x1": int(round(seg["start"])),
+                    "y1": y,
+                    "x2": int(round(seg["end"])),
+                    "y2": y,
+                })
+            else:
+                x = int(round(seg["coord"]))
+                cleaned.append({
+                    "x1": x,
+                    "y1": int(round(seg["start"])),
+                    "x2": x,
+                    "y2": int(round(seg["end"])),
+                })
+
+        return cleaned
+
+    horizontals: List[Dict[str, float]] = []
+    verticals: List[Dict[str, float]] = []
+
+    for seg in lines:
+        if not isinstance(seg, dict):
+            continue
+        orient = _orientation(seg)
+        canonical = _canonical(seg, orient)
+        if orient == "h":
+            horizontals.append(canonical)
+        else:
+            verticals.append(canonical)
+
+    merged_lines: List[Dict[str, int]] = []
+    merged_lines.extend(_merge_axis(horizontals, "h"))
+    merged_lines.extend(_merge_axis(verticals, "v"))
+    return merged_lines
 
 def _resolve_output_dir(output_dir: Optional[str]) -> str:
     """
