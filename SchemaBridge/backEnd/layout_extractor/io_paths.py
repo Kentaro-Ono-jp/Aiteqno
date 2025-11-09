@@ -1,6 +1,7 @@
 # io_paths.py
 import os
 import glob
+from typing import Optional
 
 DEFAULT_IMAGE_NAME = "form_blank_testClinic_v1.png"
 DEFAULT_LAYOUT_JSON = os.path.join("output", "layout_a4_portrait.json")
@@ -41,7 +42,32 @@ def choose_target_image(input_dir: str, default_name: str = DEFAULT_IMAGE_NAME) 
         raise FileNotFoundError(f"PNGが見つかりません: {input_dir}（期待ファイル: {default_name}）")
     return max(pngs, key=os.path.getmtime)
 
-def ensure_output_dir(path: str):
-    out_dir = os.path.dirname(path) or "."
+def ensure_output_dir(path: Optional[str]):
+    """
+    - path が None       : SchemaBridge の親（=Aiteqno）直下の ./output を返す
+    - path がディレクトリ: そのまま作成して返す
+    - path がファイル    : その親ディレクトリを作成して返す
+    """
+    if path is None:
+        # __file__ から SchemaBridge を見つけ、親(Aiteqno)/output へ
+        module_dir = os.path.dirname(os.path.abspath(__file__))
+        cur = module_dir
+        repo_root = None
+        while True:
+            head, tail = os.path.split(cur)
+            if tail == "SchemaBridge":
+                repo_root = cur
+                break
+            if head == cur:
+                break
+            cur = head
+        parent_root = os.path.dirname(repo_root) if repo_root else os.path.dirname(module_dir)
+        out_dir = os.path.join(parent_root, "output")
+    else:
+        # ディレクトリかどうかをざっくり判定（既存ディレクトリ or 拡張子なしをディレクトリ扱い）
+        if os.path.isdir(path) or (not os.path.splitext(path)[1] and not os.path.basename(path).count(".")):
+            out_dir = os.path.abspath(path)
+        else:
+            out_dir = os.path.dirname(path) or "."
     os.makedirs(out_dir, exist_ok=True)
     return out_dir

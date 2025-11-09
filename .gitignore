@@ -9,3 +9,4 @@ output/*.pdf
 output/*.png
 *.zip
 input/*.png
+output/*.json

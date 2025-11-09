@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from image_utils import binarize
+from image_utils import binarize, extract_line_masks
 
 def _deskew(gray):
     edges = cv2.Canny(gray, 50, 150, apertureSize=3)
@@ -19,26 +19,6 @@ def _deskew(gray):
     M = cv2.getRotationMatrix2D((w/2, h/2), angle, 1.0)
     desk = cv2.warpAffine(gray, M, (w, h), flags=cv2.INTER_LINEAR, borderValue=255)
     return desk, angle
-
-def _extract_line_masks(gray):
-    # Otsuベースの素直な二値化
-    binimg = binarize(gray)
-    h, w = binimg.shape
-
-    # “長い罫線”だけを抽出（短線救済はやらない）
-    kx = max(15, w // 50)   # 横罫用
-    ky = max(15, h // 50)   # 縦罫用
-    h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kx, 1))
-    v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, ky))
-    h_lines = cv2.morphologyEx(binimg, cv2.MORPH_OPEN, h_kernel, iterations=1)
-    v_lines = cv2.morphologyEx(binimg, cv2.MORPH_OPEN, v_kernel, iterations=1)
-
-    # 軽い閉演算でギャップを詰める（太線優先なので小さめ）
-    h_lines = cv2.morphologyEx(h_lines, cv2.MORPH_CLOSE, np.ones((1, 3), np.uint8), iterations=1)
-    v_lines = cv2.morphologyEx(v_lines, cv2.MORPH_CLOSE, np.ones((3, 1), np.uint8), iterations=1)
-
-    line_mask = cv2.bitwise_or(h_lines, v_lines)
-    return line_mask, h_lines, v_lines, binimg
 
 def _extract_short_verticals(gray):
     """
@@ -130,7 +110,7 @@ def analyze_image(image_path):
     if img is None:
         raise FileNotFoundError(image_path)
     gray, _ = _deskew(img)
-    line_mask, h_lines, v_lines, binimg = _extract_line_masks(gray)
+    line_mask, h_lines, v_lines, binimg = extract_line_masks(gray)
     # 罫線セグメント
     h_segs = _lines_to_segments(h_lines, "h")
     v_segs = _lines_to_segments(v_lines, "v")
