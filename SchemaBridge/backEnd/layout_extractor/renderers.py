@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 from viewport import Viewport  # 同階層
 
 def _max_xy_from_layout(layout_data):
