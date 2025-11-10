@@ -38,3 +38,10 @@
 
 ## Security
 脆弱性は公開Issueではなく、メールまたは GitHub Security Advisories でご連絡ください。
+
+## Naming
+本リポジトリ名「Aiteqno」は、約2年半後（2028年4月予定）に設立予定の法人名に由来します。現時点では個人事業主（屋号：ReactorFront）によるOSSコア公開であり、商用/OEM対応は別契約にて提供します。現在参画中の取引先の社名や案件詳細は公開しません。
+
+## Maintainers
+- Kentaro Ono（Findyフリーランス参画 / 個人事業主 ReactorFront）  
+  contact: swordy.battle.axe@gmail.com
