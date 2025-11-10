@@ -1,11 +1,10 @@
 import os
 import sys
+from simple_pipeline import run
 
 # .pyc を書かせない（既存仕様を踏襲）
 sys.dont_write_bytecode = True
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
-
-from simple_pipeline import run
 
 def main():
     result = run(
