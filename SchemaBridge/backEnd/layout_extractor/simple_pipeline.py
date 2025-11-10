@@ -5,7 +5,8 @@ from typing import Optional, Tuple
 from io_paths import (
     find_repo_root,
     resolve_input_dir,
-    choose_target_image
+    choose_target_image,
+    ensure_output_dir
 )
 from analyze import analyze_image
 from renderers import draw_layout_on_pdf, draw_layout_on_png
@@ -65,7 +66,7 @@ def run(
 
     # プレビュー生成（描画は常に正規化済みlayout.jsonベース）
     if save_pdf:
-        from io_paths import ensure_output_dir
+        
         from viewport import Viewport
         try:
             pdf_path = os.path.join(ensure_output_dir(output_dir), "layout_preview.pdf")
@@ -74,7 +75,6 @@ def run(
             pdf_path = None  # PDF依存不在/失敗でも継続
 
     if save_png:
-        from io_paths import ensure_output_dir
         png_path = os.path.join(ensure_output_dir(output_dir), "layout_preview.png")
         try:
             draw_layout_on_png(layout_data, png_path, debug_image=target_image, page_size=page_size)

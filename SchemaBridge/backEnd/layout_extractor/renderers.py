@@ -143,9 +143,9 @@ def render_layout(layout_data: dict, backend, vp: Viewport, debug_image: Optiona
         backend.draw_image(bx, by, bw, bh, debug_image)
 
     # --- ここから罫線描画：layout.json（正規化済み）の lines を黒実線で描く ---
-    for l in layout_data.get("lines", []):
-        x1t, y1t = vp.map_top(l["x1"], l["y1"])
-        x2t, y2t = vp.map_top(l["x2"], l["y2"])
+    for line in layout_data.get("lines", []):
+        x1t, y1t = vp.map_top(line["x1"], line["y1"])
+        x2t, y2t = vp.map_top(line["x2"], line["y2"])
         backend.draw_line(x1t, y1t, x2t, y2t, stroke=(0.0, 0.0, 0.0), dash=None, width=0.8)
 
     # （青のデバッグ線は廃止）
