@@ -1,3 +1,7 @@
+![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)
+![Python](https://img.shields.io/badge/Python-3.x-informational)
+![CI](https://github.com/Kentaro-Ono-jp/Aiteqno/actions/workflows/ci.yml/badge.svg)
+
 # 問診票電子化及び電子カルテ入力支援システム
 
 紙の問診票を構造化データに変換し、院内EHR/基幹へ取り込むためのバックエンド（Flask）。
