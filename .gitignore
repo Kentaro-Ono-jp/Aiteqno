@@ -11,4 +11,3 @@ output/*.png
 input/*.png
 output/*.json
 codex.patch
-input/form_blank_testClinic_v1.png

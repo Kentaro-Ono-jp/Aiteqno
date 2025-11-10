@@ -85,8 +85,11 @@ def _extract_text_boxes(binimg, line_mask):
     """
     text_only = cv2.bitwise_and(binimg, cv2.bitwise_not(line_mask))
 
-    # 連結（行単位に寄せる）
-    text_dil = cv2.dilate(text_only, np.ones((3, 3), np.uint8), iterations=1)
+    # 連結（語→行の順で少しだけ繋げる：横7×1 → 縦1×3）
+    h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 1))
+    v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 3))
+    x = cv2.dilate(text_only, h_kernel, iterations=1)   # 横方向を優先して結合
+    text_dil = cv2.dilate(x, v_kernel, iterations=1)    # 行内の上下を軽く結合
 
     contours, _ = cv2.findContours(text_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     h, w = binimg.shape[:2]
