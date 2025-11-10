@@ -8,10 +8,12 @@ from viewport import Viewport  # 同階層
 
 def _max_xy_from_layout(layout_data):
     xs, ys = [], []
-    for l in layout_data.get("lines", []):
-        xs += [l["x1"], l["x2"]]; ys += [l["y1"], l["y2"]]
-    for b in layout_data.get("boxes", []):
-        xs += [b["x"], b["x"] + b["w"]]; ys += [b["y"], b["y"] + b["h"]]
+    for line in layout_data.get("lines", []):
+        xs += [line["x1"], line["x2"]]
+        ys += [line["y1"], line["y2"]]
+    for box in layout_data.get("boxes", []):
+        xs += [box["x"], box["x"] + box["w"]]
+        ys += [box["y"], box["y"] + box["h"]]
     size_info = layout_data.get("size") or {}
     xs.append(size_info.get("w", 0))
     ys.append(size_info.get("h", 0))
