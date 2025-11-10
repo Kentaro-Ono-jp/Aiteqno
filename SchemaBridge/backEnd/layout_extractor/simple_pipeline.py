@@ -66,8 +66,6 @@ def run(
 
     # プレビュー生成（描画は常に正規化済みlayout.jsonベース）
     if save_pdf:
-        
-        from viewport import Viewport
         try:
             pdf_path = os.path.join(ensure_output_dir(output_dir), "layout_preview.pdf")
             draw_layout_on_pdf(layout_data, pdf_path, debug_image=target_image, page_size=page_size)
