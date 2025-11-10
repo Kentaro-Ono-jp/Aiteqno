@@ -59,11 +59,13 @@ def _lines_to_segments(mask, orientation="h"):
     H, W = mask.shape[:2]
     if orientation == "h":
         min_len = max(120, int(0.18 * W))   # 太い横罫に寄せてさらに長さで絞る
-        angle_ok = lambda x1,y1,x2,y2: abs(y2 - y1) <= max(1, int(0.07 * abs(x2 - x1)))
+        def angle_ok(x1, y1, x2, y2):
+            return abs(y2 - y1) <= max(1, int(0.07 * abs(x2 - x1)))
         hough_threshold, max_gap = 140, 6
     else:
         min_len = max(100, int(0.12 * H))   # 縦も「長線のみ」
-        angle_ok = lambda x1,y1,x2,y2: abs(x2 - x1) <= max(1, int(0.07 * abs(y2 - y1)))
+        def angle_ok(x1, y1, x2, y2):
+            return abs(x2 - x1) <= max(1, int(0.07 * abs(y2 - y1)))
         hough_threshold, max_gap = 140, 6
 
     lines = cv2.HoughLinesP(skel, 1, np.pi/180, threshold=hough_threshold,
@@ -128,9 +130,9 @@ def analyze_image(image_path):
 
     for s in short_vs:
         dup = False
-        for l in v_segs:
-            same_x = _near(s["x1"], l["x1"]) and _near(s["x2"], l["x2"])
-            close_y = _near(s["y1"], l["y1"], 20) or _near(s["y2"], l["y2"], 20)
+        for v in v_segs:
+            same_x = _near(s["x1"], v["x1"]) and _near(s["x2"], v["x2"])
+            close_y = _near(s["y1"], v["y1"], 20) or _near(s["y2"], v["y2"], 20)
             if same_x and close_y:
                 dup = True
                 break
