@@ -87,9 +87,9 @@ def _extract_text_boxes(binimg, line_mask):
     """
     text_only = cv2.bitwise_and(binimg, cv2.bitwise_not(line_mask))
 
-    # 連結（語→行の順で少しだけ繋げる：横7×1 → 縦1×3）
-    h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 1))
-    v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 3))
+    # 連結（語→行の順で少しだけ繋げる：横11×1 → 縦1×7）
+    h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 1))
+    v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 7))
     x = cv2.dilate(text_only, h_kernel, iterations=1)   # 横方向を優先して結合
     text_dil = cv2.dilate(x, v_kernel, iterations=1)    # 行内の上下を軽く結合
 
@@ -105,7 +105,8 @@ def _extract_text_boxes(binimg, line_mask):
         if hh < 10 or hh > 120:
             continue
         ratio = ww / max(hh, 1)
-        if ratio < 0.5 or ratio > 15:
+        # ★長文1行（横長）を救済：上限を 15 → 80 に緩和（必要に応じて再調整）
+        if ratio < 0.5 or ratio > 80:
             continue
         boxes.append({"x": int(x), "y": int(y), "w": int(ww), "h": int(hh)})
     return boxes
