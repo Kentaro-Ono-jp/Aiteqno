@@ -3,16 +3,35 @@
 import cv2
 
 def binarize(gray):
-    """帳票の“太い罫線”と文字を安定抽出するための素直な二値化（Otsu＋軽平滑）"""
+    """薄い罫線も残しやすくするため、CLAHE と局所適応閾値を併用した二値化。"""
     if len(gray.shape) == 3:
         gray = cv2.cvtColor(gray, cv2.COLOR_BGR2GRAY)
 
-    # ノイズ抑制（軽い平滑のみ）
+    # ノイズ抑制 + 局所コントラスト補正
     blur = cv2.GaussianBlur(gray, (3, 3), 0)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    clahe_img = clahe.apply(blur)
 
-    # Otsu（線・文字＝黒側）→反転で「黒=線/文字」にそろえる
-    _, th = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-    return th
+    # グローバル閾値（Otsu）
+    _, th_otsu = cv2.threshold(clahe_img, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+    # 局所適応閾値（薄い線を拾いやすくする）
+    th_adapt = cv2.adaptiveThreshold(
+        clahe_img,
+        255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY_INV,
+        blockSize=31,
+        C=10,
+    )
+
+    # 2つの結果を統合して弱い線を残す
+    merged = cv2.bitwise_or(th_otsu, th_adapt)
+
+    # 軽いノイズ除去
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+    merged = cv2.morphologyEx(merged, cv2.MORPH_OPEN, kernel, iterations=1)
+    return merged
 
 def extract_line_masks(gray, hor_len=60, ver_len=60):
     """

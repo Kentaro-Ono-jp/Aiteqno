@@ -144,13 +144,11 @@ def render_layout(layout_data: dict, backend, vp: Viewport, debug_image: Optiona
         bw, bh = (src_w * vp.scale, src_h * vp.scale)
         backend.draw_image(bx, by, bw, bh, debug_image)
 
-    # --- ここから罫線描画：layout.json（正規化済み）の lines を黒実線で描く ---
+    # --- ここからガイドライン描画：検出された罫線に対して、黄色い点線ガイドを重ねて出力 ---
     for line in layout_data.get("lines", []):
         x1t, y1t = vp.map_top(line["x1"], line["y1"])
         x2t, y2t = vp.map_top(line["x2"], line["y2"])
-        backend.draw_line(x1t, y1t, x2t, y2t, stroke=(0.0, 0.0, 0.0), dash=None, width=0.8)
-
-    # （青のデバッグ線は廃止）
+        backend.draw_line(x1t, y1t, x2t, y2t, stroke=(0.95, 0.85, 0.25), dash=(2, 3), width=0.7)
 
     # デバッグオーバーレイ（赤点線：OCR対象ボックス）は維持
     if layout_data.get("debug_overlay_boxes", True):
@@ -164,7 +162,7 @@ def render_layout(layout_data: dict, backend, vp: Viewport, debug_image: Optiona
     y2 = vp.page_height - vp.margin - line_h
     y1 = vp.page_height - vp.margin - (2 * line_h + gap)
     label_main = f"A4 layout template (scale={vp.scale:.3f}, margin={vp.margin}pt)"
-    label_dbg = "Debug overlay"
+    label_dbg = "Guide overlay"
     if debug_image and os.path.isfile(debug_image):
         label_dbg += f" / source: {os.path.basename(debug_image)}"
     backend.draw_text(20, y1, label_main, size=8, color=(0.3, 0.3, 0.3))
