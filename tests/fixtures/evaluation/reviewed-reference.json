@@ -1,0 +1,86 @@
+{
+  "reference_id": "readable-boundary-v1",
+  "ir_version": "0.1.0",
+  "reviewed": true,
+  "elements": [
+    {
+      "id": "title",
+      "type": "text",
+      "page_number": 1,
+      "text": "診療申込書",
+      "bbox": {"x": 0.10, "y": 0.05, "width": 0.35, "height": 0.05},
+      "reading_order": 0,
+      "content_sha256": null,
+      "essential": true
+    },
+    {
+      "id": "name-label",
+      "type": "text",
+      "page_number": 1,
+      "text": "氏名",
+      "bbox": {"x": 0.10, "y": 0.16, "width": 0.12, "height": 0.04},
+      "reading_order": 1,
+      "content_sha256": null,
+      "essential": true
+    },
+    {
+      "id": "date-label",
+      "type": "text",
+      "page_number": 1,
+      "text": "受診日",
+      "bbox": {"x": 0.10, "y": 0.26, "width": 0.16, "height": 0.04},
+      "reading_order": 2,
+      "content_sha256": null,
+      "essential": false
+    },
+    {
+      "id": "symptom-label",
+      "type": "text",
+      "page_number": 1,
+      "text": "症状を記入してください",
+      "bbox": {"x": 0.10, "y": 0.38, "width": 0.42, "height": 0.05},
+      "reading_order": 3,
+      "content_sha256": null,
+      "essential": false
+    },
+    {
+      "id": "separator",
+      "type": "line",
+      "page_number": 1,
+      "text": null,
+      "bbox": {"x": 0.08, "y": 0.12, "width": 0.84, "height": 0.01},
+      "reading_order": null,
+      "content_sha256": null,
+      "essential": false
+    },
+    {
+      "id": "answer-box",
+      "type": "rectangle",
+      "page_number": 1,
+      "text": null,
+      "bbox": {"x": 0.10, "y": 0.45, "width": 0.70, "height": 0.22},
+      "reading_order": null,
+      "content_sha256": null,
+      "essential": false
+    },
+    {
+      "id": "clinic-logo",
+      "type": "image",
+      "page_number": 1,
+      "text": null,
+      "bbox": {"x": 0.74, "y": 0.04, "width": 0.16, "height": 0.08},
+      "reading_order": null,
+      "content_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "essential": false
+    }
+  ],
+  "relationships": [
+    {"kind": "reading_order", "source": "title", "target": "name-label", "essential": true},
+    {"kind": "reading_order", "source": "name-label", "target": "date-label", "essential": false},
+    {"kind": "reading_order", "source": "date-label", "target": "symptom-label", "essential": false},
+    {"kind": "containment", "source": "body", "target": "title", "essential": false},
+    {"kind": "adjacency", "source": "answer-box", "target": "clinic-logo", "essential": false}
+  ],
+  "essential_text_anchors": ["診療申込書", "氏名"],
+  "required_human_checks": []
+}

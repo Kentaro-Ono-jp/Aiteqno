@@ -657,6 +657,15 @@ The formal restoration target is the generated DOCX, not
 `reconstructed.png` is useful for diagnosing the IR and preview adapter, but it
 MUST NOT substitute for observing the DOCX in the formal restoration score.
 
+The normalized evaluation boundary is represented by
+`RestorationEvaluationInput`. It contains the IR version/schema result, a
+reviewed `EvaluationReference`, a `DocxObservation`, the exact
+`DocxRenderReport` for that file, an optional `SnapshotObservation`, and any
+completed manual checks. `PythonDocxObserver` reads the OPC package and
+`python-docx` reopen result, then normalizes visible text, borders, media,
+reading order, containment, and adjacency. Neither the input model nor the
+metric layer imports an OCR backend.
+
 ### 10.2 Composite score
 
 The restoration score is 0 through 100:
@@ -677,26 +686,57 @@ score = 100 * (
 | `structure_similarity` | F1 of reading-order, containment, and adjacency relationships observed in DOCX |
 | `geometry_similarity` | Normalized visual-region overlap/position score from the rendered DOCX snapshot |
 
-Matching is deterministic. It first requires compatible element types, then
-uses normalized page coordinates, overlap, and center distance. Issue #22 will
-freeze exact tolerances in tests without changing these weights silently.
+Matching is deterministic and uses these frozen V1 rules:
+
+- the render report must list the expected element as rendered and not omitted;
+- page number and element type must agree;
+- text elements require NFKC/whitespace-normalized character similarity of at
+  least `0.60`;
+- image digests, when available on both sides, must agree;
+- eligible pairs are ranked by content, geometry, and an explicit source-ID
+  hint, then greedily assigned with reference ID and observed ID as tie breakers;
+- text similarity uses Python's deterministic `SequenceMatcher` with
+  `autojunk=False` over the complete normalized reading order;
+- element and structure scores use precision/recall F1, with both-empty sets
+  scoring 1 and a one-sided empty set scoring 0;
+- geometry for each expected region is
+  `0.70 * IoU + 0.30 * max(0, 1 - center_distance / sqrt(2))`; missing regions
+  score 0, and the component is the arithmetic mean.
+
+Component weights are part of the V1 contract and are not configurable. The
+inclusive pass threshold defaults to 70 and may be configured from 0 through
+100. Component values are retained to six decimal places and the final score is
+rounded to two decimal places before applying the threshold.
 
 ### 10.3 Result states
 
-- `pass`: score is at least 70 and every hard gate passes.
-- `fail`: score is below 70 or any hard gate fails.
-- `requires_human_review`: machine inputs are insufficient to assert readability.
+- `pass`: the rounded score is at least the configured threshold, every hard
+  gate passes, the reference is reviewed, and all declared human checks are
+  complete.
+- `fail`: the score is below threshold or any hard gate fails. Failure takes
+  precedence over review state.
+- `requires_human_review`: the numeric score and known gates do not fail, but
+  the reference is unreviewed, a gate lacks machine evidence, or a declared
+  human check remains incomplete. It is never an automatic pass.
 
 ### 10.4 Hard gates
 
 All of these must pass regardless of numeric score:
 
-1. IR validates against the supported schema.
-2. DOCX passes the open-without-repair validation gates.
-3. Every fixture-designated essential text anchor is present and readable.
-4. Reading order does not reverse or disconnect essential sections.
-5. No source page background is used to fake reconstruction.
-6. No fatal render warning or missing required asset exists.
+1. IR schema validity and the IR versions in the reference and render report
+   agree.
+2. The DOCX OPC package is readable and `python-docx` can reopen it.
+3. The render report SHA-256 matches the DOCX that was actually observed.
+4. LibreOffice or equivalent snapshot evidence establishes repair-free opening;
+   absent evidence is unknown and forces human review rather than pass.
+5. Every fixture-designated essential text anchor is present after DOCX
+   read-back.
+6. Essential reading-order, containment, and adjacency relationships survive.
+7. Every essential element is present in both DOCX observation and render
+   report.
+8. No source page background is used to fake reconstruction.
+9. No fatal render error, essential omission, or required-asset failure exists.
+10. The generated DOCX contains no external relationship.
 
 A 70-point document with a missing patient-name label therefore fails. A
 70-point document with approximate spacing but readable content may pass.
@@ -713,6 +753,10 @@ A 70-point document with a missing patient-name label therefore fails. A
 - hard-gate results
 - final state
 - reasons and required human checks
+
+`FilesystemEvaluationWriter` publishes UTF-8 JSON with stable key ordering and
+create-only semantics; it never overwrites an existing artifact. The practical
+API and artifact examples are in [the restoration evaluation guide](evaluation.md).
 
 ## 11. CLI and artifact contract
 
