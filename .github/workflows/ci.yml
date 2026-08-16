@@ -52,6 +52,11 @@ jobs:
 
           with ZipFile(wheels[0]) as archive:
               names = set(archive.namelist())
+              entry_points = [
+                  name for name in names if name.endswith(".dist-info/entry_points.txt")
+              ]
+              assert len(entry_points) == 1, entry_points
+              entry_point_text = archive.read(entry_points[0]).decode("utf-8")
 
           required = {
               "aiteqno/__init__.py",
@@ -82,6 +87,8 @@ jobs:
               "aiteqno/adapters/tesseract.py",
               "aiteqno/adapters/json_schema.py",
               "aiteqno/cli/__init__.py",
+              "aiteqno/cli/__main__.py",
+              "aiteqno/cli/main.py",
           }
           missing = required - names
           assert not missing, sorted(missing)
@@ -89,4 +96,5 @@ jobs:
           schema_suffix = ".data/data/share/aiteqno/schemas/document-ir-v0.1.schema.json"
           schema_entries = [name for name in names if name.endswith(schema_suffix)]
           assert len(schema_entries) == 1, schema_entries
+          assert "aiteqno = aiteqno.cli:main" in entry_point_text
           PY

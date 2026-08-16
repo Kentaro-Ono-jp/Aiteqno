@@ -716,14 +716,18 @@ A 70-point document with a missing patient-name label therefore fails. A
 
 ## 11. CLI and artifact contract
 
-The later CLI issues implement:
+The V1 CLI implements:
 
 ```powershell
-aiteqno extract input.png -o document-bundle/
-aiteqno render document-bundle/document.ir.json -o reconstructed.docx
-aiteqno preview document-bundle/document.ir.json -o reconstructed.png
+aiteqno extract input.png -o document.ir.json
+aiteqno render document.ir.json -o reconstructed.docx
+aiteqno preview document.ir.json -o reconstructed.png
 aiteqno roundtrip input.png -o output/
 ```
+
+The standalone `extract` command writes `assets/` beside the requested JSON.
+`render` and `preview` resolve that sibling directory and never consult the
+original PNG.
 
 `roundtrip` produces:
 
@@ -732,14 +736,14 @@ output/
 ├── document.ir.json
 ├── assets/
 ├── reconstructed.docx
-├── reconstructed.png
-├── render-report.json
-└── evaluation.json
+└── reconstructed.png
 ```
 
-Commands MUST use non-zero exit codes for invalid input, unsupported IR version,
-missing runtime dependencies, render failure, and failed hard gates. Human-readable
-diagnostics go to stderr; machine artifacts remain valid JSON.
+Commands use distinct non-zero exit codes for invalid usage, invalid input,
+output conflicts, missing runtime dependencies, and operational failures.
+Human-readable diagnostics go to stderr; successful absolute artifact paths go
+to stdout. Every output is create-only. The complete PowerShell, path, stream,
+and exit-code contract is defined in [the V1 CLI guide](cli.md).
 
 ## 12. Security and robustness
 
