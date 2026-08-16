@@ -1,5 +1,6 @@
 """Protocols implemented by Aiteqno infrastructure adapters."""
 
+from .assets import AssetResolutionError, AssetResolver, ResolvedAsset
 from .docx import (
     DocxRenderError,
     DocxRenderer,
@@ -11,6 +12,8 @@ from .docx import (
 )
 
 __all__ = [
+    "AssetResolutionError",
+    "AssetResolver",
     "DocxRenderError",
     "DocxRenderer",
     "DocxRenderReport",
@@ -18,4 +21,5 @@ __all__ = [
     "FontSubstitution",
     "RenderPolicy",
     "RenderWarning",
+    "ResolvedAsset",
 ]
