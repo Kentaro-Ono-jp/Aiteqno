@@ -47,9 +47,21 @@ FORBIDDEN_SDIST_PATHS = {
     "tests/test_layout_extractor_smoke.py",
 }
 FORBIDDEN_RUNTIME_REQUIREMENTS = {"reportlab"}
+FORBIDDEN_REPOSITORY_PATHS = {
+    Path("output/layout_a4_portrait.json"),
+}
 
 
 def main() -> None:
+    legacy_repository_entries = {
+        path.as_posix() for path in FORBIDDEN_REPOSITORY_PATHS if path.exists()
+    }
+    if legacy_repository_entries:
+        raise AssertionError(
+            "repository retains removed pre-V1 files: "
+            f"{sorted(legacy_repository_entries)}"
+        )
+
     wheels = list(DIST_DIRECTORY.glob("aiteqno-*.whl"))
     sdists = list(DIST_DIRECTORY.glob("aiteqno-*.tar.gz"))
     if len(wheels) != 1:
