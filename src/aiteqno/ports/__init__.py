@@ -10,6 +10,14 @@ from .docx import (
     RenderPolicy,
     RenderWarning,
 )
+from .preview import (
+    PreviewFontSubstitution,
+    PreviewRenderer,
+    PreviewRenderError,
+    PreviewRenderReport,
+    PreviewRenderResult,
+    PreviewWarning,
+)
 
 __all__ = [
     "AssetResolutionError",
@@ -19,6 +27,12 @@ __all__ = [
     "DocxRenderReport",
     "DocxRenderResult",
     "FontSubstitution",
+    "PreviewFontSubstitution",
+    "PreviewRenderer",
+    "PreviewRenderError",
+    "PreviewRenderReport",
+    "PreviewRenderResult",
+    "PreviewWarning",
     "RenderPolicy",
     "RenderWarning",
     "ResolvedAsset",
