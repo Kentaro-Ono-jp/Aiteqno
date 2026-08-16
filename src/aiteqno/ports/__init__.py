@@ -10,6 +10,15 @@ from .docx import (
     RenderPolicy,
     RenderWarning,
 )
+from .ocr import (
+    DEFAULT_OCR_LANGUAGES,
+    OcrBackend,
+    OcrBackendError,
+    OcrCapabilities,
+    OcrOptions,
+    OcrRegion,
+    OcrToken,
+)
 from .preview import (
     PreviewFontSubstitution,
     PreviewRenderer,
@@ -41,10 +50,17 @@ __all__ = [
     "DocxRenderer",
     "DocxRenderReport",
     "DocxRenderResult",
+    "DEFAULT_OCR_LANGUAGES",
     "FontSubstitution",
     "ImageInput",
     "LineCandidate",
     "LineOrientation",
+    "OcrBackend",
+    "OcrBackendError",
+    "OcrCapabilities",
+    "OcrOptions",
+    "OcrRegion",
+    "OcrToken",
     "PageCandidate",
     "PixelMode",
     "PixelPoint",

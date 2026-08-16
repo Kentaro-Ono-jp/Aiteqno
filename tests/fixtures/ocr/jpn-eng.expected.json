@@ -1,0 +1,8 @@
+{
+  "pixel_width": 1200,
+  "pixel_height": 340,
+  "dpi": 300.0,
+  "languages": ["jpn", "eng"],
+  "must_contain": ["AITEQNO", "2026"],
+  "must_contain_any_japanese": ["患者", "番号", "患者番号"]
+}

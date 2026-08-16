@@ -17,3 +17,13 @@ Agreement（CLA）への同意は求めません。Pull Requestを送信する�
 
 過去にAGPL-3.0で取得されたコピーに対する既存の許諾は取り消されません。
 現在のソースコードを利用する場合は、ルートの [LICENSE](LICENSE) を参照してください。
+
+## Third-party OCR runtime
+
+V1の標準OCR backendは、外部runtimeとしてTesseract 5.xを、Python wrapper
+として`pytesseract`を利用します。両者はApache License 2.0で提供されます。
+Tesseract実行ファイルとtrained-dataはAiteqnoのwheelへ同梱せず、利用環境で
+別途導入します。導入元が提供するライセンス表示とnoticesを保持してください。
+
+対応版、Windows / CI導入手順、公式参照先は
+[docs/ocr-runtime.md](docs/ocr-runtime.md)に記録します。
