@@ -39,6 +39,31 @@ PDF input, DOCX input, multi-page extraction, form semantics, HTTP APIs, and a
 GUI are outside V1. See the [roadmap](ROADMAP.md) for the intended order of
 future work.
 
+## Downloadable Windows demo
+
+The [GitHub Releases page](https://github.com/Kentaro-Ono-jp/Aiteqno/releases)
+provides a prerelease Windows demo ZIP. Extract it, then drag a single-page PNG
+onto `run-demo.cmd`. The first run creates a versioned runtime under
+`%LOCALAPPDATA%`; it does not create a repository `.venv`.
+
+The demo adds the formal JSON Schema and a SHA-256 manifest to the normal
+round-trip output:
+
+```text
+<input-name>-aiteqno-output/
+|-- document.ir.json
+|-- document-ir.schema.json
+|-- demo.manifest.json
+|-- assets/
+|-- reconstructed.docx
+`-- reconstructed.png
+```
+
+Python 3.11 through 3.14 and Tesseract 5.x with `jpn` / `eng` data remain local
+prerequisites. Python dependencies are downloaded on the first run. See the
+[demo and release guide](docs/demo-release.md) for usage, limitations, archive
+verification, and maintainer commands.
+
 ## Windows Quick Start
 
 Prerequisites:
@@ -121,6 +146,8 @@ and exit codes, see the [OCR runtime guide](docs/ocr-runtime.md) and the
   readability hard gates.
 - [Golden E2E guide](docs/e2e.md) documents the source-free round trip across
   Windows and Linux.
+- [Windows demo and release guide](docs/demo-release.md) documents the
+  downloadable package and its reproducible archive contract.
 - [Golden fixture manifest](tests/fixtures/e2e/manifest.json) records fixture
   provenance, hashes, reviewed content, and the accepted score.
 
