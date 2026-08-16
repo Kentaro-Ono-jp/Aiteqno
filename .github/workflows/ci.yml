@@ -46,3 +46,15 @@ jobs:
         run: python -m build
       - name: Verify distribution contents
         run: python scripts/verify_distribution.py
+      - name: Build Windows demo package
+        run: >-
+          python scripts/build_demo_package.py
+          --wheel dist
+          --output build/Aiteqno-demo-ci.zip
+          --release-tag ci
+      - name: Verify Windows demo package
+        run: >-
+          python scripts/verify_demo_package.py
+          build/Aiteqno-demo-ci.zip
+          --release-tag ci
+          --package-version 0.3.0.dev0

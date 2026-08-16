@@ -1,5 +1,7 @@
 """Verify the built wheel/sdist contract on every supported CI shell."""
 
+import argparse
+from collections.abc import Sequence
 from pathlib import Path
 from tarfile import open as open_tar
 from zipfile import ZipFile
@@ -50,9 +52,19 @@ FORBIDDEN_RUNTIME_REQUIREMENTS = {"reportlab"}
 FORBIDDEN_REPOSITORY_PATHS = {
     Path("output/layout_a4_portrait.json"),
 }
+REQUIRED_SDIST_PATHS = {
+    "MANIFEST.in",
+    "demo/windows/README.md",
+    "demo/windows/run-demo.cmd",
+    "demo/windows/run-demo.ps1",
+    "docs/demo-release.md",
+    "scripts/build_demo_package.py",
+    "scripts/demo_runner.py",
+    "scripts/verify_demo_package.py",
+}
 
 
-def main() -> None:
+def verify_distribution(dist_directory: Path = DIST_DIRECTORY) -> None:
     legacy_repository_entries = {
         path.as_posix() for path in FORBIDDEN_REPOSITORY_PATHS if path.exists()
     }
@@ -62,8 +74,8 @@ def main() -> None:
             f"{sorted(legacy_repository_entries)}"
         )
 
-    wheels = list(DIST_DIRECTORY.glob("aiteqno-*.whl"))
-    sdists = list(DIST_DIRECTORY.glob("aiteqno-*.tar.gz"))
+    wheels = list(dist_directory.glob("aiteqno-*.whl"))
+    sdists = list(dist_directory.glob("aiteqno-*.tar.gz"))
     if len(wheels) != 1:
         raise AssertionError(f"expected one wheel, received: {wheels}")
     if len(sdists) != 1:
@@ -107,6 +119,15 @@ def main() -> None:
 
     with open_tar(sdists[0], mode="r:gz") as archive:
         sdist_names = {member.name.replace("\\", "/") for member in archive}
+    missing_sdist_paths = {
+        required
+        for required in REQUIRED_SDIST_PATHS
+        if not any(name.endswith(f"/{required}") for name in sdist_names)
+    }
+    if missing_sdist_paths:
+        raise AssertionError(
+            f"sdist is missing release sources: {sorted(missing_sdist_paths)}"
+        )
     legacy_entries = {
         name
         for name in sdist_names
@@ -121,5 +142,21 @@ def main() -> None:
         )
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--dist-directory",
+        type=Path,
+        default=DIST_DIRECTORY,
+    )
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    arguments = build_parser().parse_args(argv)
+    verify_distribution(arguments.dist_directory)
+    return 0
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
