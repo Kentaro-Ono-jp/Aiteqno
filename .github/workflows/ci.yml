@@ -56,6 +56,7 @@ jobs:
               "aiteqno/ports/assets.py",
               "aiteqno/ports/docx.py",
               "aiteqno/ports/preview.py",
+              "aiteqno/ports/structure.py",
               "aiteqno/application/__init__.py",
               "aiteqno/application/preview.py",
               "aiteqno/application/render.py",
@@ -63,6 +64,7 @@ jobs:
               "aiteqno/adapters/assets.py",
               "aiteqno/adapters/docx.py",
               "aiteqno/adapters/preview.py",
+              "aiteqno/adapters/structure.py",
               "aiteqno/adapters/json_schema.py",
               "aiteqno/cli/__init__.py",
           }
