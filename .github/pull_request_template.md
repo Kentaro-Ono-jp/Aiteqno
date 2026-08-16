@@ -6,7 +6,4 @@
 
 - [ ] CI（lint）が通っています
 - [ ] ドキュメント/READMEの更新（必要なら）
-
-## CLA Agreement（必須）
-
-- [ ] **I have read and agree to the repository's CLA (CLA.md).**
+- [ ] この貢献物をMIT Licenseで提供できる権利があります
