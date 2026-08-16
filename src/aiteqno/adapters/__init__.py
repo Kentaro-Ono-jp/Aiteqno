@@ -11,6 +11,13 @@ from .docx import (
     DEFAULT_SUPPORTED_FONTS,
     PythonDocxRenderer,
 )
+from .extraction import (
+    DEFAULT_MAX_ENCODED_ASSET_BYTES,
+    DOCUMENT_IR_FILENAME,
+    FilesystemDocumentBundleWriter,
+    PillowPngAssetEncoder,
+)
+from .json_schema import JsonSchemaDocumentIRValidator
 from .ocr_fake import (
     FAKE_OCR_PROVIDER,
     FAKE_OCR_PROVIDER_VERSION,
@@ -43,6 +50,7 @@ __all__ = [
     "DEFAULT_FALLBACK_DPI",
     "DEFAULT_MAX_ASSET_BYTES",
     "DEFAULT_MAX_ASSET_PIXELS",
+    "DEFAULT_MAX_ENCODED_ASSET_BYTES",
     "DEFAULT_MAX_PREVIEW_PIXELS",
     "DEFAULT_MAX_PNG_BYTES",
     "DEFAULT_MAX_PNG_PIXELS",
@@ -50,13 +58,17 @@ __all__ = [
     "DEFAULT_PREVIEW_DPI",
     "DEFAULT_PREVIEW_FONT_FALLBACKS",
     "DEFAULT_SUPPORTED_FONTS",
+    "DOCUMENT_IR_FILENAME",
     "FAKE_OCR_PROVIDER",
     "FAKE_OCR_PROVIDER_VERSION",
     "FakeOcrBackend",
     "FakeOcrObservation",
+    "FilesystemDocumentBundleWriter",
+    "JsonSchemaDocumentIRValidator",
     "BundleAssetResolver",
     "PillowPreviewRenderer",
     "PillowPngDecoder",
+    "PillowPngAssetEncoder",
     "PythonDocxRenderer",
     "OpenCvStructureExtractor",
     "MIN_TESSERACT_MAJOR_VERSION",

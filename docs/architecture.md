@@ -552,6 +552,23 @@ The application layer converts candidates to points, normalizes duplicates,
 combines OCR tokens, assigns stable IDs, creates assets, and validates the final
 IR.
 
+Issue #20 fixes the V1 orchestration rules as follows:
+
+- candidate collections are normalized by source geometry before IDs are
+  assigned; extracted IDs never depend on a clock or random value;
+- OCR tokens are associated by their provider-supplied region reference first,
+  then by deterministic source-pixel overlap, and text reading order is
+  normalized into top-to-bottom rows and left-to-right tokens;
+- structure detection and OCR recognition confidence remain separate fields,
+  while `overall` uses the conservative minimum of the available values;
+- line, rectangle, image, and text paint layers use deterministic `z_index`
+  values while the element array preserves text reading order;
+- only detected image-region crops become content-addressed PNG assets;
+  candidates covering 85% or more of the page are omitted with a diagnostic;
+- the complete `document.ir.json` and `assets/` tree is staged beside the target
+  and published through a same-filesystem rename. An existing output directory
+  is never overwritten.
+
 ### 9.2 OCR adapter protocol
 
 The adapter boundary is conceptually:
