@@ -1,0 +1,122 @@
+{
+  "manifest_version": 1,
+  "policy": {
+    "license": "MIT",
+    "provenance": "Every PNG is original synthetic test artwork authored for Aiteqno; no third-party document or personal data is included.",
+    "golden_update_rule": "Any source hash, Document IR hash, expected element property, or DOCX topology change must be an explicit review target."
+  },
+  "fixtures": [
+    {
+      "id": "synthetic-jpn-eng-text-v1",
+      "role": "synthetic_ocr_smoke",
+      "source": "../ocr/jpn-eng.png.b64",
+      "encoding": "base64",
+      "sha256": "ccfa1bfedff409064924a6e57805e81fc826e754407e03827388df9da56a103f",
+      "license": "MIT",
+      "provenance": "Original raster generated for Aiteqno OCR tests.",
+      "contains_personal_data": false,
+      "purpose": "Small multilingual OCR runtime smoke fixture; not used as the quality-scored document."
+    },
+    {
+      "id": "representative-patient-form-v1",
+      "role": "real_document_equivalent",
+      "source": "../structure/structured-page.png.b64",
+      "encoding": "base64",
+      "sha256": "229b7fb69dbed42fe5867bbc833cfedf67968777a0e1e13c514e73d37c39f899",
+      "license": "MIT",
+      "provenance": "Original synthetic patient-form layout generated for Aiteqno; it represents a realistic form without copying a real document.",
+      "contains_personal_data": false,
+      "purpose": "Canonical V1 PNG -> IR -> DOCX/preview -> evaluation round-trip.",
+      "ocr": {
+        "languages": [
+          "eng"
+        ],
+        "observations": [
+          {
+            "text": "PATIENT",
+            "bbox": {"x": 42, "y": 47, "width": 72, "height": 13},
+            "confidence": 0.95
+          },
+          {
+            "text": "FORM",
+            "bbox": {"x": 120, "y": 47, "width": 48, "height": 13},
+            "confidence": 0.95
+          },
+          {
+            "text": "NAME",
+            "bbox": {"x": 42, "y": 129, "width": 37, "height": 10},
+            "confidence": 0.96
+          },
+          {
+            "text": "JOHN",
+            "bbox": {"x": 87, "y": 129, "width": 37, "height": 10},
+            "confidence": 0.95
+          },
+          {
+            "text": "DOE",
+            "bbox": {"x": 130, "y": 129, "width": 28, "height": 10},
+            "confidence": 0.95
+          },
+          {
+            "text": "DATE",
+            "bbox": {"x": 42, "y": 169, "width": 35, "height": 10},
+            "confidence": 0.95
+          },
+          {
+            "text": "2026-08-16",
+            "bbox": {"x": 85, "y": 169, "width": 71, "height": 10},
+            "confidence": 0.9
+          }
+        ]
+      },
+      "expected": {
+        "document_ir_semantic_sha256": "b835de2609c4d3656bc34811cfcc5a28a8be0af8e1b8dd81f93159c8745d9b1d",
+        "asset_rgb24_sha256": "fe52e270ca7b5ab66214fcb6a1a2e9108a2141f78be91504e19b8128eb2e0daf",
+        "element_counts": {
+          "text": 7,
+          "line": 6,
+          "rectangle": 5,
+          "image": 1
+        },
+        "texts": [
+          "PATIENT",
+          "FORM",
+          "NAME",
+          "JOHN",
+          "DOE",
+          "DATE",
+          "2026-08-16"
+        ],
+        "restoration_threshold": 70.0,
+        "restoration_score": 78.79
+      },
+      "reference": {
+        "reference_id": "representative-patient-form-v1",
+        "essential_element_ids": [
+          "p001-text-0000",
+          "p001-text-0001",
+          "p001-text-0002",
+          "p001-text-0003",
+          "p001-text-0004",
+          "p001-text-0005",
+          "p001-text-0006",
+          "p001-image-0000"
+        ],
+        "essential_text_anchors": [
+          "PATIENT FORM",
+          "NAME JOHN DOE",
+          "DATE 2026-08-16"
+        ],
+        "docx_topology": {
+          "body": "body",
+          "table": "docx-table-0000",
+          "cell": "docx-table-0000-cell-r000-c000",
+          "paragraph_count": 8,
+          "rectangle_element": "p001-rectangle-0000",
+          "image_element": "p001-image-0000",
+          "line_element": "p001-line-0000"
+        }
+      }
+    }
+  ]
+}

@@ -6,23 +6,27 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    name: ${{ matrix.os }} / Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, windows-latest]
         python-version: ["3.11", "3.14"]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install Tesseract OCR runtime
+      - name: Install Linux document runtimes
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends tesseract-ocr tesseract-ocr-jpn
+          sudo apt-get install --yes --no-install-recommends libreoffice-writer tesseract-ocr tesseract-ocr-jpn
           tesseract --version
           tesseract --list-langs | grep -Fx eng
           tesseract --list-langs | grep -Fx jpn
+          libreoffice --version
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -34,70 +38,11 @@ jobs:
       - name: Test
         run: python -m unittest discover -s tests -v
         env:
-          AITEQNO_RUN_TESSERACT_INTEGRATION: "1"
+          AITEQNO_RUN_LIBREOFFICE_INTEGRATION: ${{ runner.os == 'Linux' && '1' || '0' }}
+          AITEQNO_RUN_TESSERACT_INTEGRATION: ${{ runner.os == 'Linux' && '1' || '0' }}
       - name: Compile
-        run: python -m compileall -q src SchemaBridge tests
+        run: python -m compileall -q src SchemaBridge scripts tests
       - name: Build distributions
         run: python -m build
       - name: Verify distribution contents
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          from zipfile import ZipFile
-
-          wheels = list(Path("dist").glob("aiteqno-*.whl"))
-          sdists = list(Path("dist").glob("aiteqno-*.tar.gz"))
-          assert len(wheels) == 1, wheels
-          assert len(sdists) == 1, sdists
-
-          with ZipFile(wheels[0]) as archive:
-              names = set(archive.namelist())
-              entry_points = [
-                  name for name in names if name.endswith(".dist-info/entry_points.txt")
-              ]
-              assert len(entry_points) == 1, entry_points
-              entry_point_text = archive.read(entry_points[0]).decode("utf-8")
-
-          required = {
-              "aiteqno/__init__.py",
-              "aiteqno/_version.py",
-              "aiteqno/py.typed",
-              "aiteqno/domain/__init__.py",
-              "aiteqno/domain/codec.py",
-              "aiteqno/domain/errors.py",
-              "aiteqno/domain/model.py",
-              "aiteqno/ports/__init__.py",
-              "aiteqno/ports/assets.py",
-              "aiteqno/ports/docx.py",
-              "aiteqno/ports/evaluation.py",
-              "aiteqno/ports/extraction.py",
-              "aiteqno/ports/ocr.py",
-              "aiteqno/ports/preview.py",
-              "aiteqno/ports/structure.py",
-              "aiteqno/application/__init__.py",
-              "aiteqno/application/extract.py",
-              "aiteqno/application/evaluate.py",
-              "aiteqno/application/preview.py",
-              "aiteqno/application/render.py",
-              "aiteqno/adapters/__init__.py",
-              "aiteqno/adapters/assets.py",
-              "aiteqno/adapters/docx.py",
-              "aiteqno/adapters/evaluation.py",
-              "aiteqno/adapters/extraction.py",
-              "aiteqno/adapters/ocr_fake.py",
-              "aiteqno/adapters/preview.py",
-              "aiteqno/adapters/structure.py",
-              "aiteqno/adapters/tesseract.py",
-              "aiteqno/adapters/json_schema.py",
-              "aiteqno/cli/__init__.py",
-              "aiteqno/cli/__main__.py",
-              "aiteqno/cli/main.py",
-          }
-          missing = required - names
-          assert not missing, sorted(missing)
-
-          schema_suffix = ".data/data/share/aiteqno/schemas/document-ir-v0.1.schema.json"
-          schema_entries = [name for name in names if name.endswith(schema_suffix)]
-          assert len(schema_entries) == 1, schema_entries
-          assert "aiteqno = aiteqno.cli:main" in entry_point_text
-          PY
+        run: python scripts/verify_distribution.py

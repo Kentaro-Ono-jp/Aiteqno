@@ -525,6 +525,10 @@ The implementation progresses through these gates:
 4. A release candidate receives a manual Microsoft Word smoke check on Windows.
 
 The architecture does not require Microsoft Word automation in CI.
+`LibreOfficeSnapshotRenderer` performs gate 3 with an isolated temporary user
+profile and retains no converted artifact. The V1 golden evaluation awards no
+geometry credit when no page regions were measured; it must clear the quality
+threshold through independently observed text, elements, and structure.
 
 ## 8. PNG preview contract
 

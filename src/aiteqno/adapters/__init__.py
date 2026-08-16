@@ -19,6 +19,11 @@ from .extraction import (
 )
 from .evaluation import FilesystemEvaluationWriter, PythonDocxObserver
 from .json_schema import JsonSchemaDocumentIRValidator
+from .libreoffice import (
+    DEFAULT_LIBREOFFICE_TIMEOUT_SECONDS,
+    LIBREOFFICE_RENDERER_NAME,
+    LibreOfficeSnapshotRenderer,
+)
 from .ocr_fake import (
     FAKE_OCR_PROVIDER,
     FAKE_OCR_PROVIDER_VERSION,
@@ -55,6 +60,7 @@ __all__ = [
     "DEFAULT_MAX_PREVIEW_PIXELS",
     "DEFAULT_MAX_PNG_BYTES",
     "DEFAULT_MAX_PNG_PIXELS",
+    "DEFAULT_LIBREOFFICE_TIMEOUT_SECONDS",
     "DEFAULT_PAGE_MARGIN_PT",
     "DEFAULT_PREVIEW_DPI",
     "DEFAULT_PREVIEW_FONT_FALLBACKS",
@@ -67,6 +73,8 @@ __all__ = [
     "FilesystemEvaluationWriter",
     "FilesystemDocumentBundleWriter",
     "JsonSchemaDocumentIRValidator",
+    "LIBREOFFICE_RENDERER_NAME",
+    "LibreOfficeSnapshotRenderer",
     "BundleAssetResolver",
     "PillowPreviewRenderer",
     "PillowPngDecoder",
