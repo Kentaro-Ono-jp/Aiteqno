@@ -1,0 +1,25 @@
+{
+  "observer_name": "fixture-docx-observer",
+  "observer_version": "1.0",
+  "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "package_readable": true,
+  "python_docx_reopenable": true,
+  "elements": [
+    {"id": "obs-title", "type": "text", "page_number": 1, "text": "診療申込書", "bbox": null, "reading_order": 0, "source_element_id": "title", "content_sha256": null},
+    {"id": "obs-name", "type": "text", "page_number": 1, "text": "氏名", "bbox": null, "reading_order": 1, "source_element_id": "name-label", "content_sha256": null},
+    {"id": "obs-date", "type": "text", "page_number": 1, "text": "受診日", "bbox": null, "reading_order": 2, "source_element_id": "date-label", "content_sha256": null},
+    {"id": "obs-symptom", "type": "text", "page_number": 1, "text": "症状を記入", "bbox": null, "reading_order": 3, "source_element_id": "symptom-label", "content_sha256": null},
+    {"id": "obs-line", "type": "line", "page_number": 1, "text": null, "bbox": null, "reading_order": null, "source_element_id": "separator", "content_sha256": null},
+    {"id": "obs-box", "type": "rectangle", "page_number": 1, "text": null, "bbox": null, "reading_order": null, "source_element_id": "answer-box", "content_sha256": null},
+    {"id": "obs-extra-line", "type": "line", "page_number": 1, "text": null, "bbox": null, "reading_order": null, "source_element_id": null, "content_sha256": null}
+  ],
+  "relationships": [
+    {"kind": "reading_order", "source": "obs-title", "target": "obs-name", "essential": false},
+    {"kind": "containment", "source": "body", "target": "obs-title", "essential": false},
+    {"kind": "reading_order", "source": "obs-name", "target": "obs-date", "essential": false},
+    {"kind": "adjacency", "source": "obs-box", "target": "obs-extra-line", "essential": false},
+    {"kind": "containment", "source": "body", "target": "obs-extra-line", "essential": false}
+  ],
+  "external_relationships": [],
+  "errors": []
+}

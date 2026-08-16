@@ -1,0 +1,23 @@
+{
+  "renderer_name": "fixture-libreoffice-headless",
+  "renderer_version": "1.0",
+  "available": true,
+  "opened_without_repair": true,
+  "regions": [
+    {
+      "id": "snapshot-title",
+      "type": "text",
+      "bbox": {"x": 0.10, "y": 0.05, "width": 0.35, "height": 0.05},
+      "source_element_id": "title",
+      "observed_element_id": "obs-title"
+    },
+    {
+      "id": "snapshot-name",
+      "type": "text",
+      "bbox": {"x": 0.10, "y": 0.16, "width": 0.12, "height": 0.04},
+      "source_element_id": "name-label",
+      "observed_element_id": "obs-name"
+    }
+  ],
+  "errors": []
+}

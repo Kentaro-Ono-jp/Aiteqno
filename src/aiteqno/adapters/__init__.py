@@ -17,6 +17,7 @@ from .extraction import (
     FilesystemDocumentBundleWriter,
     PillowPngAssetEncoder,
 )
+from .evaluation import FilesystemEvaluationWriter, PythonDocxObserver
 from .json_schema import JsonSchemaDocumentIRValidator
 from .ocr_fake import (
     FAKE_OCR_PROVIDER,
@@ -63,6 +64,7 @@ __all__ = [
     "FAKE_OCR_PROVIDER_VERSION",
     "FakeOcrBackend",
     "FakeOcrObservation",
+    "FilesystemEvaluationWriter",
     "FilesystemDocumentBundleWriter",
     "JsonSchemaDocumentIRValidator",
     "BundleAssetResolver",
@@ -70,6 +72,7 @@ __all__ = [
     "PillowPngDecoder",
     "PillowPngAssetEncoder",
     "PythonDocxRenderer",
+    "PythonDocxObserver",
     "OpenCvStructureExtractor",
     "MIN_TESSERACT_MAJOR_VERSION",
     "STRUCTURE_PROVIDER",

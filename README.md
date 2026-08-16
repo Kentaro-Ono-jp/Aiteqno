@@ -5,6 +5,9 @@ Schema-first OCR pipeline for structured documents.
 The current V1 round-trip CLI contract and Windows PowerShell examples are in
 [docs/cli.md](docs/cli.md).
 
+The DOCX restoration score, 70-point acceptance rule, and readability hard
+gates are defined in [docs/evaluation.md](docs/evaluation.md).
+
 Aiteqno converts structured forms (DOCX / PDF) into reliable JSON  
 by detecting document structure **before running OCR**.
 
