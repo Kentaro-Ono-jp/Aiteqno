@@ -52,6 +52,11 @@ jobs:
 
           with ZipFile(wheels[0]) as archive:
               names = set(archive.namelist())
+              entry_points = [
+                  name for name in names if name.endswith(".dist-info/entry_points.txt")
+              ]
+              assert len(entry_points) == 1, entry_points
+              entry_point_text = archive.read(entry_points[0]).decode("utf-8")
 
           required = {
               "aiteqno/__init__.py",
@@ -91,9 +96,5 @@ jobs:
           schema_suffix = ".data/data/share/aiteqno/schemas/document-ir-v0.1.schema.json"
           schema_entries = [name for name in names if name.endswith(schema_suffix)]
           assert len(schema_entries) == 1, schema_entries
-
-          entry_points = [name for name in names if name.endswith(".dist-info/entry_points.txt")]
-          assert len(entry_points) == 1, entry_points
-          entry_point_text = archive.read(entry_points[0]).decode("utf-8")
           assert "aiteqno = aiteqno.cli:main" in entry_point_text
           PY
