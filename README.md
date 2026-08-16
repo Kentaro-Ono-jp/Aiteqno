@@ -8,6 +8,9 @@ The current V1 round-trip CLI contract and Windows PowerShell examples are in
 The DOCX restoration score, 70-point acceptance rule, and readability hard
 gates are defined in [docs/evaluation.md](docs/evaluation.md).
 
+The licensed representative fixtures, source-free reconstruction test, and
+Windows/Linux matrix are defined in [docs/e2e.md](docs/e2e.md).
+
 Aiteqno converts structured forms (DOCX / PDF) into reliable JSON  
 by detecting document structure **before running OCR**.
 

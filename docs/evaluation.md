@@ -12,11 +12,18 @@ The evaluator combines four independent sources of evidence:
    structural relationships;
 2. text, borders, media, and structure read back from the generated DOCX;
 3. the render report produced for that exact DOCX;
-4. normalized regions from a LibreOffice or equivalent DOCX page snapshot.
+4. repair-free opening and optional normalized regions from a LibreOffice or
+   equivalent DOCX page snapshot.
 
 `PythonDocxObserver` supplies item 2 without reading the source PNG. Snapshot
 production belongs to the golden E2E adapter; a missing snapshot does not crash
-the evaluator, but it prevents an automatic pass.
+the evaluator, but it prevents an automatic pass. The V1 LibreOffice adapter
+converts DOCX to a temporary PDF to establish repair-free opening and reports no
+regions, rather than inferring geometry it did not measure. The representative
+golden still passes at 78.79 with zero geometry credit.
+
+See [V1 golden round-trip](e2e.md) for fixture provenance, CI coverage, and the
+intentional-update policy.
 
 ## Decision model
 
