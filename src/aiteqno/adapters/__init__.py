@@ -11,6 +11,12 @@ from .docx import (
     DEFAULT_SUPPORTED_FONTS,
     PythonDocxRenderer,
 )
+from .ocr_fake import (
+    FAKE_OCR_PROVIDER,
+    FAKE_OCR_PROVIDER_VERSION,
+    FakeOcrBackend,
+    FakeOcrObservation,
+)
 from .preview import (
     DEFAULT_MAX_PREVIEW_PIXELS,
     DEFAULT_PREVIEW_DPI,
@@ -26,6 +32,11 @@ from .structure import (
     OpenCvStructureExtractor,
     PillowPngDecoder,
 )
+from .tesseract import (
+    MIN_TESSERACT_MAJOR_VERSION,
+    TESSERACT_PROVIDER,
+    TesseractOcrBackend,
+)
 
 __all__ = [
     "DEFAULT_FALLBACK_FONT",
@@ -39,11 +50,18 @@ __all__ = [
     "DEFAULT_PREVIEW_DPI",
     "DEFAULT_PREVIEW_FONT_FALLBACKS",
     "DEFAULT_SUPPORTED_FONTS",
+    "FAKE_OCR_PROVIDER",
+    "FAKE_OCR_PROVIDER_VERSION",
+    "FakeOcrBackend",
+    "FakeOcrObservation",
     "BundleAssetResolver",
     "PillowPreviewRenderer",
     "PillowPngDecoder",
     "PythonDocxRenderer",
     "OpenCvStructureExtractor",
+    "MIN_TESSERACT_MAJOR_VERSION",
     "STRUCTURE_PROVIDER",
     "STRUCTURE_PROVIDER_VERSION",
+    "TESSERACT_PROVIDER",
+    "TesseractOcrBackend",
 ]
