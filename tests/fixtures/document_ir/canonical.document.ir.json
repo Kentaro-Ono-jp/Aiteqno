@@ -1,0 +1,178 @@
+{
+  "ir_version": "0.1.0",
+  "document_id": "canonical-v0.1",
+  "generator": {
+    "name": "aiteqno-fixture",
+    "version": "0.3.0.dev0"
+  },
+  "pages": [
+    {
+      "id": "page-001",
+      "number": 1,
+      "size": {
+        "width": 595.28,
+        "height": 841.89,
+        "unit": "pt"
+      },
+      "source": {
+        "pixel_width": 794,
+        "pixel_height": 1123,
+        "dpi_x": 96,
+        "dpi_y": 96,
+        "dpi_source": "inferred"
+      },
+      "elements": [
+        {
+          "id": "p001-text-0000",
+          "type": "text",
+          "bbox": {
+            "x": 48,
+            "y": 42,
+            "width": 210,
+            "height": 24
+          },
+          "z_index": 10,
+          "confidence": null,
+          "provenance": [
+            {
+              "stage": "manual",
+              "provider": "aiteqno-fixture",
+              "provider_version": "0.3.0.dev0",
+              "source_refs": [
+                "fixture-source"
+              ],
+              "source_bbox_px": {
+                "x": 64,
+                "y": 56,
+                "width": 280,
+                "height": 32
+              }
+            }
+          ],
+          "text": "問診票",
+          "reading_order": 0,
+          "style": {
+            "font_family": "Noto Sans CJK JP",
+            "font_size_pt": 18,
+            "font_weight": 700,
+            "font_style": "normal",
+            "color": "#000000",
+            "align": "left",
+            "line_height": 1.2,
+            "rotation_deg": 0,
+            "opacity": 1
+          }
+        },
+        {
+          "id": "p001-line-0001",
+          "type": "line",
+          "bbox": {
+            "x": 48,
+            "y": 100,
+            "width": 499,
+            "height": 0
+          },
+          "z_index": 5,
+          "confidence": null,
+          "provenance": [
+            {
+              "stage": "manual",
+              "provider": "aiteqno-fixture",
+              "provider_version": "0.3.0.dev0",
+              "source_refs": []
+            }
+          ],
+          "start": {
+            "x": 48,
+            "y": 100
+          },
+          "end": {
+            "x": 547,
+            "y": 100
+          },
+          "style": {
+            "width_pt": 1,
+            "color": "#333333",
+            "dash": "solid",
+            "opacity": 1
+          }
+        },
+        {
+          "id": "p001-rectangle-0002",
+          "type": "rectangle",
+          "bbox": {
+            "x": 48,
+            "y": 124,
+            "width": 240,
+            "height": 72
+          },
+          "z_index": 3,
+          "confidence": null,
+          "provenance": [
+            {
+              "stage": "manual",
+              "provider": "aiteqno-fixture",
+              "provider_version": "0.3.0.dev0",
+              "source_refs": []
+            }
+          ],
+          "style": {
+            "stroke_color": "#000000",
+            "stroke_width_pt": 1,
+            "fill_color": null,
+            "corner_radius_pt": 0,
+            "opacity": 1
+          }
+        },
+        {
+          "id": "p001-image-0003",
+          "type": "image",
+          "bbox": {
+            "x": 312,
+            "y": 124,
+            "width": 96,
+            "height": 72
+          },
+          "z_index": 4,
+          "confidence": null,
+          "provenance": [
+            {
+              "stage": "manual",
+              "provider": "aiteqno-fixture",
+              "provider_version": "0.3.0.dev0",
+              "source_refs": []
+            }
+          ],
+          "asset_id": "asset-logo",
+          "fit": "contain",
+          "alt_text": "Fixture image"
+        }
+      ],
+      "extensions": {
+        "jp.reactorfront.aiteqno.fixture": {
+          "purpose": "canonical"
+        }
+      }
+    }
+  ],
+  "assets": [
+    {
+      "id": "asset-logo",
+      "path": "assets/sha256-0000000000000000000000000000000000000000000000000000000000000000.png",
+      "media_type": "image/png",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "pixel_width": 128,
+      "pixel_height": 96,
+      "dpi_x": 96,
+      "dpi_y": 96
+    }
+  ],
+  "metadata": {
+    "title": "Canonical Document IR v0.1 fixture"
+  },
+  "extensions": {
+    "jp.reactorfront.aiteqno.fixture": {
+      "reviewed": true
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "ir_version": "0.2.0",
+  "document_id": "invalid-version",
+  "generator": {
+    "name": "aiteqno-fixture",
+    "version": "0.3.0.dev0"
+  },
+  "pages": [
+    {
+      "id": "page-001",
+      "number": 1,
+      "size": {
+        "width": 100,
+        "height": 100,
+        "unit": "pt"
+      },
+      "elements": []
+    }
+  ],
+  "assets": []
+}

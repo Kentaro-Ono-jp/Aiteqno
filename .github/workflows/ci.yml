@@ -49,11 +49,19 @@ jobs:
               "aiteqno/_version.py",
               "aiteqno/py.typed",
               "aiteqno/domain/__init__.py",
+              "aiteqno/domain/codec.py",
+              "aiteqno/domain/errors.py",
+              "aiteqno/domain/model.py",
               "aiteqno/ports/__init__.py",
               "aiteqno/application/__init__.py",
               "aiteqno/adapters/__init__.py",
+              "aiteqno/adapters/json_schema.py",
               "aiteqno/cli/__init__.py",
           }
           missing = required - names
           assert not missing, sorted(missing)
+
+          schema_suffix = ".data/data/share/aiteqno/schemas/document-ir-v0.1.schema.json"
+          schema_entries = [name for name in names if name.endswith(schema_suffix)]
+          assert len(schema_entries) == 1, schema_entries
           PY

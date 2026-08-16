@@ -1,0 +1,53 @@
+{
+  "ir_version": "0.1.0",
+  "document_id": "invalid-asset",
+  "generator": {
+    "name": "aiteqno-fixture",
+    "version": "0.3.0.dev0"
+  },
+  "pages": [
+    {
+      "id": "page-001",
+      "number": 1,
+      "size": {
+        "width": 100,
+        "height": 100,
+        "unit": "pt"
+      },
+      "elements": [
+        {
+          "id": "p001-image-0000",
+          "type": "image",
+          "bbox": {
+            "x": 10,
+            "y": 10,
+            "width": 20,
+            "height": 20
+          },
+          "z_index": 0,
+          "confidence": null,
+          "provenance": [
+            {
+              "stage": "manual",
+              "provider": "aiteqno-fixture",
+              "provider_version": "0.3.0.dev0",
+              "source_refs": []
+            }
+          ],
+          "asset_id": "asset-unsafe",
+          "fit": "contain"
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "asset-unsafe",
+      "path": "../escape.png",
+      "media_type": "image/png",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "pixel_width": 20,
+      "pixel_height": 20
+    }
+  ]
+}
