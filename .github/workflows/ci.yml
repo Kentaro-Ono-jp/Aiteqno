@@ -7,20 +7,53 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.14"]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.x"
+          python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt ruff==0.16.3
+          python -m pip install -e ".[dev]"
       - name: Verify dependencies
         run: python -m pip check
       - name: Lint
-        run: ruff check .
+        run: python -m ruff check .
       - name: Test
         run: python -m unittest discover -s tests -v
       - name: Compile
-        run: python -m compileall -q SchemaBridge tests
+        run: python -m compileall -q src SchemaBridge tests
+      - name: Build distributions
+        run: python -m build
+      - name: Verify distribution contents
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          wheels = list(Path("dist").glob("aiteqno-*.whl"))
+          sdists = list(Path("dist").glob("aiteqno-*.tar.gz"))
+          assert len(wheels) == 1, wheels
+          assert len(sdists) == 1, sdists
+
+          with ZipFile(wheels[0]) as archive:
+              names = set(archive.namelist())
+
+          required = {
+              "aiteqno/__init__.py",
+              "aiteqno/_version.py",
+              "aiteqno/py.typed",
+              "aiteqno/domain/__init__.py",
+              "aiteqno/ports/__init__.py",
+              "aiteqno/application/__init__.py",
+              "aiteqno/adapters/__init__.py",
+              "aiteqno/cli/__init__.py",
+          }
+          missing = required - names
+          assert not missing, sorted(missing)
+          PY

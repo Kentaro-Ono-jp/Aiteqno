@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools==84.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aiteqno"
+version = "0.3.0.dev0"
+description = "Document IR round-trip processing for structured documents"
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.11,<3.15"
+license = "MIT"
+authors = [
+  { name = "Kentaro Ono", email = "swordy.battle.axe@gmail.com" },
+]
+keywords = ["document-ir", "docx", "ocr", "round-trip"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Scientific/Engineering :: Image Processing",
+]
+dependencies = [
+  "numpy==2.4.6",
+  "opencv-python==5.0.0.93",
+  "pillow==12.3.0",
+  "reportlab==5.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "build==1.5.0",
+  "ruff==0.16.3",
+]
+
+[project.urls]
+Homepage = "https://github.com/Kentaro-Ono-jp/Aiteqno"
+Documentation = "https://github.com/Kentaro-Ono-jp/Aiteqno/blob/main/docs/architecture.md"
+Issues = "https://github.com/Kentaro-Ono-jp/Aiteqno/issues"
+Repository = "https://github.com/Kentaro-Ono-jp/Aiteqno.git"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["aiteqno*"]
+
+[tool.setuptools.package-data]
+aiteqno = ["py.typed"]
