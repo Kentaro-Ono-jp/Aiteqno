@@ -12,6 +12,7 @@ from jsonschema import Draft202012Validator
 from jsonschema.exceptions import SchemaError, ValidationError
 
 from aiteqno.domain import DocumentIR, DocumentIRValidationError, ValidationIssue
+from aiteqno.ports.extraction import DocumentIRSchemaError
 
 
 SCHEMA_FILENAME = "document-ir-v0.1.schema.json"
@@ -141,7 +142,27 @@ def validate_document_ir(document: DocumentIR) -> None:
     validate_document_ir_data(document.to_dict())
 
 
+class JsonSchemaDocumentIRValidator:
+    """Injected application boundary for the canonical Draft 2020-12 schema."""
+
+    def validate(self, document: DocumentIR) -> None:
+        """Validate a model while separating schema-runtime failures from bad IR."""
+
+        if not isinstance(document, DocumentIR):
+            raise TypeError("document must be a DocumentIR")
+        try:
+            validate_document_ir(document)
+        except DocumentIRValidationError:
+            raise
+        except (FileNotFoundError, json.JSONDecodeError, SchemaError) as exc:
+            raise DocumentIRSchemaError(
+                "document_ir_schema_unavailable",
+                f"canonical Document IR schema could not be loaded: {exc}",
+            ) from exc
+
+
 __all__ = [
+    "JsonSchemaDocumentIRValidator",
     "SchemaError",
     "document_ir_from_data",
     "document_ir_from_file",
