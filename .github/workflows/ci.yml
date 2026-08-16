@@ -53,8 +53,11 @@ jobs:
               "aiteqno/domain/errors.py",
               "aiteqno/domain/model.py",
               "aiteqno/ports/__init__.py",
+              "aiteqno/ports/docx.py",
               "aiteqno/application/__init__.py",
+              "aiteqno/application/render.py",
               "aiteqno/adapters/__init__.py",
+              "aiteqno/adapters/docx.py",
               "aiteqno/adapters/json_schema.py",
               "aiteqno/cli/__init__.py",
           }
