@@ -1,0 +1,48 @@
+{
+  "ir_version": "0.1.0",
+  "document_id": "invalid-coordinate",
+  "generator": {
+    "name": "aiteqno-fixture",
+    "version": "0.3.0.dev0"
+  },
+  "pages": [
+    {
+      "id": "page-001",
+      "number": 1,
+      "size": {
+        "width": 100,
+        "height": 100,
+        "unit": "pt"
+      },
+      "elements": [
+        {
+          "id": "p001-rectangle-0000",
+          "type": "rectangle",
+          "bbox": {
+            "x": 95,
+            "y": 10,
+            "width": 10,
+            "height": 10
+          },
+          "z_index": 0,
+          "confidence": null,
+          "provenance": [
+            {
+              "stage": "manual",
+              "provider": "aiteqno-fixture",
+              "provider_version": "0.3.0.dev0",
+              "source_refs": []
+            }
+          ],
+          "style": {
+            "stroke_color": "#000000",
+            "stroke_width_pt": 1,
+            "fill_color": null,
+            "corner_radius_pt": 0
+          }
+        }
+      ]
+    }
+  ],
+  "assets": []
+}
