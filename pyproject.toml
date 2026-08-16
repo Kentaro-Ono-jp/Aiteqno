@@ -46,6 +46,9 @@ Documentation = "https://github.com/Kentaro-Ono-jp/Aiteqno/blob/main/docs/archit
 Issues = "https://github.com/Kentaro-Ono-jp/Aiteqno/issues"
 Repository = "https://github.com/Kentaro-Ono-jp/Aiteqno.git"
 
+[project.scripts]
+aiteqno = "aiteqno.cli:main"
+
 [tool.setuptools]
 package-dir = { "" = "src" }
 
