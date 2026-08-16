@@ -93,9 +93,9 @@ DOCX → schema → layout detection → OCR → JSON
 - sample form datasets (input/*.pdf → output/*.json)
 - minimal audit log implementation (CLI flag)
 - API compatibility policy (90-day notice for breaking changes)
-- security fixes prioritized for commercial SLA
+- security fixes and dependency maintenance
 - conversion engine improvements (table / vertical line detection)
-- signed builds for enterprise usage
+- reproducible builds and artifact verification
 - documentation (Quick Start / FAQ)
 - benchmark publication (CPU / memory / processing time)
 - real-world use case collection
@@ -120,17 +120,19 @@ Breaking changes will be announced **90 days in advance**.
 
 ---
 
-# Why AGPL?
+# License
 
-Aiteqno is released under AGPL to ensure that improvements made in SaaS environments remain open.
+Aiteqno is released under the [MIT License](LICENSE).
 
-This prevents proprietary forks of the core pipeline while allowing collaborative development.
+Versions v0.1.0 through v0.1.1 were published under AGPL-3.0. Existing license
+grants for those copies remain valid; v0.2.0 and later are published under MIT.
 
 ---
 
 # Contributing
 
-Issues and discussion are welcome.
+Issues, discussion, and pull requests are welcome. Contributions are accepted
+under the MIT License; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 If you have real-world form datasets or use cases, please open an issue.
 
@@ -138,17 +140,17 @@ If you have real-world form datasets or use cases, please open an issue.
 
 # License
 
-AGPL-3.0
+MIT
 
 bellow In Japanese .
-![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Python](https://img.shields.io/badge/Python-3.x-informational)
 ![CI](https://github.com/Kentaro-Ono-jp/Aiteqno/actions/workflows/ci.yml/badge.svg)
 
 # 問診票電子化及び電子カルテ入力支援システム
 
 紙の問診票を構造化データに変換し、院内EHR/基幹へ取り込むためのバックエンド（Flask）。
-ライセンスは AGPL-3.0（詳細は LICENSE 参照）。商標の扱いは TRADEMARKS.md を参照。
+ライセンスはMIT License（詳細はLICENSE参照）。商標の扱いはTRADEMARKS.mdを参照。
 
 ## Quick Start
 
@@ -177,11 +179,8 @@ bellow In Japanese .
 
 ## License
 
-本リポジトリは AGPL-3.0。改変やネット提供時はソース公開義務が発生します。
-
-## Commercial Support
-
-有償サポート（SLA/LTS/監査支援など）提供可。連絡先: <swordy.battle.axe@gmail.com>
+本リポジトリはMIT Licenseで公開しています。v0.1.0からv0.1.1までは
+AGPL-3.0で公開されていました。詳細はLICENSEとLICENSING_POLICY.mdを参照してください。
 
 ## Security
 
@@ -189,28 +188,10 @@ bellow In Japanese .
 
 ## Naming
 
-本リポジトリ名「Aiteqno」は、約2年半後（2028年4月予定）に設立予定の法人名に由来します。現時点では個人事業主（屋号：ReactorFront）によるOSSコア公開であり、商用/OEM対応は別契約にて提供します。現在参画中の取引先の社名や案件詳細は公開しません。
+本リポジトリ名「Aiteqno」はプロジェクト名に由来します。ReactorFrontが
+オープンソースプロジェクトとして公開・維持しています。
 
 ## Maintainers
 
-- Kentaro Ono（Findyフリーランス参画 / 個人事業主 ReactorFront）  
+- Kentaro Ono（ReactorFront）
   contact: <swordy.battle.axe@gmail.com>
-
-## Commercial & OEM (Quick Guide)
-
-- **無料（AGPL-3.0）**: 研究・検証・OSS用途。ネット提供時は**改変含むソース公開義務**があります。
-- **商用/クローズド利用**: デュアルライセンス（有償）を提供します。要件・規模に応じた見積。
-- **OES（部品として組込み）**: コアはそのまま組込み可。導入テンプレ/監査ログ/LTSは商用拡張で対応。
-
-**問い合わせ**: <swordy.battle.axe@gmail.com>  
-件名例: `[Commercial Inquiry] Aiteqno QR/PDF/OCR`
-
-### FAQ（抜粋）
-
-- Q. AGPLだと社内利用でもコード公開が必要？  
-  A. **社内専用（第三者提供なし）**なら公開義務はありません。SaaS等で第三者に提供する場合に公開義務が発生します。
-- Q. クローズドで使いたい  
-  A. 商用ライセンスをご検討ください（価格表あり / ボリューム割引可）。
-- Q. 既存EHR/業務と連携したい  
-  A. EHR連携テンプレ（CSV/XML）と導入プレイブックを提供予定。お気軽に相談ください。
-  
