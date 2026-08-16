@@ -289,7 +289,7 @@ class PngExtractionPipelineTest(unittest.TestCase):
             self.assertEqual(context.exception.code, "ocr_test_failure")
             self.assertFalse(output.exists())
 
-    def test_application_orchestration_keeps_adapter_and_legacy_boundaries(self):
+    def test_application_orchestration_keeps_adapter_boundaries(self):
         source = (
             Path(__file__).resolve().parents[1]
             / "src"
@@ -299,7 +299,6 @@ class PngExtractionPipelineTest(unittest.TestCase):
         ).read_text(encoding="utf-8")
 
         self.assertNotIn("aiteqno.adapters", source)
-        self.assertNotIn("SchemaBridge", source)
         self.assertNotIn("pytesseract", source)
         self.assertNotIn("cv2", source)
 

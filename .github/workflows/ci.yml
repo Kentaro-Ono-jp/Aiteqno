@@ -41,7 +41,7 @@ jobs:
           AITEQNO_RUN_LIBREOFFICE_INTEGRATION: ${{ runner.os == 'Linux' && '1' || '0' }}
           AITEQNO_RUN_TESSERACT_INTEGRATION: ${{ runner.os == 'Linux' && '1' || '0' }}
       - name: Compile
-        run: python -m compileall -q src SchemaBridge scripts tests
+        run: python -m compileall -q src scripts tests
       - name: Build distributions
         run: python -m build
       - name: Verify distribution contents

@@ -1,206 +1,169 @@
 # Aiteqno
 
-Schema-first OCR pipeline for structured documents.
-
-The current V1 round-trip CLI contract and Windows PowerShell examples are in
-[docs/cli.md](docs/cli.md).
-
-The DOCX restoration score, 70-point acceptance rule, and readability hard
-gates are defined in [docs/evaluation.md](docs/evaluation.md).
-
-The licensed representative fixtures, source-free reconstruction test, and
-Windows/Linux matrix are defined in [docs/e2e.md](docs/e2e.md).
-
-Aiteqno converts structured forms (DOCX / PDF) into reliable JSON  
-by detecting document structure **before running OCR**.
-
-This approach dramatically improves accuracy for form-like documents  
-such as questionnaires, medical records, and administrative forms.
-
----
-
-# The Problem
-
-Traditional OCR pipelines work like this:
-
-image → OCR → guess document structure → messy data
-
-This approach struggles with:
-
-- questionnaires
-- medical forms
-- administrative documents
-- structured PDFs
-
-Because OCR tries to understand structure **after** recognition.
-
----
-
-# The Aiteqno Approach
-
-Aiteqno flips the pipeline:
-
-schema → layout detection → OCR → validation → JSON
-
-By defining document structure first, Aiteqno can:
-
-- identify fields before OCR
-- validate OCR results using schemas
-- produce structured JSON reliably
-
-This makes form processing significantly more robust.
-
----
-
-# Example
-
-Input
-
-DOCX / PDF questionnaire
-
-Output
-
-
-{
-"patient_name": "Taro Yamada",
-"age": 42,
-"symptoms": ["headache", "fatigue"]
-}
-
-
----
-
-# Use Cases
-
-Aiteqno is designed for structured document processing.
-
-Examples include:
-
-- medical questionnaires
-- insurance forms
-- administrative documents
-- enterprise form pipelines
-- EHR integration
-
----
-
-# Current Status
-
-Early research and prototype stage.
-
-The project currently focuses on building the core pipeline:
-
-DOCX → schema → layout detection → OCR → JSON
-
----
-
-# Roadmap
-
-## Next milestones
-
-- EHR integration templates (CSV / XML mapping)
-- sample form datasets (input/*.pdf → output/*.json)
-- minimal audit log implementation (CLI flag)
-- API compatibility policy (90-day notice for breaking changes)
-- security fixes and dependency maintenance
-- conversion engine improvements (table / vertical line detection)
-- reproducible builds and artifact verification
-- documentation (Quick Start / FAQ)
-- benchmark publication (CPU / memory / processing time)
-- real-world use case collection
-
-These roadmap items are derived from the current development plan. :contentReference[oaicite:0]{index=0}
-
----
-
-# Timeline (rough estimate)
-
-2028 Q2
-- initial EHR templates
-- minimal audit log
-- FAQ documentation
-
-2028 Q3
-- benchmark publication
-- signed builds
-- expanded case documentation
-
-Breaking changes will be announced **90 days in advance**.
-
----
-
-# License
-
-Aiteqno is released under the [MIT License](LICENSE).
-
-Versions v0.1.0 through v0.1.1 were published under AGPL-3.0. Existing license
-grants for those copies remain valid; v0.2.0 and later are published under MIT.
-
----
-
-# Contributing
-
-Issues, discussion, and pull requests are welcome. Contributions are accepted
-under the MIT License; see [CONTRIBUTING.md](CONTRIBUTING.md).
-
-If you have real-world form datasets or use cases, please open an issue.
-
----
-
-# License
-
-MIT
-
-bellow In Japanese .
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Python](https://img.shields.io/badge/Python-3.x-informational)
-![CI](https://github.com/Kentaro-Ono-jp/Aiteqno/actions/workflows/ci.yml/badge.svg)
-
-# 問診票電子化及び電子カルテ入力支援システム
-
-紙の問診票を構造化データに変換し、院内EHR/基幹へ取り込むためのバックエンド（Flask）。
-ライセンスはMIT License（詳細はLICENSE参照）。商標の扱いはTRADEMARKS.mdを参照。
-
-## Quick Start
-
-環境作成:
-    python -m venv .venv
-    # macOS/Linux:
-    source .venv/bin/activate
-    # Windows (Git Bash/CMD):
-    .venv\Scripts\activate
-
-依存関係:
-    pip install -r requirements.txt
-
-起動:
-    # macOS/Linux:
-    export FLASK_APP=app.py
-    # Windows (CMD/Powershell):
-    set FLASK_APP=app.py
-    flask run --host=0.0.0.0 --port=5000
-
-## API (最小)
-
-- GET  /api/mode
-- GET/POST /api/form
-- GET  /api/blob/
+[![CI](https://github.com/Kentaro-Ono-jp/Aiteqno/actions/workflows/ci.yml/badge.svg)](https://github.com/Kentaro-Ono-jp/Aiteqno/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.11--3.14-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+Aiteqno is a local, source-independent document round-trip tool. V1 extracts
+text and visual structure from one single-page PNG into a versioned Document
+IR, then reconstructs a readable DOCX and comparison PNG from that IR alone.
+
+```text
+single-page PNG
+       |
+       v
+    extract --------> document.ir.json + assets/
+                         |                 |
+                         +---- render ----> reconstructed.docx
+                         |
+                         +---- preview ---> reconstructed.png
+```
+
+The reconstructed document is an approximation, not a pixel-perfect copy. The
+formal result is a DOCX that preserves the important text and document
+relationships well enough to read and use. The full source page is never kept
+as a background shortcut.
+
+## V1 scope
+
+| Capability | V1 contract |
+| --- | --- |
+| Input | One single-page PNG |
+| Intermediate format | `document.ir.json` validated by the published JSON Schema, plus content-addressed image assets |
+| Formal reconstruction | `reconstructed.docx` |
+| Comparison artifact | `reconstructed.png` |
+| OCR | Local Tesseract 5.x; Japanese and English are the defaults |
+| Quality target | A score around 70 is acceptable only when readability hard gates also pass |
+
+PDF input, DOCX input, multi-page extraction, form semantics, HTTP APIs, and a
+GUI are outside V1. See the [roadmap](ROADMAP.md) for the intended order of
+future work.
+
+## Windows Quick Start
+
+Prerequisites:
+
+- Git
+- Python 3.11 through 3.14
+- Tesseract 5.x with the `jpn` and `eng` language data
+
+Clone the repository and create an isolated environment from PowerShell. These
+commands do not require activation of the virtual environment:
+
+```powershell
+git clone https://github.com/Kentaro-Ono-jp/Aiteqno.git
+Set-Location .\Aiteqno
+
+py -3.14 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -e .
+.\.venv\Scripts\aiteqno.exe --help
+```
+
+If Tesseract is not on `PATH`, point Aiteqno at the executable and language
+directory for the current PowerShell session:
+
+```powershell
+$env:AITEQNO_TESSERACT_EXECUTABLE = "C:\Program Files\Tesseract-OCR\tesseract.exe"
+$env:AITEQNO_TESSDATA_PREFIX = "C:\Program Files\Tesseract-OCR\tessdata"
+```
+
+Copy a PNG into a local input directory and run the complete round trip. The
+destination directory must not already exist:
+
+```powershell
+New-Item -ItemType Directory -Force .\input | Out-Null
+Copy-Item "C:\path\to\form.png" ".\input\form.png"
+
+.\.venv\Scripts\aiteqno.exe roundtrip `
+  ".\input\form.png" `
+  -o ".\output\form-roundtrip"
+```
+
+The result is a portable bundle:
+
+```text
+output/form-roundtrip/
+|-- document.ir.json
+|-- assets/
+|-- reconstructed.docx
+`-- reconstructed.png
+```
+
+`render` and `preview` read only `document.ir.json` and its sibling `assets`
+directory. The original PNG can be moved elsewhere before those commands run.
+
+```powershell
+.\.venv\Scripts\aiteqno.exe extract `
+  ".\input\form.png" `
+  -o ".\work\document.ir.json"
+
+.\.venv\Scripts\aiteqno.exe render `
+  ".\work\document.ir.json" `
+  -o ".\work\reconstructed.docx"
+
+.\.venv\Scripts\aiteqno.exe preview `
+  ".\work\document.ir.json" `
+  -o ".\work\reconstructed.png"
+```
+
+For Tesseract installation, language selection, path handling, overwrite rules,
+and exit codes, see the [OCR runtime guide](docs/ocr-runtime.md) and the
+[complete CLI reference](docs/cli.md).
+
+## Contracts and quality evidence
+
+- [V1 architecture](docs/architecture.md) defines boundaries, coordinate
+  systems, source independence, and reconstruction rules.
+- [Document IR JSON Schema](schemas/document-ir-v0.1.schema.json) is the formal
+  machine-readable contract.
+- [Evaluation contract](docs/evaluation.md) defines the weighted score and the
+  readability hard gates.
+- [Golden E2E guide](docs/e2e.md) documents the source-free round trip across
+  Windows and Linux.
+- [Golden fixture manifest](tests/fixtures/e2e/manifest.json) records fixture
+  provenance, hashes, reviewed content, and the accepted score.
+
+The representative golden round trip scores `78.79 / 100` against a threshold
+of `70`. A numeric pass is never sufficient by itself: essential text,
+structure, output validity, source independence, and no-repair DOCX opening are
+separate hard gates.
+
+## Development
+
+Install the development tools and run the same deterministic checks used by CI:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+.\.venv\Scripts\python.exe -m pip check
+.\.venv\Scripts\python.exe -m ruff check .
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe -m compileall -q src scripts tests
+.\.venv\Scripts\python.exe -m build
+.\.venv\Scripts\python.exe scripts\verify_distribution.py
+```
+
+CI runs on Windows and Linux with Python 3.11 and 3.14. Linux CI also exercises
+real Tesseract and LibreOffice integrations; deterministic fakes keep the core
+golden round trip reproducible on every supported machine.
+
+## Migrating from the pre-V1 prototype
+
+The experimental layout scripts, guide-line/red-box renderers, and their custom
+JSON are no longer part of the active tree. They remain available in Git
+history. Read the [V1 migration note](docs/migration-v1.md) before replacing an
+older workflow; pre-V1 layout JSON must be regenerated from its source PNG.
+
+## Project policies
+
+- [Contributing](CONTRIBUTING.md)
+- [Security](SECURITY.md)
+- [Maintainers](MAINTAINERS.md)
+- [Trademark policy](TRADEMARKS.md)
+- [Licensing policy](LICENSING_POLICY.md)
 
 ## License
 
-本リポジトリはMIT Licenseで公開しています。v0.1.0からv0.1.1までは
-AGPL-3.0で公開されていました。詳細はLICENSEとLICENSING_POLICY.mdを参照してください。
-
-## Security
-
-脆弱性は公開Issueではなく、メールまたは GitHub Security Advisories でご連絡ください。
-
-## Naming
-
-本リポジトリ名「Aiteqno」はプロジェクト名に由来します。ReactorFrontが
-オープンソースプロジェクトとして公開・維持しています。
-
-## Maintainers
-
-- Kentaro Ono（ReactorFront）
-  contact: <swordy.battle.axe@gmail.com>
+Aiteqno v0.2.0 and later is released under the [MIT License](LICENSE). Versions
+v0.1.0 through v0.1.1 were published under AGPL-3.0; existing grants for those
+copies remain valid. See [LICENSING_POLICY.md](LICENSING_POLICY.md).

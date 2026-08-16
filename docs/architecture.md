@@ -112,8 +112,11 @@ through constructors or function parameters. Adapters MUST NOT call the CLI.
 This prevents OCR, rendering, and extraction implementations from depending on
 each other or forming a cycle.
 
-The old `SchemaBridge` package MAY be consulted while algorithms are migrated,
-but new runtime code MUST NOT import it.
+The V1 runtime is implemented exclusively by the installable `src/aiteqno`
+package. The pre-V1 prototype has been removed from the active tree and remains
+available through Git history only. Runtime and test code MUST NOT import source
+files outside the package. See [the V1 migration note](migration-v1.md) for the
+replacement commands and data contract.
 
 ## 5. Processing sequences
 
@@ -537,10 +540,11 @@ threshold through independently observed text, elements, and structure.
 - Rendering uses the same point-coordinate interpretation and paint order as
   DOCX.
 - Font fallback is deterministic and appears in a preview report.
-- Guide lines, OCR boxes, confidence heat maps, and debug labels are disabled in
-  the product preview.
-- Diagnostic overlays MAY exist as a separate opt-in developer artifact with a
-  different filename; they MUST never modify `reconstructed.png`.
+- `reconstructed.png` contains only Document IR elements. Guide lines, OCR
+  boxes, confidence heat maps, debug labels, and source-image backgrounds are
+  not product features and MUST NOT be emitted.
+- A future diagnostic renderer would require a separate artifact contract; V1
+  exposes no debug-overlay mode.
 
 The preview enables geometry comparison without making PNG the formal result.
 

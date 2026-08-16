@@ -280,7 +280,7 @@ class PillowPreviewRendererTest(unittest.TestCase):
         self.assertEqual(preview.getpixel((240, 205)), (0, 0, 0))
         self.assertEqual(result.report.fallback_element_ids, ())
 
-    def test_dash_and_opacity_styles_are_rendered_without_debug_overlays(self):
+    def test_dash_and_opacity_styles_render_as_document_content(self):
         canonical = load_canonical_document()
         line = canonical.pages[0].elements[1]
         rectangle = canonical.pages[0].elements[2]

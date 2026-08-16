@@ -70,12 +70,12 @@ class DocumentIRSchemaTest(unittest.TestCase):
 
     def test_unknown_fields_are_rejected(self):
         data = load_fixture("canonical.document.ir.json")
-        data["pages"][0]["elements"][0]["debug_overlay"] = True
+        data["pages"][0]["elements"][0]["unsupported_field"] = True
 
         with self.assertRaises(DocumentIRValidationError) as raised:
             validate_document_ir_data(data)
 
-        self.assertIn("debug_overlay", str(raised.exception))
+        self.assertIn("unsupported_field", str(raised.exception))
 
 
 class DocumentIRModelTest(unittest.TestCase):
@@ -192,7 +192,7 @@ class DocumentIRModelTest(unittest.TestCase):
 
 
 class DomainBoundaryTest(unittest.TestCase):
-    def test_domain_does_not_import_external_or_legacy_implementation(self):
+    def test_domain_does_not_import_external_implementation(self):
         domain_directory = Path(__file__).resolve().parents[1] / "src" / "aiteqno" / "domain"
         imports: set[str] = set()
 
