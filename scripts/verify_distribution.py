@@ -1,6 +1,7 @@
 """Verify the built wheel/sdist contract on every supported CI shell."""
 
 from pathlib import Path
+from tarfile import open as open_tar
 from zipfile import ZipFile
 
 
@@ -41,6 +42,11 @@ REQUIRED_WHEEL_FILES = {
     "aiteqno/cli/__main__.py",
     "aiteqno/cli/main.py",
 }
+FORBIDDEN_SDIST_PATHS = {
+    "SchemaBridge/",
+    "tests/test_layout_extractor_smoke.py",
+}
+FORBIDDEN_RUNTIME_REQUIREMENTS = {"reportlab"}
 
 
 def main() -> None:
@@ -59,6 +65,12 @@ def main() -> None:
         if len(entry_points) != 1:
             raise AssertionError(f"unexpected entry point files: {entry_points}")
         entry_point_text = archive.read(entry_points[0]).decode("utf-8")
+        metadata_entries = [
+            name for name in names if name.endswith(".dist-info/METADATA")
+        ]
+        if len(metadata_entries) != 1:
+            raise AssertionError(f"unexpected metadata files: {metadata_entries}")
+        metadata_text = archive.read(metadata_entries[0]).decode("utf-8")
 
     missing = REQUIRED_WHEEL_FILES - names
     if missing:
@@ -69,6 +81,32 @@ def main() -> None:
         raise AssertionError(f"unexpected schema entries: {schema_entries}")
     if "aiteqno = aiteqno.cli:main" not in entry_point_text:
         raise AssertionError("console entry point is missing")
+
+    lowered_metadata = metadata_text.casefold()
+    obsolete_requirements = {
+        dependency
+        for dependency in FORBIDDEN_RUNTIME_REQUIREMENTS
+        if f"requires-dist: {dependency}" in lowered_metadata
+    }
+    if obsolete_requirements:
+        raise AssertionError(
+            f"wheel retains obsolete dependencies: {sorted(obsolete_requirements)}"
+        )
+
+    with open_tar(sdists[0], mode="r:gz") as archive:
+        sdist_names = {member.name.replace("\\", "/") for member in archive}
+    legacy_entries = {
+        name
+        for name in sdist_names
+        if any(
+            name.endswith(forbidden.rstrip("/")) or f"/{forbidden}" in f"/{name}"
+            for forbidden in FORBIDDEN_SDIST_PATHS
+        )
+    }
+    if legacy_entries:
+        raise AssertionError(
+            f"sdist retains removed pre-V1 files: {sorted(legacy_entries)}"
+        )
 
 
 if __name__ == "__main__":

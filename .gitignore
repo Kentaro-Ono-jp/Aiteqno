@@ -4,15 +4,8 @@ __pycache__/
 *.egg-info/
 build/
 dist/
-SchemaBridge/other/venv/
-SchemaBridge/backEnd/layout_extractor/input/
-SchemaBridge/backEnd/layout_extractor/output/
-SchemaBridge/backEnd/layout_extractor/__pycache__/
-SchemaBridge/backEnd/layout_extractor/*.pdf
 *.pyc
-output/*.pdf
-output/*.png
+/input/
+/output/
 *.zip
-input/*.png
-output/*.json
 codex.patch

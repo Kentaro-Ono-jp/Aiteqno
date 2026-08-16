@@ -235,7 +235,7 @@ class StructureExtractorTest(unittest.TestCase):
             "structure_pixel_limit_exceeded",
         )
 
-    def test_new_structure_runtime_is_independent_from_legacy_and_debug_rendering(self):
+    def test_structure_detection_has_no_preview_renderer_dependency(self):
         repository_root = Path(__file__).resolve().parents[1]
         source = "\n".join(
             (repository_root / path).read_text(encoding="utf-8")
@@ -245,9 +245,8 @@ class StructureExtractorTest(unittest.TestCase):
             )
         )
 
-        self.assertNotIn("SchemaBridge", source)
-        self.assertNotIn("draw_layout", source)
-        self.assertNotIn("debug_image", source)
+        self.assertNotIn("aiteqno.adapters.preview", source)
+        self.assertNotIn("PillowPreviewRenderer", source)
 
 
 def _bbox_from_dict(value):
