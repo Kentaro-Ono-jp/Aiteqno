@@ -70,8 +70,8 @@
         ]
       },
       "expected": {
-        "document_ir_sha256": "58632bab2768b457a57a14414ba47954d317836f114e45b8e0419a034cee01b4",
-        "asset_sha256": "7be119c7245d0a8944e0a31931647f0891774385ffacd5eaae2c685ac18b8682",
+        "document_ir_semantic_sha256": "b835de2609c4d3656bc34811cfcc5a28a8be0af8e1b8dd81f93159c8745d9b1d",
+        "asset_rgb24_sha256": "fe52e270ca7b5ab66214fcb6a1a2e9108a2141f78be91504e19b8128eb2e0daf",
         "element_counts": {
           "text": 7,
           "line": 6,

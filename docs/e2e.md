@@ -21,10 +21,14 @@ two original MIT-licensed synthetic fixtures:
 - a patient-form-like representative image used for the scored round trip.
 
 The form is realistic in structure but is not copied from a real document and
-contains no personal data. The manifest pins each source SHA-256, the exact
-deterministic Document IR SHA-256, the cropped asset SHA-256, expected element
-counts and text, essential content, the expected DOCX topology, and the quality
-threshold/result. A fixture or extraction change must update those values in a
+contains no personal data. The manifest pins each source SHA-256, a normalized
+Document IR semantic SHA-256, the cropped asset's decoded RGB24 SHA-256,
+expected element counts and text, essential content, the expected DOCX
+topology, and the quality threshold/result. The normalization replaces
+content-addressed asset IDs, paths, and encoded-byte hashes with stable indexes
+and decoded-pixel hashes. This excludes OS-specific PNG compression bytes while
+keeping document semantics, geometry, style, provenance, and pixel content
+reviewable. A fixture or extraction change must update those values in a
 deliberate review diff.
 
 OCR observations are fixed by `FakeOcrBackend` in the cross-platform golden

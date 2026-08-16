@@ -7,7 +7,7 @@ import sys
 import tempfile
 import unittest
 from collections import Counter
-from io import StringIO
+from io import BytesIO, StringIO
 from pathlib import Path
 from unittest.mock import patch
 from zipfile import ZipFile
@@ -208,11 +208,47 @@ def _reference(document, specification):
     )
 
 
+def _semantic_ir_digest(ir_path, document):
+    normalized = json.loads(ir_path.read_text(encoding="utf-8"))
+    asset_entries = {item["id"]: item for item in normalized["assets"]}
+    identity_mapping = {}
+    pixel_digests = []
+    resolver = BundleAssetResolver(ir_path.parent)
+    for index, asset in enumerate(document.assets):
+        canonical_id = f"asset-{index:04d}"
+        identity_mapping[asset.id] = canonical_id
+        entry = asset_entries[asset.id]
+        with Image.open(BytesIO(resolver.resolve(asset).data)) as encoded_image:
+            rgb_image = encoded_image.convert("RGB")
+            try:
+                pixel_digest = hashlib.sha256(rgb_image.tobytes()).hexdigest()
+            finally:
+                rgb_image.close()
+        pixel_digests.append(pixel_digest)
+        entry["id"] = canonical_id
+        entry["path"] = f"assets/{canonical_id}.png"
+        entry["sha256"] = f"rgb24:{pixel_digest}"
+    for page in normalized["pages"]:
+        for element in page["elements"]:
+            if element["type"] == "image":
+                element["asset_id"] = identity_mapping[element["asset_id"]]
+    payload = json.dumps(
+        normalized,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest(), tuple(pixel_digests)
+
+
 def _assert_golden_ir(test_case, ir_path, specification):
     expected = specification["expected"]
-    actual_ir_digest = hashlib.sha256(ir_path.read_bytes()).hexdigest()
-    test_case.assertEqual(actual_ir_digest, expected["document_ir_sha256"])
     document = document_ir_from_file(ir_path)
+    semantic_digest, pixel_digests = _semantic_ir_digest(ir_path, document)
+    test_case.assertEqual(
+        semantic_digest,
+        expected["document_ir_semantic_sha256"],
+    )
     elements = tuple(element for page in document.pages for element in page.elements)
     counts = Counter(element.type.value for element in elements)
     test_case.assertEqual(dict(counts), expected["element_counts"])
@@ -221,12 +257,9 @@ def _assert_golden_ir(test_case, ir_path, specification):
         expected["texts"],
     )
     test_case.assertEqual(len(document.assets), 1)
-    asset = document.assets[0]
-    test_case.assertEqual(asset.sha256, expected["asset_sha256"])
-    resolved = BundleAssetResolver(ir_path.parent).resolve(asset)
     test_case.assertEqual(
-        hashlib.sha256(resolved.data).hexdigest(),
-        expected["asset_sha256"],
+        pixel_digests,
+        (expected["asset_rgb24_sha256"],),
     )
     return document
 
