@@ -1,4 +1,9 @@
 .venv/
+__pycache__/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
 SchemaBridge/other/venv/
 SchemaBridge/backEnd/layout_extractor/input/
 SchemaBridge/backEnd/layout_extractor/output/
