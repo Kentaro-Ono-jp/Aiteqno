@@ -8,7 +8,7 @@ def _deskew(gray):
     if lines is None: 
         return gray, 0.0
     angles = []
-    for rho, theta in lines[:,0,:]:
+    for rho, theta in np.asarray(lines).reshape(-1, 2):
         ang = (theta - np.pi/2.0) * 180/np.pi
         if -10 <= ang <= 10:  # ほぼ水平のみ評価
             angles.append(ang)
@@ -43,7 +43,7 @@ def _extract_short_verticals(gray):
     if lines is None:
         return segs
 
-    for x1, y1, x2, y2 in lines[:, 0, :]:
+    for x1, y1, x2, y2 in np.asarray(lines).reshape(-1, 4):
         # ほぼ縦のみ通す（水平成分が大きいものは除外）
         if abs(x2 - x1) > abs(y2 - y1) * 0.25:
             continue
@@ -72,7 +72,7 @@ def _lines_to_segments(mask, orientation="h"):
                             minLineLength=min_len, maxLineGap=max_gap)
     segs = []
     if lines is not None:
-        for x1,y1,x2,y2 in lines[:,0,:]:
+        for x1, y1, x2, y2 in np.asarray(lines).reshape(-1, 4):
             if not angle_ok(x1,y1,x2,y2):
                 continue
             segs.append({"x1": int(x1), "y1": int(y1), "x2": int(x2), "y2": int(y2)})
