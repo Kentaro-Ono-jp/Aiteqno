@@ -1,0 +1,992 @@
+{
+  "essential_text_anchors": [
+    "文書解析評価シート",
+    "氏名",
+    "住所",
+    "電話",
+    "依頼する処理を選択してください",
+    "対象形式",
+    "主な言語",
+    "原稿に含まれる要素を確認してください",
+    "出力後の確認方法を指定してください",
+    "注意事項を確認してください",
+    "編集可能なDOCX",
+    "環境情報を保存する"
+  ],
+  "normalization": "NFKC then remove every Unicode whitespace character",
+  "reference_id": "synthetic-dense-japanese-form-v1",
+  "reference_version": 1,
+  "relationships": [
+    {
+      "essential": true,
+      "kind": "reading_order",
+      "source": "title",
+      "target": "section-1-title"
+    },
+    {
+      "essential": true,
+      "kind": "reading_order",
+      "source": "section-1-title",
+      "target": "section-2-title"
+    },
+    {
+      "essential": true,
+      "kind": "reading_order",
+      "source": "section-2-title",
+      "target": "section-3-title"
+    },
+    {
+      "essential": true,
+      "kind": "reading_order",
+      "source": "section-3-title",
+      "target": "section-4-title"
+    },
+    {
+      "essential": true,
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "name-label"
+    },
+    {
+      "essential": true,
+      "kind": "containment",
+      "source": "request-grid-outer",
+      "target": "request-format"
+    },
+    {
+      "essential": true,
+      "kind": "containment",
+      "source": "content-grid-outer",
+      "target": "content-structure"
+    },
+    {
+      "essential": true,
+      "kind": "containment",
+      "source": "review-grid-outer",
+      "target": "review-machine"
+    },
+    {
+      "essential": true,
+      "kind": "containment",
+      "source": "confirmation-grid-outer",
+      "target": "confirm-editable"
+    },
+    {
+      "essential": true,
+      "kind": "adjacency",
+      "source": "request-format-label",
+      "target": "request-format"
+    },
+    {
+      "essential": true,
+      "kind": "adjacency",
+      "source": "request-language-label",
+      "target": "request-language"
+    },
+    {
+      "essential": true,
+      "kind": "adjacency",
+      "source": "content-visual-label",
+      "target": "content-visual"
+    },
+    {
+      "essential": true,
+      "kind": "adjacency",
+      "source": "review-machine-label",
+      "target": "review-machine"
+    }
+  ],
+  "expected_page_count": 1,
+  "required_manual_checks": [
+    "no_fatal_text_overlap",
+    "no_text_clipping",
+    "layout_human_usable",
+    "word_open_edit_save"
+  ],
+  "review": {
+    "reviewed_at": "2026-08-17",
+    "reviewer": "Kentaro Ono",
+    "revision": 1,
+    "status": "reviewed"
+  },
+  "reviewed": true,
+  "source_dimensions": {
+    "pixel_height": 991,
+    "pixel_width": 700,
+    "sha256": "df0b724d8fcc1b5d5e0483a60401c2cb3882675f71d1e37ecdbcff9e687ffc25"
+  },
+  "source_sha256": "df0b724d8fcc1b5d5e0483a60401c2cb3882675f71d1e37ecdbcff9e687ffc25",
+  "structural_items": [
+    {
+      "bbox": {
+        "height": 0.99697275,
+        "width": 0.99571429,
+        "x": 0.00142857,
+        "y": 0.00100908
+      },
+      "essential": false,
+      "id": "page-frame",
+      "type": "rectangle"
+    },
+    {
+      "bbox": {
+        "height": 0.00100908,
+        "width": 0.25571429,
+        "x": 0.06,
+        "y": 0.07568113
+      },
+      "essential": false,
+      "id": "header-left-rule",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.00100908,
+        "width": 0.25571429,
+        "x": 0.68571429,
+        "y": 0.07568113
+      },
+      "essential": false,
+      "id": "header-right-rule",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.12310797,
+        "width": 0.88,
+        "x": 0.06,
+        "y": 0.12512614
+      },
+      "essential": true,
+      "id": "identity-grid-outer",
+      "type": "rectangle"
+    },
+    {
+      "bbox": {
+        "height": 0.00100908,
+        "width": 0.88142857,
+        "x": 0.06,
+        "y": 0.15539859
+      },
+      "essential": true,
+      "id": "identity-grid-row-00",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.00100908,
+        "width": 0.88142857,
+        "x": 0.06,
+        "y": 0.19374369
+      },
+      "essential": true,
+      "id": "identity-grid-row-01",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.00100908,
+        "width": 0.88142857,
+        "x": 0.06,
+        "y": 0.22199798
+      },
+      "essential": true,
+      "id": "identity-grid-row-02",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.12411705,
+        "width": 0.00142857,
+        "x": 0.16,
+        "y": 0.12512614
+      },
+      "essential": true,
+      "id": "identity-grid-column-00",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.12411705,
+        "width": 0.00142857,
+        "x": 0.60571429,
+        "y": 0.12512614
+      },
+      "essential": true,
+      "id": "identity-grid-column-01",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.06962664,
+        "width": 0.00142857,
+        "x": 0.71142857,
+        "y": 0.12512614
+      },
+      "essential": true,
+      "id": "identity-short-column",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.209889,
+        "width": 0.88,
+        "x": 0.06,
+        "y": 0.29465187
+      },
+      "essential": true,
+      "id": "request-grid-outer",
+      "type": "rectangle"
+    },
+    {
+      "bbox": {
+        "height": 0.00100908,
+        "width": 0.88142857,
+        "x": 0.06,
+        "y": 0.32492432
+      },
+      "essential": true,
+      "id": "request-grid-row-00",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.00100908,
+        "width": 0.88142857,
+        "x": 0.06,
+        "y": 0.35519677
+      },
+      "essential": true,
+      "id": "request-grid-row-01",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.00100908,
+        "width": 0.88142857,
+        "x": 0.06,
+        "y": 0.38546922
+      },
+      "essential": true,
+      "id": "request-grid-row-02",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.00100908,
+        "width": 0.88142857,
+        "x": 0.06,
+        "y": 0.41574168
+      },
+      "essential": true,
+      "id": "request-grid-row-03",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.00100908,
+        "width": 0.88142857,
+        "x": 0.06,
+        "y": 0.44601413
+      },
+      "essential": true,
+      "id": "request-grid-row-04",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.00100908,
+        "width": 0.88142857,
+        "x": 0.06,
+        "y": 0.47628658
+      },
+      "essential": true,
+      "id": "request-grid-row-05",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.21089808,
+        "width": 0.00142857,
+        "x": 0.21428571,
+        "y": 0.29465187
+      },
+      "essential": true,
+      "id": "request-grid-column-00",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.11099899,
+        "width": 0.88,
+        "x": 0.06,
+        "y": 0.55297679
+      },
+      "essential": true,
+      "id": "content-grid-outer",
+      "type": "rectangle"
+    },
+    {
+      "bbox": {
+        "height": 0.00100908,
+        "width": 0.88142857,
+        "x": 0.06,
+        "y": 0.58123108
+      },
+      "essential": true,
+      "id": "content-grid-row-00",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.00100908,
+        "width": 0.88142857,
+        "x": 0.06,
+        "y": 0.60948537
+      },
+      "essential": true,
+      "id": "content-grid-row-01",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.00100908,
+        "width": 0.88142857,
+        "x": 0.06,
+        "y": 0.63773966
+      },
+      "essential": true,
+      "id": "content-grid-row-02",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.11200807,
+        "width": 0.00142857,
+        "x": 0.18285714,
+        "y": 0.55297679
+      },
+      "essential": true,
+      "id": "content-grid-column-00",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.08072654,
+        "width": 0.88,
+        "x": 0.06,
+        "y": 0.71241171
+      },
+      "essential": true,
+      "id": "review-grid-outer",
+      "type": "rectangle"
+    },
+    {
+      "bbox": {
+        "height": 0.00100908,
+        "width": 0.88142857,
+        "x": 0.06,
+        "y": 0.75277497
+      },
+      "essential": true,
+      "id": "review-grid-row-00",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.08173562,
+        "width": 0.00142857,
+        "x": 0.27142857,
+        "y": 0.71241171
+      },
+      "essential": true,
+      "id": "review-grid-column-00",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.08173562,
+        "width": 0.00142857,
+        "x": 0.59142857,
+        "y": 0.71241171
+      },
+      "essential": true,
+      "id": "review-grid-column-01",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.08678103,
+        "width": 0.88,
+        "x": 0.06,
+        "y": 0.84157417
+      },
+      "essential": true,
+      "id": "confirmation-grid-outer",
+      "type": "rectangle"
+    },
+    {
+      "bbox": {
+        "height": 0.00100908,
+        "width": 0.88142857,
+        "x": 0.06,
+        "y": 0.87083754
+      },
+      "essential": true,
+      "id": "confirmation-grid-row-00",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.00100908,
+        "width": 0.88142857,
+        "x": 0.06,
+        "y": 0.90010091
+      },
+      "essential": true,
+      "id": "confirmation-grid-row-01",
+      "type": "line"
+    },
+    {
+      "bbox": {
+        "height": 0.00100908,
+        "width": 0.34428571,
+        "x": 0.17142857,
+        "y": 0.96871847
+      },
+      "essential": true,
+      "id": "footer-signature-rule",
+      "type": "line"
+    }
+  ],
+  "text_regions": [
+    {
+      "bbox": {
+        "height": 0.01210898,
+        "width": 0.19285714,
+        "x": 0.06,
+        "y": 0.0554995
+      },
+      "essential": false,
+      "id": "document-number",
+      "text": "管理番号 ＿＿＿＿＿＿＿＿"
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.15714286,
+        "x": 0.77857143,
+        "y": 0.0554995
+      },
+      "essential": false,
+      "id": "created-date",
+      "text": "作成日：     年   月   日"
+    },
+    {
+      "bbox": {
+        "height": 0.0221998,
+        "width": 0.39857143,
+        "x": 0.3,
+        "y": 0.09283552
+      },
+      "essential": true,
+      "id": "title",
+      "text": "文 書 解 析  評 価 シ ー ト"
+    },
+    {
+      "bbox": {
+        "height": 0.01009082,
+        "width": 0.06285714,
+        "x": 0.07428571,
+        "y": 0.13319879
+      },
+      "essential": false,
+      "id": "furigana-label",
+      "text": "ふりがな"
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.03571429,
+        "x": 0.62285714,
+        "y": 0.13420787
+      },
+      "essential": false,
+      "id": "category-label",
+      "text": "区 分"
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.09571429,
+        "x": 0.72857143,
+        "y": 0.13319879
+      },
+      "essential": false,
+      "id": "category-options",
+      "text": "個 人 ・ 法 人"
+    },
+    {
+      "bbox": {
+        "height": 0.01311806,
+        "width": 0.04571429,
+        "x": 0.08285714,
+        "y": 0.16851665
+      },
+      "essential": true,
+      "id": "name-label",
+      "text": "氏 名"
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.06285714,
+        "x": 0.62285714,
+        "y": 0.16750757
+      },
+      "essential": false,
+      "id": "identifier-label",
+      "text": "識別番号"
+    },
+    {
+      "bbox": {
+        "height": 0.01412714,
+        "width": 0.04285714,
+        "x": 0.08285714,
+        "y": 0.20080727
+      },
+      "essential": true,
+      "id": "address-label",
+      "text": "住 所"
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.03571429,
+        "x": 0.07428571,
+        "y": 0.22805247
+      },
+      "essential": true,
+      "id": "phone-label",
+      "text": "電 話"
+    },
+    {
+      "bbox": {
+        "height": 0.00807265,
+        "width": 0.04714286,
+        "x": 0.62285714,
+        "y": 0.23007064
+      },
+      "essential": false,
+      "id": "mail-label",
+      "text": "メール"
+    },
+    {
+      "bbox": {
+        "height": 0.01614531,
+        "width": 0.37857143,
+        "x": 0.06714286,
+        "y": 0.27346115
+      },
+      "essential": true,
+      "id": "section-1-title",
+      "text": "1．依頼する処理を選択してください"
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.06285714,
+        "x": 0.07714286,
+        "y": 0.30272452
+      },
+      "essential": true,
+      "id": "request-format-label",
+      "text": "対象形式"
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.34571429,
+        "x": 0.23142857,
+        "y": 0.30272452
+      },
+      "essential": true,
+      "id": "request-format",
+      "text": "PNG ・ PDF ・ DOCX ・ その他（                    ）"
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.06285714,
+        "x": 0.07714286,
+        "y": 0.33400605
+      },
+      "essential": true,
+      "id": "request-language-label",
+      "text": "主な言語"
+    },
+    {
+      "bbox": {
+        "height": 0.01210898,
+        "width": 0.24571429,
+        "x": 0.23142857,
+        "y": 0.33299697
+      },
+      "essential": true,
+      "id": "request-language",
+      "text": "日本語 ・ 英語 ・ 数字中心 ・ 混在"
+    },
+    {
+      "bbox": {
+        "height": 0.01009082,
+        "width": 0.06285714,
+        "x": 0.07714286,
+        "y": 0.36427851
+      },
+      "essential": false,
+      "id": "request-purpose-label",
+      "text": "利用目的"
+    },
+    {
+      "bbox": {
+        "height": 0.01210898,
+        "width": 0.30142857,
+        "x": 0.23142857,
+        "y": 0.36326942
+      },
+      "essential": true,
+      "id": "request-purpose",
+      "text": "検索 ・ 転記 ・ 比較 ・ 保存 ・ データ連携"
+    },
+    {
+      "bbox": {
+        "height": 0.01009082,
+        "width": 0.06285714,
+        "x": 0.07714286,
+        "y": 0.39455096
+      },
+      "essential": false,
+      "id": "request-priority-label",
+      "text": "優先事項"
+    },
+    {
+      "bbox": {
+        "height": 0.01210898,
+        "width": 0.26142857,
+        "x": 0.23142857,
+        "y": 0.39354188
+      },
+      "essential": true,
+      "id": "request-priority",
+      "text": "文字精度 ・ 構造 ・ 配置 ・ 処理速度"
+    },
+    {
+      "bbox": {
+        "height": 0.01210898,
+        "width": 0.06285714,
+        "x": 0.07714286,
+        "y": 0.42381433
+      },
+      "essential": false,
+      "id": "request-output-label",
+      "text": "希望出力"
+    },
+    {
+      "bbox": {
+        "height": 0.01210898,
+        "width": 0.29714286,
+        "x": 0.23142857,
+        "y": 0.42280525
+      },
+      "essential": false,
+      "id": "request-output",
+      "text": "JSON ・ DOCX ・ 画像 ・ 確認用レポート"
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.06285714,
+        "x": 0.07714286,
+        "y": 0.45509586
+      },
+      "essential": false,
+      "id": "request-retention-label",
+      "text": "保存期間"
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.26428571,
+        "x": 0.23142857,
+        "y": 0.45408678
+      },
+      "essential": false,
+      "id": "request-retention",
+      "text": "即時削除 ・ 30日 ・ 90日 ・ 指定なし"
+    },
+    {
+      "bbox": {
+        "height": 0.01009082,
+        "width": 0.06285714,
+        "x": 0.07714286,
+        "y": 0.48536831
+      },
+      "essential": false,
+      "id": "request-notes-label",
+      "text": "補足事項"
+    },
+    {
+      "bbox": {
+        "height": 0.01210898,
+        "width": 0.42428571,
+        "x": 0.23142857,
+        "y": 0.48335015
+      },
+      "essential": false,
+      "id": "request-notes",
+      "text": "罫線や小さな文字を含む場合は、ここに記載してください。"
+    },
+    {
+      "bbox": {
+        "height": 0.01513623,
+        "width": 0.44714286,
+        "x": 0.06714286,
+        "y": 0.53178607
+      },
+      "essential": true,
+      "id": "section-2-title",
+      "text": "2．原稿に含まれる要素を確認してください"
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.04,
+        "x": 0.07714286,
+        "y": 0.56004036
+      },
+      "essential": false,
+      "id": "content-visual-label",
+      "text": "図  形"
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.35571429,
+        "x": 0.2,
+        "y": 0.56004036
+      },
+      "essential": true,
+      "id": "content-visual",
+      "text": "□ 写真   □ 図解   □ 印影   □ バーコード   □ なし"
+    },
+    {
+      "bbox": {
+        "height": 0.01009082,
+        "width": 0.04,
+        "x": 0.07714286,
+        "y": 0.58930373
+      },
+      "essential": false,
+      "id": "content-structure-label",
+      "text": "構  造"
+    },
+    {
+      "bbox": {
+        "height": 0.01210898,
+        "width": 0.35571429,
+        "x": 0.2,
+        "y": 0.58829465
+      },
+      "essential": true,
+      "id": "content-structure",
+      "text": "□ 表   □ 箇条書き   □ 段組み   □ 入力欄   □ なし"
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.04,
+        "x": 0.07714286,
+        "y": 0.61654894
+      },
+      "essential": false,
+      "id": "content-writing-label",
+      "text": "筆  記"
+    },
+    {
+      "bbox": {
+        "height": 0.01210898,
+        "width": 0.35571429,
+        "x": 0.2,
+        "y": 0.61654894
+      },
+      "essential": false,
+      "id": "content-writing",
+      "text": "□ 活字   □ 手書き   □ 修正跡   □ かすれ   □ 傾き"
+    },
+    {
+      "bbox": {
+        "height": 0.01009082,
+        "width": 0.04714286,
+        "x": 0.07714286,
+        "y": 0.64581231
+      },
+      "essential": false,
+      "id": "content-security-label",
+      "text": "機密性"
+    },
+    {
+      "bbox": {
+        "height": 0.01210898,
+        "width": 0.37,
+        "x": 0.2,
+        "y": 0.64480323
+      },
+      "essential": false,
+      "id": "content-security",
+      "text": "□ 公開   □ 社内   □ 要配慮   □ 個人情報を含まない"
+    },
+    {
+      "bbox": {
+        "height": 0.01513623,
+        "width": 0.42428571,
+        "x": 0.06714286,
+        "y": 0.69122099
+      },
+      "essential": true,
+      "id": "section-3-title",
+      "text": "3．出力後の確認方法を指定してください"
+    },
+    {
+      "bbox": {
+        "height": 0.01009082,
+        "width": 0.06285714,
+        "x": 0.07714286,
+        "y": 0.72452069
+      },
+      "essential": false,
+      "id": "review-machine-label",
+      "text": "自動判定"
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.24285714,
+        "x": 0.28857143,
+        "y": 0.7235116
+      },
+      "essential": true,
+      "id": "review-machine",
+      "text": "□ 必須文字   □ 構造   □ ページ数"
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.11142857,
+        "x": 0.60857143,
+        "y": 0.72452069
+      },
+      "essential": false,
+      "id": "review-machine-note",
+      "text": "閾値：70％以上"
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.06285714,
+        "x": 0.07714286,
+        "y": 0.76387487
+      },
+      "essential": false,
+      "id": "review-human-label",
+      "text": "目視確認"
+    },
+    {
+      "bbox": {
+        "height": 0.01210898,
+        "width": 0.24285714,
+        "x": 0.28857143,
+        "y": 0.76286579
+      },
+      "essential": true,
+      "id": "review-human",
+      "text": "□ 重なり   □ 欠け   □ 読みやすさ"
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.18857143,
+        "x": 0.60857143,
+        "y": 0.76387487
+      },
+      "essential": false,
+      "id": "review-human-note",
+      "text": "判定：合格・保留・不合格"
+    },
+    {
+      "bbox": {
+        "height": 0.01614531,
+        "width": 0.37857143,
+        "x": 0.06714286,
+        "y": 0.82038345
+      },
+      "essential": true,
+      "id": "section-4-title",
+      "text": "4．次の注意事項を確認してください"
+    },
+    {
+      "bbox": {
+        "height": 0.01311806,
+        "width": 0.47571429,
+        "x": 0.07714286,
+        "y": 0.84762866
+      },
+      "essential": true,
+      "id": "confirm-approximation",
+      "text": "□ 復元結果は原稿の完全な複製ではなく、読みやすい近似である。"
+    },
+    {
+      "bbox": {
+        "height": 0.01210898,
+        "width": 0.45714286,
+        "x": 0.07714286,
+        "y": 0.87790111
+      },
+      "essential": true,
+      "id": "confirm-editable",
+      "text": "□ 最終成果物は編集可能なDOCXとして開けることを確認する。"
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.43571429,
+        "x": 0.07714286,
+        "y": 0.90716448
+      },
+      "essential": true,
+      "id": "confirm-evidence",
+      "text": "□ 判定に使用したJSON、PDF、画像、環境情報を保存する。"
+    },
+    {
+      "bbox": {
+        "height": 0.01009082,
+        "width": 0.09428571,
+        "x": 0.06142857,
+        "y": 0.95358224
+      },
+      "essential": false,
+      "id": "footer-signature",
+      "text": "確認者署名："
+    },
+    {
+      "bbox": {
+        "height": 0.0110999,
+        "width": 0.24142857,
+        "x": 0.68714286,
+        "y": 0.95257316
+      },
+      "essential": false,
+      "id": "footer-result",
+      "text": "最終判定： 合格 ・ 保留 ・ 不合格"
+    }
+  ]
+}

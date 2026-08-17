@@ -1,0 +1,17 @@
+{
+  "record_version": 1,
+  "sources": [
+    {
+      "id": "legacy-test-clinic-form",
+      "former_repository_path": "input/form_blank_testClinic_v1.png",
+      "sha256": "f57c5246c248cf6a2f7abe548225d65ae9ab376d83a64d4183224a3e0f395369",
+      "pixel_width": 700,
+      "pixel_height": 991,
+      "external_article": "https://flexireads.wordpress.com/2020/03/17/how-to-fill-out-a-medical-form-in-japan/",
+      "external_image": "https://flexireads.wordpress.com/wp-content/uploads/2022/02/a5a50-img_3613.gif",
+      "redistribution_status": "unverified",
+      "fixture_status": "excluded",
+      "reason": "The repository copy is visually and pixel-wise equivalent to the external image, and no license permitting MIT redistribution was established. No copy is retained in the current fixture tree."
+    }
+  ]
+}

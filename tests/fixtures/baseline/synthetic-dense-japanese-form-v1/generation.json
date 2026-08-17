@@ -1,0 +1,13 @@
+{
+  "authorship": "Original synthetic test artwork authored for Aiteqno.",
+  "contains_personal_data": false,
+  "fixture_id": "synthetic-dense-japanese-form-v1",
+  "font": {
+    "path_at_generation": "C:\\Windows\\Fonts\\YuGothR.ttc",
+    "sha256": "cd24b5617c1e26572b0a7fe7e558f7121ca42c36f7b50e8d9216ac222a1c0a93"
+  },
+  "license": "MIT",
+  "pillow_version": "12.3.0",
+  "python": "3.13.3",
+  "source_sha256": "df0b724d8fcc1b5d5e0483a60401c2cb3882675f71d1e37ecdbcff9e687ffc25"
+}

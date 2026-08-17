@@ -10,18 +10,29 @@ credit instead of inventing coordinates.
 
 from __future__ import annotations
 
+import hashlib
 import os
+import re
 import shutil
 import subprocess
 import tempfile
+from dataclasses import dataclass
 from os import PathLike
 from pathlib import Path
+from typing import Any
+
+from PIL import Image, UnidentifiedImageError
 
 from aiteqno.ports import SnapshotObservation
 
 
 DEFAULT_LIBREOFFICE_TIMEOUT_SECONDS = 90.0
+DEFAULT_SNAPSHOT_DPI = 144
 LIBREOFFICE_RENDERER_NAME = "libreoffice-headless"
+PDFTOPPM_RASTERIZER_NAME = "pdftoppm"
+
+_PDFTOPPM_ENVIRONMENT_VARIABLE = "AITEQNO_PDFTOPPM_EXECUTABLE"
+_RASTERIZED_PAGE_PATTERN = re.compile(r"^raw-page-(\d+)\.png$")
 
 _REPAIR_MARKERS = (
     "corrupt",
@@ -30,6 +41,60 @@ _REPAIR_MARKERS = (
     "recovery",
     "repair",
 )
+
+
+@dataclass(frozen=True, slots=True)
+class LibreOfficeSnapshotPage:
+    """One retained, rasterized page from an actual LibreOffice PDF export."""
+
+    page_number: int
+    relative_path: str
+    sha256: str
+    width_px: int
+    height_px: int
+    dpi: int
+
+    def to_dict(self) -> dict[str, int | str]:
+        """Return a JSON-serializable evidence record."""
+
+        return {
+            "page_number": self.page_number,
+            "relative_path": self.relative_path,
+            "sha256": self.sha256,
+            "width_px": self.width_px,
+            "height_px": self.height_px,
+            "dpi": self.dpi,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class LibreOfficeSnapshotEvidence:
+    """Persisted evidence from LibreOffice plus Poppler page rasterization."""
+
+    renderer_name: str
+    renderer_version: str
+    rasterizer_name: str
+    rasterizer_version: str
+    pdf_relative_path: str
+    pdf_sha256: str
+    page_count: int
+    pages: tuple[LibreOfficeSnapshotPage, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-serializable evidence record."""
+
+        return {
+            "renderer_name": self.renderer_name,
+            "renderer_version": self.renderer_version,
+            "rasterizer_name": self.rasterizer_name,
+            "rasterizer_version": self.rasterizer_version,
+            "pdf": {
+                "relative_path": self.pdf_relative_path,
+                "sha256": self.pdf_sha256,
+            },
+            "page_count": self.page_count,
+            "pages": [page.to_dict() for page in self.pages],
+        }
 
 
 class LibreOfficeSnapshotRenderer:
@@ -121,6 +186,150 @@ class LibreOfficeSnapshotRenderer:
             opened_without_repair=True,
         )
 
+    def render_evidence(
+        self,
+        docx_path: str | PathLike[str],
+        output_directory: str | PathLike[str],
+        *,
+        rasterizer_executable_path: str | PathLike[str] | None = None,
+        dpi: int = DEFAULT_SNAPSHOT_DPI,
+    ) -> LibreOfficeSnapshotEvidence:
+        """Create and retain actual PDF and PNG evidence without overwriting files.
+
+        The output directory must not already exist. Work happens in a sibling
+        staging directory, so callers either receive a complete evidence set or
+        an exception without a partially published output directory.
+        """
+
+        target = Path(docx_path).expanduser()
+        if target.suffix.lower() != ".docx":
+            raise ValueError("docx_path must use the .docx extension")
+        if not target.is_file():
+            raise FileNotFoundError(f"DOCX input does not exist: {target}")
+        if isinstance(dpi, bool) or not isinstance(dpi, int) or dpi <= 0:
+            raise ValueError("dpi must be a positive integer")
+
+        evidence_output = Path(output_directory).expanduser().resolve()
+        if evidence_output.exists():
+            raise FileExistsError(
+                "snapshot evidence output_directory already exists; "
+                f"choose a new path: {evidence_output}"
+            )
+
+        executable = self._resolve_executable()
+        if executable is None:
+            raise RuntimeError(
+                "LibreOffice executable was not found; install LibreOffice or set "
+                "AITEQNO_LIBREOFFICE_EXECUTABLE to the soffice executable"
+            )
+        rasterizer = self._resolve_rasterizer(rasterizer_executable_path)
+        if rasterizer is None:
+            raise RuntimeError(
+                "pdftoppm executable was not found; install Poppler or set "
+                f"{_PDFTOPPM_ENVIRONMENT_VARIABLE} to the pdftoppm executable"
+            )
+
+        renderer_version = self._read_version(executable)
+        rasterizer_version = self._read_rasterizer_version(rasterizer)
+        evidence_output.parent.mkdir(parents=True, exist_ok=True)
+
+        with tempfile.TemporaryDirectory(
+            prefix=f".{evidence_output.name}-staging-",
+            dir=evidence_output.parent,
+        ) as raw_root:
+            root = Path(raw_root)
+            conversion_directory = root / "conversion"
+            profile_directory = root / "profile"
+            staged_evidence = root / "evidence"
+            conversion_directory.mkdir()
+            profile_directory.mkdir()
+            staged_evidence.mkdir()
+
+            command = [
+                str(executable),
+                "--headless",
+                "--nologo",
+                "--nodefault",
+                "--nolockcheck",
+                "--nofirststartwizard",
+                f"-env:UserInstallation={profile_directory.resolve().as_uri()}",
+                "--convert-to",
+                "pdf:writer_pdf_Export",
+                "--outdir",
+                str(conversion_directory),
+                str(target.resolve()),
+            ]
+            completed = self._run_or_raise(command, "LibreOffice conversion")
+            diagnostics = self._diagnostics(completed)
+            converted_pdf = conversion_directory / f"{target.stem}.pdf"
+            conversion_error = self._conversion_error(
+                completed.returncode,
+                diagnostics,
+                converted_pdf,
+            )
+            if conversion_error is not None:
+                raise RuntimeError(conversion_error)
+
+            snapshot_pdf = staged_evidence / "snapshot.pdf"
+            shutil.copyfile(converted_pdf, snapshot_pdf)
+            raster_prefix = staged_evidence / "raw-page"
+            raster_command = [
+                str(rasterizer),
+                "-png",
+                "-r",
+                str(dpi),
+                str(snapshot_pdf),
+                str(raster_prefix),
+            ]
+            rasterized = self._run_or_raise(raster_command, "pdftoppm rasterization")
+            if rasterized.returncode != 0:
+                detail = self._diagnostics(rasterized)
+                suffix = f": {detail}" if detail else ""
+                raise RuntimeError(
+                    "pdftoppm rasterization exited with status "
+                    f"{rasterized.returncode}{suffix}"
+                )
+
+            raw_pages = self._rasterized_pages(staged_evidence)
+            if not raw_pages:
+                raise RuntimeError("pdftoppm did not produce any PNG page snapshots")
+
+            pages: list[LibreOfficeSnapshotPage] = []
+            for page_number, (_, raw_page) in enumerate(raw_pages, start=1):
+                page_path = staged_evidence / f"page-{page_number:03d}.png"
+                raw_page.replace(page_path)
+                width_px, height_px = self._validate_png_page(page_path)
+                pages.append(
+                    LibreOfficeSnapshotPage(
+                        page_number=page_number,
+                        relative_path=page_path.name,
+                        sha256=self._sha256(page_path),
+                        width_px=width_px,
+                        height_px=height_px,
+                        dpi=dpi,
+                    )
+                )
+
+            evidence = LibreOfficeSnapshotEvidence(
+                renderer_name=LIBREOFFICE_RENDERER_NAME,
+                renderer_version=renderer_version,
+                rasterizer_name=PDFTOPPM_RASTERIZER_NAME,
+                rasterizer_version=rasterizer_version,
+                pdf_relative_path=snapshot_pdf.name,
+                pdf_sha256=self._sha256(snapshot_pdf),
+                page_count=len(pages),
+                pages=tuple(pages),
+            )
+            try:
+                staged_evidence.replace(evidence_output)
+            except FileExistsError as exc:
+                raise FileExistsError(
+                    "snapshot evidence output_directory was created concurrently; "
+                    f"no files were overwritten: {evidence_output}"
+                ) from exc
+
+        return evidence
+
     def _resolve_executable(self) -> Path | None:
         if self._explicit_executable is not None:
             candidate = self._explicit_executable.resolve()
@@ -150,6 +359,22 @@ class LibreOfficeSnapshotRenderer:
                 return candidate.resolve()
         return None
 
+    @staticmethod
+    def _resolve_rasterizer(
+        executable_path: str | PathLike[str] | None,
+    ) -> Path | None:
+        if executable_path is not None:
+            candidate = Path(executable_path).expanduser().resolve()
+            return candidate if candidate.is_file() else None
+
+        configured = os.environ.get(_PDFTOPPM_ENVIRONMENT_VARIABLE)
+        if configured:
+            candidate = Path(configured).expanduser().resolve()
+            return candidate if candidate.is_file() else None
+
+        discovered = shutil.which(PDFTOPPM_RASTERIZER_NAME)
+        return None if discovered is None else Path(discovered).resolve()
+
     def _read_version(self, executable: Path) -> str:
         try:
             completed = subprocess.run(
@@ -167,6 +392,92 @@ class LibreOfficeSnapshotRenderer:
         if completed.returncode != 0 or not output:
             return "unknown"
         return output.splitlines()[0][:200]
+
+    def _read_rasterizer_version(self, executable: Path) -> str:
+        try:
+            completed = subprocess.run(
+                [str(executable), "-v"],
+                check=False,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=min(self._timeout_seconds, 15.0),
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return "unknown"
+        output = (completed.stdout or completed.stderr).strip()
+        if completed.returncode != 0 or not output:
+            return "unknown"
+        return output.splitlines()[0][:200]
+
+    def _run_or_raise(
+        self,
+        command: list[str],
+        operation: str,
+    ) -> subprocess.CompletedProcess[str]:
+        try:
+            return subprocess.run(
+                command,
+                check=False,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=self._timeout_seconds,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError(
+                f"{operation} timed out after {self._timeout_seconds:g} seconds"
+            ) from exc
+        except OSError as exc:
+            raise RuntimeError(f"{operation} could not start: {exc}") from exc
+
+    @staticmethod
+    def _diagnostics(completed: subprocess.CompletedProcess[str]) -> str:
+        return "\n".join(
+            part.strip()
+            for part in (completed.stdout, completed.stderr)
+            if part.strip()
+        )[:2000]
+
+    @staticmethod
+    def _rasterized_pages(directory: Path) -> list[tuple[int, Path]]:
+        pages: list[tuple[int, Path]] = []
+        for candidate in directory.glob("raw-page-*.png"):
+            match = _RASTERIZED_PAGE_PATTERN.fullmatch(candidate.name)
+            if match is not None:
+                pages.append((int(match.group(1)), candidate))
+        pages.sort(key=lambda item: item[0])
+        return pages
+
+    @staticmethod
+    def _validate_png_page(path: Path) -> tuple[int, int]:
+        try:
+            with Image.open(path) as image:
+                image.load()
+                if image.format != "PNG":
+                    raise RuntimeError(
+                        f"rasterized snapshot is not a PNG image: {path.name}"
+                    )
+                width_px, height_px = image.size
+        except (OSError, UnidentifiedImageError) as exc:
+            raise RuntimeError(
+                f"rasterized snapshot is not a readable PNG image: {path.name}"
+            ) from exc
+        if width_px <= 0 or height_px <= 0:
+            raise RuntimeError(
+                f"rasterized snapshot has invalid dimensions: {path.name}"
+            )
+        return width_px, height_px
+
+    @staticmethod
+    def _sha256(path: Path) -> str:
+        digest = hashlib.sha256()
+        with path.open("rb") as stream:
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
 
     @staticmethod
     def _conversion_error(
@@ -201,6 +512,10 @@ class LibreOfficeSnapshotRenderer:
 
 __all__ = [
     "DEFAULT_LIBREOFFICE_TIMEOUT_SECONDS",
+    "DEFAULT_SNAPSHOT_DPI",
     "LIBREOFFICE_RENDERER_NAME",
+    "PDFTOPPM_RASTERIZER_NAME",
+    "LibreOfficeSnapshotEvidence",
+    "LibreOfficeSnapshotPage",
     "LibreOfficeSnapshotRenderer",
 ]

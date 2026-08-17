@@ -1,6 +1,20 @@
 """Protocols implemented by Aiteqno infrastructure adapters."""
 
 from .assets import AssetResolutionError, AssetResolver, ResolvedAsset
+from .baseline import (
+    BaselineComponentScore,
+    LogicalBlockEvaluation,
+    ManualCheckEvidence,
+    ManualCheckStatus,
+    RelationshipEvaluation,
+    SourceBaselineObservation,
+    SourceBaselineReference,
+    SourceBaselineResult,
+    SourceRelationship,
+    SourceStructuralItem,
+    SourceTextRegion,
+    StructuralItemEvaluation,
+)
 from .docx import (
     DocxRenderError,
     DocxRenderer,
@@ -82,6 +96,7 @@ __all__ = [
     "AssetPayload",
     "BundleWriteError",
     "BundleWriteResult",
+    "BaselineComponentScore",
     "ComponentScore",
     "DocxObservation",
     "DocxObservationError",
@@ -106,6 +121,10 @@ __all__ = [
     "HardGateResult",
     "LineCandidate",
     "LineOrientation",
+    "LogicalBlockEvaluation",
+    "ManualCheckEvidence",
+    "ManualCheckStatus",
+    "RelationshipEvaluation",
     "OcrBackend",
     "OcrBackendError",
     "OcrCapabilities",
@@ -136,6 +155,13 @@ __all__ = [
     "RestorationEvaluationResult",
     "SnapshotObservation",
     "SnapshotRegion",
+    "SourceBaselineObservation",
+    "SourceBaselineReference",
+    "SourceBaselineResult",
+    "SourceRelationship",
+    "SourceStructuralItem",
+    "SourceTextRegion",
+    "StructuralItemEvaluation",
     "StructuralRelationship",
     "StructureExtractionError",
     "StructureExtractionResult",

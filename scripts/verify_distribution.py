@@ -18,6 +18,7 @@ REQUIRED_WHEEL_FILES = {
     "aiteqno/domain/model.py",
     "aiteqno/ports/__init__.py",
     "aiteqno/ports/assets.py",
+    "aiteqno/ports/baseline.py",
     "aiteqno/ports/docx.py",
     "aiteqno/ports/evaluation.py",
     "aiteqno/ports/extraction.py",
@@ -25,6 +26,7 @@ REQUIRED_WHEEL_FILES = {
     "aiteqno/ports/preview.py",
     "aiteqno/ports/structure.py",
     "aiteqno/application/__init__.py",
+    "aiteqno/application/baseline.py",
     "aiteqno/application/extract.py",
     "aiteqno/application/evaluate.py",
     "aiteqno/application/preview.py",
@@ -58,9 +60,17 @@ REQUIRED_SDIST_PATHS = {
     "demo/windows/run-demo.cmd",
     "demo/windows/run-demo.ps1",
     "docs/demo-release.md",
+    "docs/real-runtime-baseline.md",
+    "scripts/build_real_baseline_fixture.py",
     "scripts/build_demo_package.py",
     "scripts/demo_runner.py",
+    "scripts/run_real_baseline.py",
     "scripts/verify_demo_package.py",
+    "tests/fixtures/baseline/excluded-sources.json",
+    "tests/fixtures/baseline/synthetic-dense-japanese-form-v1/generation.json",
+    "tests/fixtures/baseline/synthetic-dense-japanese-form-v1/manifest.json",
+    "tests/fixtures/baseline/synthetic-dense-japanese-form-v1/reference.json",
+    "tests/fixtures/baseline/synthetic-dense-japanese-form-v1/source.png.b64",
 }
 
 
