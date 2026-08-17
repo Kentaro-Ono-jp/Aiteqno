@@ -9,10 +9,16 @@ import tempfile
 import unittest
 from io import BytesIO
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 from PIL import Image
 
-from aiteqno.ports import SourceBaselineReference
+from aiteqno.domain import DocumentIR
+from aiteqno.ports import (
+    OcrRuntimeEvidence,
+    OcrTrainedDataEvidence,
+    SourceBaselineReference,
+)
 from scripts.run_real_baseline import _read_fixture, run as run_real_baseline
 
 
@@ -200,6 +206,35 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 2,
                 "expected_page_count",
             ),
+            (
+                "ocr text threshold",
+                "manifest",
+                (
+                    "quality_contract",
+                    "component_minimums",
+                    "text_character_accuracy",
+                ),
+                60.0,
+                "OCR text character minimum",
+            ),
+            (
+                "ocr block threshold",
+                "manifest",
+                (
+                    "quality_contract",
+                    "component_minimums",
+                    "logical_block_coverage",
+                ),
+                50.0,
+                "OCR logical block coverage minimum",
+            ),
+            (
+                "ocr anchor threshold",
+                "manifest",
+                ("quality_contract", "essential_anchor_recall"),
+                90.0,
+                "OCR essential anchor recall",
+            ),
         )
 
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -287,6 +322,90 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 {"operational-error.json"},
             )
 
+    def test_ocr_report_survives_a_deterministic_downstream_render_failure(self):
+        candidate_ir = DocumentIR.from_json(
+            (
+                Path(__file__).resolve().parent
+                / "fixtures"
+                / "document_ir"
+                / "canonical.document.ir.json"
+            ).read_bytes()
+        )
+        runtime = OcrRuntimeEvidence(
+            provider="tesseract",
+            provider_version="5.0.0-test",
+            executable="test-tesseract",
+            languages=("jpn", "eng"),
+            page_segmentation_mode=6,
+            engine_mode=3,
+            effective_ocr_dpi=96,
+            source_dpi_x=96,
+            source_dpi_y=96,
+            traineddata=(
+                OcrTrainedDataEvidence(
+                    language="jpn",
+                    size_bytes=1,
+                    sha256="1" * 64,
+                ),
+                OcrTrainedDataEvidence(
+                    language="eng",
+                    size_bytes=1,
+                    sha256="2" * 64,
+                ),
+            ),
+            operating_system="deterministic-test-os",
+            python_version="3.test",
+        )
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            output = Path(temporary_directory) / "downstream-failure"
+
+            def completed_extraction(_source_data, bundle_directory, **_kwargs):
+                bundle_directory.mkdir(parents=True)
+                return Mock(document=candidate_ir, diagnostics=())
+
+            with (
+                patch(
+                    "scripts.run_real_baseline._runtime",
+                    return_value=(Mock(), Mock()),
+                ),
+                patch(
+                    "scripts.run_real_baseline._environment_record",
+                    return_value={"phase": "deterministic-test"},
+                ),
+                patch(
+                    "scripts.run_real_baseline.extract_png",
+                    side_effect=completed_extraction,
+                ),
+                patch(
+                    "scripts.run_real_baseline._ocr_runtime_evidence",
+                    return_value=runtime,
+                ),
+                patch(
+                    "scripts.run_real_baseline.render_docx",
+                    side_effect=RuntimeError("forced downstream render failure"),
+                ),
+            ):
+                with self.assertRaisesRegex(
+                    RuntimeError,
+                    "forced downstream render failure",
+                ):
+                    run_real_baseline(FIXTURE_DIRECTORY, output, expect_state=None)
+
+            report = json.loads(
+                (output / "ocr-quality-evaluation.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(report["schema_version"], "1.0")
+            self.assertEqual(report["scope"]["text_source"], "candidate_ir")
+            self.assertEqual(report["state"], "fail")
+            self.assertFalse((output / "source-quality-evaluation.json").exists())
+            self.assertFalse((output / "bundle" / "reconstructed.docx").exists())
+            failure = json.loads(
+                (output / "operational-error.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(failure["error_type"], "RuntimeError")
+            self.assertIn("forced downstream render failure", failure["message"])
+
 
 @unittest.skipUnless(
     os.environ.get("AITEQNO_RUN_REAL_IMAGE_BASELINE") == "1",
@@ -327,6 +446,14 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         self.assertEqual(summary["final_state"], "fail")
         self.assertEqual(summary["expected_current_state"], "fail")
         self.assertEqual(
+            summary["layers"]["source_to_candidate_ir_ocr"]["state"],
+            "fail",
+        )
+        self.assertEqual(
+            summary["layers"]["source_to_candidate_ir_ocr"]["text_evidence"],
+            "candidate_ir",
+        )
+        self.assertEqual(
             summary["layers"]["source_to_actual_docx"]["state"],
             "fail",
         )
@@ -364,6 +491,45 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         )
         self.assertTrue((output / "preflight-environment.json").is_file())
         self.assertTrue((output / "environment.json").is_file())
+        ocr_evaluation = json.loads(
+            (output / "ocr-quality-evaluation.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(ocr_evaluation["schema_version"], "1.0")
+        self.assertEqual(ocr_evaluation["scope"]["text_source"], "candidate_ir")
+        self.assertEqual(
+            ocr_evaluation["scope"]["ends_before"],
+            ["docx", "preview", "libreoffice", "poppler", "rendered_page_ocr"],
+        )
+        self.assertEqual(ocr_evaluation["state"], "fail")
+        self.assertEqual(
+            ocr_evaluation["runtime"]["configuration"]["languages"],
+            ["jpn", "eng"],
+        )
+        self.assertEqual(
+            ocr_evaluation["runtime"]["configuration"]["page_segmentation_mode"],
+            6,
+        )
+        self.assertEqual(
+            ocr_evaluation["runtime"]["configuration"]["engine_mode"],
+            3,
+        )
+        self.assertEqual(
+            ocr_evaluation["runtime"]["configuration"]["effective_ocr_dpi"],
+            96,
+        )
+        self.assertEqual(
+            ocr_evaluation["thresholds"]["text_character_accuracy"],
+            70.0,
+        )
+        self.assertEqual(
+            ocr_evaluation["thresholds"]["logical_block_coverage"],
+            60.0,
+        )
+        self.assertEqual(
+            ocr_evaluation["thresholds"]["essential_anchor_recall"],
+            100.0,
+        )
+        self.assertTrue((output / "ocr-quality-evaluation.json").is_file())
         self.assertTrue((output / "source-quality-evaluation.json").is_file())
         self.assertTrue((output / "ir-to-docx-restoration-evaluation.json").is_file())
         snapshot = output / "actual-docx-snapshot"

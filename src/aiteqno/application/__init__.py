@@ -36,6 +36,18 @@ from .evaluate import (
     evaluate_restoration_input,
     normalize_evaluation_text,
 )
+from .ocr_quality import (
+    DEFAULT_LOW_CONFIDENCE_THRESHOLD,
+    DEFAULT_MINIMUM_LOGICAL_BLOCK_COVERAGE,
+    DEFAULT_MINIMUM_TEXT_ACCURACY,
+    DEFAULT_REQUIRED_ANCHOR_RECALL,
+    OCR_QUALITY_EVALUATOR_NAME,
+    OCR_QUALITY_EVALUATOR_VERSION,
+    OcrQualityConfig,
+    evaluate_ocr_quality,
+    normalize_ocr_text,
+    ocr_character_accuracy,
+)
 from .preview import render_preview
 from .render import render_docx
 
@@ -50,12 +62,19 @@ __all__ = [
     "ExtractionDiagnostic",
     "COMPONENT_WEIGHTS",
     "DEFAULT_RESTORATION_THRESHOLD",
+    "DEFAULT_LOW_CONFIDENCE_THRESHOLD",
+    "DEFAULT_MINIMUM_LOGICAL_BLOCK_COVERAGE",
+    "DEFAULT_MINIMUM_TEXT_ACCURACY",
+    "DEFAULT_REQUIRED_ANCHOR_RECALL",
     "EVALUATOR_NAME",
     "EVALUATOR_VERSION",
     "EvaluationConfig",
     "GEOMETRY_CENTER_WEIGHT",
     "GEOMETRY_IOU_WEIGHT",
     "MIN_TEXT_ELEMENT_SIMILARITY",
+    "OCR_QUALITY_EVALUATOR_NAME",
+    "OCR_QUALITY_EVALUATOR_VERSION",
+    "OcrQualityConfig",
     "SOURCE_BASELINE_COMPONENT_WEIGHTS",
     "SOURCE_BASELINE_EVALUATOR_NAME",
     "SOURCE_BASELINE_EVALUATOR_VERSION",
@@ -66,10 +85,13 @@ __all__ = [
     "build_evaluation_reference",
     "evaluate_restoration",
     "evaluate_restoration_input",
+    "evaluate_ocr_quality",
     "evaluate_source_baseline",
     "normalize_evaluation_text",
+    "normalize_ocr_text",
     "normalize_source_text",
     "render_docx",
     "render_preview",
     "source_character_accuracy",
+    "ocr_character_accuracy",
 ]

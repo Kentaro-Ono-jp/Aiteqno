@@ -5,12 +5,15 @@ not claim that the current implementation restores a realistic Japanese form
 at 70% quality. It proves the opposite in a repeatable way: a reviewed source
 image is processed by real Tesseract, reconstructed as DOCX, rendered by real
 LibreOffice, rasterized by Poppler, OCRed again from the actual pages, and then
-reported as an expected `fail`.
+reported as an expected `fail`. Issue #45 adds an earlier OCR-only checkpoint so
+that recognition quality can be measured independently of every DOCX and
+rendering stage.
 
 ```text
 reviewed MIT source PNG
   -> real Tesseract + current structure extraction
   -> candidate Document IR
+  -> OCR-quality FAIL checkpoint (expected today)
   -> current DOCX renderer
   -> actual LibreOffice PDF
   -> Poppler page PNGs
@@ -44,24 +47,46 @@ longer contains that image. `tests/fixtures/baseline/excluded-sources.json`
 retains only its URL, SHA-256, dimensions, and exclusion reason. Historical Git
 objects are not rewritten by this issue.
 
-## Three evidence layers
+## Four evidence layers
 
 The reports must not be collapsed into one ambiguous score.
 
-1. `source-quality-evaluation.json` compares reviewed source truth with the
+1. `ocr-quality-evaluation.json` compares the reviewed source text directly
+   with OCR text in the candidate IR. It is written immediately after real
+   Tesseract extraction, before any DOCX or preview work. It does not read DOCX,
+   LibreOffice, Poppler, or rendered-page OCR evidence, so a later rendering
+   failure cannot erase or contaminate the completed OCR observation.
+2. `source-quality-evaluation.json` compares reviewed source truth with the
    candidate IR and text OCRed from the actual rendered DOCX pages. Matching is
    independent of candidate element IDs and OCR token segmentation.
-2. `ir-to-docx-restoration-evaluation.json` is the existing evaluator. It asks
+3. `ir-to-docx-restoration-evaluation.json` is the existing evaluator. It asks
    only how much of the candidate IR survived DOCX generation. It cannot measure
    OCR accuracy because its expected content comes from that same candidate IR.
-3. `actual-docx-snapshot/` contains the LibreOffice PDF, every Poppler page PNG,
+4. `actual-docx-snapshot/` contains the LibreOffice PDF, every Poppler page PNG,
    page hashes/dimensions, and visible OCR tokens. The diagnostic
    `reconstructed.png` is retained separately and is never accepted as proof of
    the DOCX's actual appearance.
 
-The combined state fails if either scored layer fails. An unavailable human
-check remains `pending`; an explicit human rejection is `failed`. A known
-machine failure remains `fail` even while human checks are pending.
+The combined state fails if any scored layer fails. An unavailable human check
+remains `pending`; an explicit human rejection is `failed`. A known machine
+failure remains `fail` even while human checks are pending.
+
+## OCR-only quality contract
+
+The OCR-only layer reuses the reviewed source reference and normalization from
+the source-quality contract, but its observation ends at the candidate IR. Text
+tokens are reconstructed by source page and coordinates rather than candidate
+element IDs or token boundaries. It requires at least 70 text-character
+accuracy, at least 60 logical-block coverage, and exact recall of every
+essential phrase. Source digest and reviewed-reference mismatches are hard
+failures. OCR recognition-confidence values and low-confidence tokens are
+retained for diagnosis, but confidence never substitutes for text correctness.
+
+The report also records the actual Tesseract provider/version, language order,
+PSM, OEM, the effective integer OCR DPI separately from decoded PNG metadata
+DPI, and trained-data hashes used for the observation. Exact runtime-dependent
+scores are not pinned; the dedicated real-runtime test independently asserts
+that the current OCR-only layer remains an expected `fail`.
 
 ## Source-quality contract
 
@@ -114,6 +139,7 @@ real-runtime-baseline/
 |-- preflight-environment.json
 |-- environment.json
 |-- baseline-summary.json
+|-- ocr-quality-evaluation.json
 |-- source-quality-evaluation.json
 |-- ir-to-docx-restoration-evaluation.json
 |-- extraction-diagnostics.json

@@ -2,9 +2,10 @@
 
 This command is intentionally a measurement runner, not a product-quality
 shortcut.  It keeps the source-grounded score separate from the existing
-IR-to-DOCX restoration score and retains the actual LibreOffice PDF/pages used
-for the decision.  A known quality ``fail`` is a successful baseline run when
-``--expect-state fail`` is supplied.
+IR-to-DOCX restoration score, checkpoints OCR-only quality before DOCX work,
+and retains the actual LibreOffice PDF/pages used for the decision.  A known
+quality ``fail`` is a successful baseline run when ``--expect-state fail`` is
+supplied.
 """
 
 from __future__ import annotations
@@ -39,8 +40,10 @@ from aiteqno.adapters import (
     TesseractOcrBackend,
 )
 from aiteqno.application import (
+    OcrQualityConfig,
     SourceBaselineConfig,
     build_evaluation_reference,
+    evaluate_ocr_quality,
     evaluate_restoration,
     evaluate_source_baseline,
     extract_png,
@@ -51,6 +54,9 @@ from aiteqno.domain import ElementType
 from aiteqno.ports import (
     EvaluationState,
     OcrOptions,
+    OcrQualityObservation,
+    OcrRuntimeEvidence,
+    OcrTrainedDataEvidence,
     SnapshotObservation,
     SourceBaselineObservation,
     SourceBaselineReference,
@@ -272,6 +278,26 @@ def _read_fixture(
         quality_contract.get("normalization"),
         reference_data.get("normalization"),
     )
+    ocr_defaults = OcrQualityConfig()
+    component_minimums = _fixture_object(
+        quality_contract.get("component_minimums"),
+        "quality component_minimums",
+    )
+    _require_contract_equal(
+        "OCR text character minimum",
+        component_minimums.get("text_character_accuracy"),
+        ocr_defaults.minimum_text_accuracy,
+    )
+    _require_contract_equal(
+        "OCR logical block coverage minimum",
+        component_minimums.get("logical_block_coverage"),
+        ocr_defaults.minimum_logical_block_coverage,
+    )
+    _require_contract_equal(
+        "OCR essential anchor recall",
+        quality_contract.get("essential_anchor_recall"),
+        ocr_defaults.required_anchor_recall,
+    )
     if not reference.reviewed or manifest["review"]["status"] != "reviewed":
         raise RuntimeError("real baseline source reference has not been human-reviewed")
     return source_data, manifest, reference
@@ -418,6 +444,51 @@ def _tessdata_records(executable: str) -> list[dict[str, Any]]:
     ]
 
 
+def _ocr_runtime_evidence(
+    source_data: bytes,
+    *,
+    decoder: PillowPngDecoder,
+    backend: TesseractOcrBackend,
+) -> OcrRuntimeEvidence:
+    capabilities = backend.healthcheck()
+    source_image = decoder.decode(source_data)
+    records_by_language = {
+        record["language"]: record
+        for record in _tessdata_records(capabilities.executable)
+    }
+    traineddata: list[OcrTrainedDataEvidence] = []
+    for language in LANGUAGES:
+        record = records_by_language.get(language)
+        if record is None or record.get("sha256") is None or record.get("size") is None:
+            raise RuntimeError(
+                "OCR runtime evidence is incomplete: could not hash traineddata "
+                f"for {language!r}"
+            )
+        traineddata.append(
+            OcrTrainedDataEvidence(
+                language=language,
+                size_bytes=record["size"],
+                sha256=record["sha256"],
+            )
+        )
+    return OcrRuntimeEvidence(
+        provider=capabilities.provider,
+        provider_version=capabilities.provider_version,
+        executable=capabilities.executable,
+        languages=LANGUAGES,
+        page_segmentation_mode=OCR_OPTIONS.page_segmentation_mode,
+        engine_mode=OCR_OPTIONS.engine_mode,
+        effective_ocr_dpi=round(
+            (source_image.source.dpi_x + source_image.source.dpi_y) / 2
+        ),
+        source_dpi_x=source_image.source.dpi_x,
+        source_dpi_y=source_image.source.dpi_y,
+        traineddata=tuple(traineddata),
+        operating_system=platform.platform(),
+        python_version=platform.python_version(),
+    )
+
+
 def _environment_record(
     *,
     fixture_directory: Path,
@@ -509,11 +580,14 @@ def _environment_record(
 
 
 def _final_state(
-    source_state: EvaluationState, restoration_state: EvaluationState
+    ocr_state: EvaluationState,
+    source_state: EvaluationState,
+    restoration_state: EvaluationState,
 ) -> str:
-    if EvaluationState.FAIL in (source_state, restoration_state):
+    states = (ocr_state, source_state, restoration_state)
+    if EvaluationState.FAIL in states:
         return EvaluationState.FAIL.value
-    if EvaluationState.REQUIRES_HUMAN_REVIEW in (source_state, restoration_state):
+    if EvaluationState.REQUIRES_HUMAN_REVIEW in states:
         return EvaluationState.REQUIRES_HUMAN_REVIEW.value
     return EvaluationState.PASS.value
 
@@ -592,6 +666,30 @@ def _run_in_created_output(
         ocr_options=OCR_OPTIONS,
     )
     document = extraction.document
+    quality = manifest["quality_contract"]
+    minima = quality["component_minimums"]
+    ocr_result = evaluate_ocr_quality(
+        reference,
+        OcrQualityObservation(
+            source_sha256=_sha256(source_data),
+            candidate_ir=document,
+            runtime=_ocr_runtime_evidence(
+                source_data,
+                decoder=decoder,
+                backend=backend,
+            ),
+        ),
+        config=OcrQualityConfig(
+            minimum_text_accuracy=minima["text_character_accuracy"],
+            minimum_logical_block_coverage=minima["logical_block_coverage"],
+            required_anchor_recall=quality["essential_anchor_recall"],
+        ),
+    )
+    _write_bytes_new(
+        output_directory / "ocr-quality-evaluation.json",
+        (ocr_result.to_json(indent=2) + "\n").encode("utf-8"),
+    )
+
     docx_path = bundle_directory / "reconstructed.docx"
     preview_path = bundle_directory / "reconstructed.png"
     docx_render = render_docx(
@@ -667,8 +765,6 @@ def _run_in_created_output(
         },
     )
 
-    quality = manifest["quality_contract"]
-    minima = quality["component_minimums"]
     source_config = SourceBaselineConfig(
         threshold=quality["overall_minimum"],
         minimum_text_accuracy=minima["text_character_accuracy"],
@@ -716,12 +812,24 @@ def _run_in_created_output(
         (restoration_result.to_json(indent=2) + "\n").encode("utf-8"),
     )
 
-    final_state = _final_state(source_result.state, restoration_result.state)
+    final_state = _final_state(
+        ocr_result.state,
+        source_result.state,
+        restoration_result.state,
+    )
     summary = {
         "fixture_id": manifest["fixture_id"],
         "expected_current_state": quality["expected_current_state"],
         "final_state": final_state,
         "layers": {
+            "source_to_candidate_ir_ocr": {
+                "state": ocr_result.state.value,
+                "text_character_accuracy": (ocr_result.text_character_accuracy.score),
+                "logical_block_coverage": (ocr_result.logical_block_coverage.score),
+                "essential_anchor_recall": (ocr_result.essential_anchor_recall.score),
+                "text_evidence": "candidate_ir",
+                "report": "ocr-quality-evaluation.json",
+            },
             "source_to_actual_docx": {
                 "state": source_result.state.value,
                 "overall_score": source_result.overall_score,
