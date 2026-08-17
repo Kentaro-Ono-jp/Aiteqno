@@ -1,16 +1,18 @@
 # Restoration evaluation
 
-Aiteqno has two deliberately separate quality measurements. The existing
-restoration score measures how much of a candidate Document IR survives in the
-generated DOCX. It does not measure OCR accuracy and does not inspect the source
-image. The source baseline compares human-reviewed source truth with candidate
-IR and text observed on actual rendered DOCX pages. Neither evaluator uses the
-diagnostic PNG preview as proof of the DOCX appearance.
+Aiteqno has three deliberately separate quality measurements. The OCR-only
+baseline compares human-reviewed source text with OCR tokens in the candidate
+Document IR before DOCX generation. The existing restoration score measures
+how much of that candidate IR survives in the generated DOCX; it does not
+measure OCR accuracy or inspect the source image. The end-to-end source baseline
+compares reviewed source truth with candidate IR and text observed on actual
+rendered DOCX pages. None of these evaluators uses the diagnostic PNG preview as
+proof of the DOCX appearance.
 
-The representative `78.79` result belongs only to the first measurement and
-uses fixed `FakeOcrBackend` observations. It is not evidence of real Tesseract
-accuracy or realistic Japanese-form restoration. The real-runtime source
-baseline is intentionally `fail`; see
+The representative `78.79` result belongs only to the second measurement, the
+IR-to-DOCX restoration score, and uses fixed `FakeOcrBackend` observations. It
+is not evidence of real Tesseract accuracy or realistic Japanese-form
+restoration. The real-runtime source baseline is intentionally `fail`; see
 [Real-runtime failure baseline](real-runtime-baseline.md).
 
 ## Inputs
@@ -121,3 +123,20 @@ Manual evidence uses explicit `pending`, `passed`, and `failed` states. Pending
 evidence prevents an otherwise clean automatic pass; a failed human check is a
 hard failure. See the baseline guide for weights, thresholds, artifacts, and CI
 runtime recording.
+
+## OCR-only baseline
+
+`evaluate_ocr_quality()` stops at the candidate Document IR. It reconstructs
+text from page geometry and reading order, matches reviewed logical source
+regions without trusting candidate IDs or token boundaries, and reports full
+character accuracy, block coverage and per-block accuracy, exact essential
+anchor recall, missing and extra text, and confidence diagnostics. Confidence
+never substitutes for a text comparison.
+
+This layer has independent minimums of 70 for full character accuracy and 60
+for logical-block coverage. Exact recall of every essential anchor, the source
+digest, the reviewed reference, candidate page count, and essential logical
+blocks are hard gates. Its create-only `ocr-quality-evaluation.json` checkpoint
+is written immediately after extraction, so a later DOCX or LibreOffice failure
+cannot erase the completed OCR evidence. See the real-runtime guide for the
+fixed input, runtime record, and intentional-failure CI policy.
