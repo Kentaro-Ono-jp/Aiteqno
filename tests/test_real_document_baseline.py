@@ -1315,8 +1315,8 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
             )
         )
         restoration_components = {
-            component["name"]: component["score"]
-            for component in restoration["components"]
+            name: component["score"]
+            for name, component in restoration["components"].items()
         }
         self.assertEqual(restoration["state"], "pass")
         self.assertGreaterEqual(restoration["overall_score"], 70.0)
