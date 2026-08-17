@@ -210,21 +210,29 @@ The four OCR A/B artifacts are written create-only before DOCX or preview
 generation. A later rendering, LibreOffice, or Poppler failure therefore leaves
 the completed comparison available beside `operational-error.json`.
 `control-bundle/` and `candidate-bundle/` remain the immutable observations.
-After a valid comparison, the selected observation is copied through a
-same-directory staging path and atomically published as `bundle/`; therefore
-its `document.ir.json`, assets, reconstructed DOCX, and preview describe one
-side consistently. `supported`, `regressed`, and `inconclusive` all select
-control in this runner; `supported` records eligibility for a separate adoption
-change. `invalid` stops before publication because the comparison evidence
-cannot be trusted.
+After a valid comparison, deterministic table topology is inferred only from
+the selected no-upscale control's existing point-coordinate primitives. The
+control observation remains immutable; the enriched control is written through
+a same-directory staging path and atomically published as `bundle/`. Its
+`document.ir.json`, assets, reconstructed DOCX, and preview therefore describe
+one side consistently. The topology step does not change any OCR text, element,
+source metadata, or asset. `supported`, `regressed`, and `inconclusive` all
+select control in this runner; `supported` records eligibility for a separate
+adoption change. `invalid` stops before topology/publication because the
+comparison evidence cannot be trusted.
+
+The current DOCX renderer intentionally does not consume this extension yet;
+its output remains the existing failing baseline. Native Word-table rendering
+from the reviewed topology is isolated to the next issue so structure inference
+and DOCX layout are never debugged in the same change.
 
 `environment.json` records the OS, Python, Aiteqno, installed Python packages,
 git revision, options, executable versions, `jpn`/`eng` trained-data hashes,
 Ubuntu package versions, locale/timezone, and fontconfig mappings. Exact OCR
 scores may move when those runtimes move; CI does not pin those scores. It
-verifies the fixed integrity contract and the current truthful `regressed`
-decision while the combined control-derived source-to-DOCX decision remains the
-expected `fail`.
+verifies the fixed integrity contract, the current truthful `regressed`
+decision, and the fixed 5-table/45-cell/210-text topology while the combined
+control-derived source-to-DOCX decision remains the expected `fail`.
 
 ## CI lanes and intentional updates
 

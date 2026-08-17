@@ -151,7 +151,8 @@ and exit codes, see the [OCR runtime guide](docs/ocr-runtime.md) and the
   Windows and Linux.
 - [Real-runtime failure baseline](docs/real-runtime-baseline.md) records the
   reviewed Japanese source, a same-runtime no-upscale/300-DPI OCR comparison,
-  actual LibreOffice pages, and the current expected end-to-end failures.
+  deterministic table topology, actual LibreOffice pages, and the current
+  expected end-to-end failures.
 - [Windows demo and release guide](docs/demo-release.md) documents the
   downloadable package and its reproducible archive contract.
 - [Golden fixture manifest](tests/fixtures/e2e/manifest.json) records fixture
