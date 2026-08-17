@@ -161,9 +161,12 @@ The deterministic representative golden scores `78.79 / 100` against a
 threshold of `70` after fixed fake OCR observations. That number measures
 candidate IR preservation in DOCX; it is not real OCR accuracy. The separate
 real-runtime Japanese baseline records control and 300 DPI candidate OCR
-immediately after Tesseract, before DOCX generation. It retains the unchanged
-candidate `ocr-quality-evaluation.json` plus transform and comparison evidence;
-the end-to-end layer currently remains `fail`. A numeric pass is never
+immediately after Tesseract, before DOCX generation. Although the 300 DPI trial
+improves aggregate OCR metrics in the current Ubuntu lane, it loses a logical
+block recovered by the no-upscale control and is therefore rejected. The
+downstream `bundle/` and DOCX remain control-derived; both observations and the
+comparison evidence are retained for diagnosis. The end-to-end layer currently
+remains `fail`. A numeric pass is never
 sufficient by itself: essential text, structure, output validity, source
 independence, actual page evidence, and human readability are separate gates.
 

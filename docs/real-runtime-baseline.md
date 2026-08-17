@@ -10,14 +10,15 @@ that recognition quality can be measured independently of every DOCX and
 rendering stage. Issue #47 adds a same-process OCR input-resolution A/B check:
 the original-resolution control and the 300 DPI working-raster candidate are
 measured with the same source, reference, regions, Tesseract runtime, and
-trained data before candidate DOCX work begins.
+trained data before downstream selection. The current candidate is rejected,
+so DOCX work continues from the unchanged control IR.
 
 ```text
 reviewed MIT source PNG + deterministic structure extraction
   -> control: real Tesseract without OCR-raster upscaling
   -> candidate: real Tesseract with 300 DPI OCR-only working rasters
   -> OCR reports + transform evidence + same-runtime A/B decision
-  -> candidate Document IR
+  -> atomically published selected bundle (control today)
   -> current DOCX renderer
   -> actual LibreOffice PDF
   -> Poppler page PNGs
@@ -59,8 +60,9 @@ quality layers, `ocr-quality-control-evaluation.json` and the existing
 `ocr-quality-evaluation.json` score the no-upscale control and 300 DPI candidate
 respectively. `ocr-input-transform.json` records the transform actually used by
 the backend, and `ocr-resolution-comparison.json` decides whether the candidate
-is a supported improvement. The runner does not infer working dimensions,
-scales, or effective DPI.
+is eligible as a supported improvement. The runner does not infer working
+dimensions, scales, or effective DPI, and it never turns eligibility into an
+automatic production adoption.
 
 1. `ocr-quality-evaluation.json` compares the reviewed source text directly
    with OCR text in the candidate IR. It is written immediately after real
@@ -68,15 +70,22 @@ scales, or effective DPI.
    LibreOffice, Poppler, or rendered-page OCR evidence, so a later rendering
    failure cannot erase or contaminate the completed OCR observation.
 2. `source-quality-evaluation.json` compares reviewed source truth with the
-   candidate IR and text OCRed from the actual rendered DOCX pages. Matching is
-   independent of candidate element IDs and OCR token segmentation.
+   selected IR and text OCRed from the actual rendered DOCX pages. The selected
+   IR is the no-upscale control for Issue #47. Matching is independent of
+   candidate element IDs and OCR token segmentation.
 3. `ir-to-docx-restoration-evaluation.json` is the existing evaluator. It asks
-   only how much of the candidate IR survived DOCX generation. It cannot measure
-   OCR accuracy because its expected content comes from that same candidate IR.
+   only how much of the selected IR survived DOCX generation. It cannot measure
+   OCR accuracy because its expected content comes from that same selected IR.
 4. `actual-docx-snapshot/` contains the LibreOffice PDF, every Poppler page PNG,
    page hashes/dimensions, and visible OCR tokens. The diagnostic
    `reconstructed.png` is retained separately and is never accepted as proof of
    the DOCX's actual appearance.
+
+For artifact compatibility, `baseline-summary.json` retains the historical
+`source_to_candidate_ir_ocr` and `candidate_ir_to_docx` layer names. In those
+keys, "candidate IR" means the IR selected for the source/restoration baseline,
+not necessarily the 300 DPI experiment. Their `selected_input` field is
+authoritative; `candidate_300_dpi_experiment` reports the experiment separately.
 
 The combined state fails if any scored layer fails. An unavailable human check
 remains `pending`; an explicit human rejection is `failed`. A known machine
@@ -98,18 +107,27 @@ PSM, OEM, the effective integer OCR DPI separately from decoded PNG metadata
 DPI, and trained-data hashes used for the observation. The candidate effective
 OCR DPI is 300 while the fixed PNG metadata remains approximately 96 DPI. Exact
 runtime-dependent scores are not pinned; the dedicated real-runtime test
-asserts the same-run delta and the comparison decision instead.
+asserts the same-run direction, integrity checks, recovery identities, and
+comparison decision instead.
 
 The 300 DPI path is supported only when full-text character accuracy improves
 by at least 1.0 percentage point, block coverage and anchor recall do not fall,
 no previously recovered anchor or block is lost, essential-block misses do not
 increase, and runtime, source/reference, geometry, and non-text IR integrity all
 match. A candidate may remain an OCR-quality `fail` against 70/60/100 and still
-be a supported, narrowly measured improvement. Confidence and token counts are
-diagnostics, not adoption criteria.
+be eligible as a supported, narrowly measured improvement. Confidence and token
+counts are diagnostics, not adoption criteria. A `supported` decision does not
+change production by itself; adoption requires a separate issue and review.
+
+The current Ubuntu observation improves text-character accuracy, logical-block
+coverage, and essential-anchor recall, but loses the control-recovered
+`request-language-label` logical block. It is therefore truthfully classified
+as `regressed`, not averaged into a win. Exact scores are deliberately not
+pinned. Other runtimes may produce different diagnostics, but the fixed Ubuntu
+lane must surface any decision change for review.
 
 The later visible-page OCR remains on its original no-upscale path. The 300 DPI
-experiment therefore affects only source-to-candidate-IR recognition; it does
+experiment therefore affects only its separately retained candidate IR; it does
 not silently change the source-to-actual-DOCX measurement in the same issue.
 
 ## Source-quality contract
@@ -175,6 +193,8 @@ real-runtime-baseline/
 |-- preview-render-report.json
 |-- control-bundle/
 |   `-- document.ir.json
+|-- candidate-bundle/
+|   `-- document.ir.json
 |-- bundle/
 |   |-- document.ir.json
 |   |-- reconstructed.docx
@@ -189,14 +209,22 @@ real-runtime-baseline/
 The four OCR A/B artifacts are written create-only before DOCX or preview
 generation. A later rendering, LibreOffice, or Poppler failure therefore leaves
 the completed comparison available beside `operational-error.json`.
+`control-bundle/` and `candidate-bundle/` remain the immutable observations.
+After a valid comparison, the selected observation is copied through a
+same-directory staging path and atomically published as `bundle/`; therefore
+its `document.ir.json`, assets, reconstructed DOCX, and preview describe one
+side consistently. `supported`, `regressed`, and `inconclusive` all select
+control in this runner; `supported` records eligibility for a separate adoption
+change. `invalid` stops before publication because the comparison evidence
+cannot be trusted.
 
 `environment.json` records the OS, Python, Aiteqno, installed Python packages,
 git revision, options, executable versions, `jpn`/`eng` trained-data hashes,
 Ubuntu package versions, locale/timezone, and fontconfig mappings. Exact OCR
 scores may move when those runtimes move; CI does not pin those scores. It
-verifies that the comparison is valid and supported under the fixed adoption
-contract, while the combined source-to-DOCX decision remains the expected
-`fail`.
+verifies the fixed integrity contract and the current truthful `regressed`
+decision while the combined control-derived source-to-DOCX decision remains the
+expected `fail`.
 
 ## CI lanes and intentional updates
 
@@ -204,9 +232,10 @@ The normal Windows/Linux Python matrix runs deterministic tests without
 machine-global document runtimes. A dedicated Ubuntu 24.04/Python 3.14 job
 installs real Tesseract, LibreOffice, Poppler, Noto CJK, and Liberation fonts.
 Its test succeeds only when both OCR observations complete, their comparison is
-valid and supported, the remaining process completes, and the combined quality
-decision is the expected `fail`. Evidence is uploaded on every run, including
-operational failures.
+valid and `regressed` for the documented lost block, control is selected, the
+remaining process completes, and the combined quality decision is the expected
+`fail`. Aggregate score gains are asserted only directionally; exact scores are
+not pinned. Evidence is uploaded on every run, including operational failures.
 
 When the baseline eventually becomes `pass`, do not merely change
 `expected_current_state`. Inspect every actual page, complete the human checks,

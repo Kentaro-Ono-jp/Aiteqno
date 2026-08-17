@@ -78,8 +78,10 @@ $env:AITEQNO_LIBREOFFICE_EXECUTABLE = "C:\Program Files\LibreOffice\program\soff
 CI runs the full deterministic suite on `ubuntu-latest` and `windows-latest`
 with Python 3.11 and 3.14 without machine-global document runtimes. A dedicated
 Ubuntu 24.04 job installs Tesseract, LibreOffice, Poppler, and Japanese fonts,
-runs both OCR inputs consecutively, gates the same-run comparison, then runs the
-real-runtime DOCX integrations and uploads all retained evidence.
+runs both OCR inputs consecutively, records the same-run comparison, keeps the
+no-upscale control selected for downstream DOCX work, then uploads all retained
+evidence. The lane currently asserts the truthful `regressed` 300 DPI decision;
+a changed decision requires review instead of silently adopting the candidate.
 
 ## Updating the golden contract
 

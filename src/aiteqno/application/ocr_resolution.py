@@ -677,11 +677,25 @@ def _geometry_issues(
                     failures.append(
                         f"{side}:text:{element.id}:source_bbox_outside_page"
                     )
+                # Extraction converts both pixel edges independently before it
+                # subtracts them.  Reproduce that canonical conversion exactly;
+                # converting width/height directly differs by one micro-point
+                # for real PNG DPI values such as 96.012.
+                left = round(source_bbox.x * 72 / page.source.dpi_x, 6)
+                top = round(source_bbox.y * 72 / page.source.dpi_y, 6)
+                right = round(
+                    (source_bbox.x + source_bbox.width) * 72 / page.source.dpi_x,
+                    6,
+                )
+                bottom = round(
+                    (source_bbox.y + source_bbox.height) * 72 / page.source.dpi_y,
+                    6,
+                )
                 expected = (
-                    round(source_bbox.x * 72 / page.source.dpi_x, 6),
-                    round(source_bbox.y * 72 / page.source.dpi_y, 6),
-                    round(source_bbox.width * 72 / page.source.dpi_x, 6),
-                    round(source_bbox.height * 72 / page.source.dpi_y, 6),
+                    left,
+                    top,
+                    round(right - left, 6),
+                    round(bottom - top, 6),
                 )
                 actual = (
                     element.bbox.x,

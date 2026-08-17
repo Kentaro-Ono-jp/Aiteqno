@@ -268,7 +268,7 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
             self.assertEqual(provenance.source_bbox_px, token.bbox)
             self.assertNotIn(token.text, provenance.notes)
 
-    def test_default_transform_scales_full_page_to_300_dpi_and_reports_evidence(
+    def test_explicit_300_dpi_transform_scales_page_and_reports_evidence(
         self,
     ):
         observed = []
@@ -282,6 +282,7 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
         }
         backend = TesseractOcrBackend(
             executable_path="test-tesseract",
+            target_dpi=300,
             transform_observer=observed.append,
         )
 
@@ -339,6 +340,7 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
         observed = []
         backend = TesseractOcrBackend(
             executable_path="test-tesseract",
+            target_dpi=300,
             transform_observer=observed.append,
         )
 
@@ -370,6 +372,7 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
         observed = []
         backend = TesseractOcrBackend(
             executable_path="test-tesseract",
+            target_dpi=300,
             transform_observer=observed.append,
         )
 
@@ -385,7 +388,7 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
         self.assertEqual(evidence.crops[0].actual_scale_x, 1.0)
         self.assertEqual(evidence.crops[0].actual_scale_y, 1.0)
 
-    def test_disabled_transform_preserves_geometry_and_has_distinct_digest(self):
+    def test_default_transform_is_disabled_and_has_distinct_candidate_digest(self):
         response = {
             "text": ["same"],
             "conf": ["99"],
@@ -395,21 +398,26 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
             "height": [13],
         }
 
-        def run(target_dpi):
+        def run(target_dpi=None, *, omit_target_dpi=False):
             observed = []
+            target_arguments = {} if omit_target_dpi else {"target_dpi": target_dpi}
             backend = TesseractOcrBackend(
                 executable_path="test-tesseract",
-                target_dpi=target_dpi,
                 transform_observer=observed.append,
+                **target_arguments,
             )
             with _runtime_patches(response=response) as image_to_data:
                 token = backend.recognize(self.image)[0]
             return token, observed[0], image_to_data.call_args
 
+        default, default_evidence, default_call = run(omit_target_dpi=True)
         control, control_evidence, control_call = run(None)
         repeated, repeated_evidence, _ = run(None)
         candidate, candidate_evidence, _ = run(300)
 
+        self.assertEqual(default, control)
+        self.assertEqual(default_evidence, control_evidence)
+        self.assertEqual(default_call.args[0].size, (200, 100))
         self.assertEqual(
             control.bbox,
             PixelBoundingBox(x=10, y=11, width=20, height=13),
@@ -431,6 +439,7 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
     def test_working_pixel_limit_is_stable_and_closes_region_crop(self):
         backend = TesseractOcrBackend(
             executable_path="test-tesseract",
+            target_dpi=300,
             max_working_pixels=100,
         )
         captured_crops = []
@@ -459,7 +468,10 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
             captured_crops[0].load()
 
     def test_tesseract_failure_closes_source_crop_and_resized_working_image(self):
-        backend = TesseractOcrBackend(executable_path="test-tesseract")
+        backend = TesseractOcrBackend(
+            executable_path="test-tesseract",
+            target_dpi=300,
+        )
         captured_crops = []
         captured_working = []
 
@@ -493,7 +505,10 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
                 raster.load()
 
     def test_resize_resource_failure_has_stable_code_and_closes_source_crop(self):
-        backend = TesseractOcrBackend(executable_path="test-tesseract")
+        backend = TesseractOcrBackend(
+            executable_path="test-tesseract",
+            target_dpi=300,
+        )
         captured_crops = []
 
         from aiteqno.adapters import tesseract as tesseract_adapter

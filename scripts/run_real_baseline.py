@@ -4,8 +4,10 @@ This command is intentionally a measurement runner, not a product-quality
 shortcut.  It keeps the source-grounded score separate from the existing
 IR-to-DOCX restoration score, checkpoints OCR-only quality before DOCX work,
 compares no-upscale and 300-DPI OCR inputs in the same process, and retains the
-actual LibreOffice PDF/pages used for the decision.  A known end-to-end quality
-``fail`` is a successful baseline run when ``--expect-state fail`` is supplied.
+actual LibreOffice PDF/pages from the selected no-upscale control.  The
+experimental candidate is never adopted without a separate reviewed change. A
+known end-to-end quality ``fail`` is a successful baseline run when
+``--expect-state fail`` is supplied.
 """
 
 from __future__ import annotations
@@ -18,6 +20,7 @@ import json
 import locale
 import os
 import platform
+import shutil
 import subprocess
 import sys
 from collections import Counter
@@ -107,6 +110,42 @@ def _write_json_new(path: Path, value: Any) -> None:
         json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     ).encode("utf-8")
     _write_bytes_new(path, payload)
+
+
+def _copytree_new_atomic(source: Path, destination: Path) -> None:
+    """Publish a selected bundle without exposing a partial destination."""
+
+    staging = destination.with_name(f".{destination.name}.staging")
+    if destination.exists() or staging.exists():
+        raise FileExistsError(
+            "selected bundle destination already exists; no files were overwritten: "
+            f"{destination}"
+        )
+    try:
+        shutil.copytree(source, staging)
+        if destination.exists():
+            raise FileExistsError(
+                "selected bundle destination appeared during publication; "
+                f"no files were overwritten: {destination}"
+            )
+        staging.rename(destination)
+    except Exception:
+        if staging.is_dir():
+            shutil.rmtree(staging)
+        raise
+
+
+def _select_ocr_input(decision: str) -> str:
+    """Keep downstream on control until a separate adoption change is reviewed."""
+
+    if decision in {"supported", "inconclusive", "regressed"}:
+        return "control"
+    if decision == "invalid":
+        raise RuntimeError(
+            "300 DPI OCR input comparison is invalid; downstream selection cannot "
+            "be trusted; review ocr-resolution-comparison.json"
+        )
+    raise RuntimeError(f"unknown OCR input comparison decision: {decision!r}")
 
 
 def _fixture_object(value: Any, label: str) -> Mapping[str, Any]:
@@ -763,10 +802,10 @@ def _run_in_created_output(
         languages=LANGUAGES,
         ocr_options=OCR_OPTIONS,
     )
-    bundle_directory = output_directory / "bundle"
+    candidate_bundle_directory = output_directory / "candidate-bundle"
     extraction = extract_png(
         source_data,
-        bundle_directory,
+        candidate_bundle_directory,
         decoder=decoder,
         structure_extractor=OpenCvStructureExtractor(),
         ocr_backend=candidate_backend,
@@ -847,23 +886,33 @@ def _run_in_created_output(
         output_directory / "ocr-resolution-comparison.json",
         (comparison.to_json(indent=2) + "\n").encode("utf-8"),
     )
-    if comparison.decision.value != "supported":
-        raise RuntimeError(
-            "300 DPI OCR input is not a supported improvement: "
-            f"{comparison.decision.value}; review ocr-resolution-comparison.json"
-        )
+    selected_input = _select_ocr_input(comparison.decision.value)
+    candidate_eligible = comparison.decision.value == "supported"
+    candidate_adopted = False
+    selected_extraction = control_extraction
+    selected_document = control_document
+    selected_ocr_result = control_ocr_result
+    selected_observation_bundle = control_bundle_directory
+    selected_backend = control_backend
+    selected_ocr_report = "ocr-quality-control-evaluation.json"
+
+    # The A/B observation bundles remain immutable evidence. Publish an atomic,
+    # create-only copy of the selected side at the established downstream path
+    # so document.ir.json, assets, and reconstructed files cannot disagree.
+    bundle_directory = output_directory / "bundle"
+    _copytree_new_atomic(selected_observation_bundle, bundle_directory)
 
     docx_path = bundle_directory / "reconstructed.docx"
     preview_path = bundle_directory / "reconstructed.png"
     docx_render = render_docx(
-        document,
+        selected_document,
         docx_path,
         renderer=PythonDocxRenderer(
             asset_resolver=BundleAssetResolver(bundle_directory)
         ),
     )
     preview_render = render_preview(
-        document,
+        selected_document,
         preview_path,
         renderer=PillowPreviewRenderer(
             asset_resolver=BundleAssetResolver(bundle_directory)
@@ -874,9 +923,13 @@ def _run_in_created_output(
     _write_json_new(
         output_directory / "extraction-diagnostics.json",
         {
-            "count": len(extraction.diagnostics),
+            "count": len(selected_extraction.diagnostics),
             "by_code": dict(
-                sorted(Counter(item.code for item in extraction.diagnostics).items())
+                sorted(
+                    Counter(
+                        item.code for item in selected_extraction.diagnostics
+                    ).items()
+                )
             ),
             "items": [
                 {
@@ -885,7 +938,7 @@ def _run_in_created_output(
                     "message": item.message,
                     "source_ref": item.source_ref,
                 }
-                for item in extraction.diagnostics
+                for item in selected_extraction.diagnostics
             ],
         },
     )
@@ -937,7 +990,7 @@ def _run_in_created_output(
     )
     source_observation = SourceBaselineObservation(
         source_sha256=_sha256(source_data),
-        candidate_ir=document,
+        candidate_ir=selected_document,
         final_docx_text=_docx_text(docx_observation),
         visible_rendered_text=visible_text,
         rendered_page_count=snapshot.page_count,
@@ -953,12 +1006,12 @@ def _run_in_created_output(
     )
 
     restoration_reference = build_evaluation_reference(
-        document,
-        reference_id=f"{reference.reference_id}-candidate-ir",
+        selected_document,
+        reference_id=f"{reference.reference_id}-{selected_input}-ir",
         reviewed=True,
     )
     restoration_result = evaluate_restoration(
-        document,
+        selected_document,
         restoration_reference,
         docx_path,
         docx_render.report,
@@ -976,7 +1029,7 @@ def _run_in_created_output(
     )
 
     final_state = _final_state(
-        ocr_result.state,
+        selected_ocr_result.state,
         source_result.state,
         restoration_result.state,
     )
@@ -987,16 +1040,37 @@ def _run_in_created_output(
         "layers": {
             "ocr_input_resolution_comparison": {
                 "decision": comparison.decision.value,
+                "selected_input": selected_input,
+                "candidate_eligible": candidate_eligible,
+                "candidate_adopted": candidate_adopted,
+                "reasons": list(comparison.reasons),
                 "control_report": "ocr-quality-control-evaluation.json",
                 "candidate_report": "ocr-quality-evaluation.json",
                 "transform_evidence": "ocr-input-transform.json",
                 "report": "ocr-resolution-comparison.json",
             },
             "source_to_candidate_ir_ocr": {
+                "state": selected_ocr_result.state.value,
+                "text_character_accuracy": (
+                    selected_ocr_result.text_character_accuracy.score
+                ),
+                "logical_block_coverage": (
+                    selected_ocr_result.logical_block_coverage.score
+                ),
+                "essential_anchor_recall": (
+                    selected_ocr_result.essential_anchor_recall.score
+                ),
+                "selected_input": selected_input,
+                "text_evidence": f"{selected_input}_ir",
+                "report": selected_ocr_report,
+            },
+            "candidate_300_dpi_experiment": {
                 "state": ocr_result.state.value,
-                "text_character_accuracy": (ocr_result.text_character_accuracy.score),
-                "logical_block_coverage": (ocr_result.logical_block_coverage.score),
-                "essential_anchor_recall": (ocr_result.essential_anchor_recall.score),
+                "text_character_accuracy": ocr_result.text_character_accuracy.score,
+                "logical_block_coverage": ocr_result.logical_block_coverage.score,
+                "essential_anchor_recall": ocr_result.essential_anchor_recall.score,
+                "adopted": candidate_adopted,
+                "eligible": candidate_eligible,
                 "text_evidence": "candidate_ir",
                 "report": "ocr-quality-evaluation.json",
             },
@@ -1008,7 +1082,10 @@ def _run_in_created_output(
             "candidate_ir_to_docx": {
                 "state": restoration_result.state.value,
                 "overall_score": restoration_result.overall_score,
-                "scope": "IR preservation only; not OCR or source-image accuracy",
+                "selected_input": selected_input,
+                "scope": (
+                    "selected IR preservation only; not OCR or source-image accuracy"
+                ),
             },
             "actual_docx_snapshot": {
                 "page_count": snapshot.page_count,
@@ -1023,7 +1100,7 @@ def _run_in_created_output(
         manifest=manifest,
         source_data=source_data,
         reference_path=fixture_directory / "reference.json",
-        backend=candidate_backend,
+        backend=selected_backend,
         snapshot=snapshot,
     )
     _write_json_new(output_directory / "environment.json", environment)

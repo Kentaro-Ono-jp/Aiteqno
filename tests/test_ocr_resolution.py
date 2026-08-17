@@ -32,7 +32,12 @@ FIXTURE_PATH = (
 SOURCE_SHA256 = "a" * 64
 
 
-def runtime(*, dpi: int, version: str = "5.5.0-test") -> OcrRuntimeEvidence:
+def runtime(
+    *,
+    dpi: int,
+    version: str = "5.5.0-test",
+    source_dpi: float = 96,
+) -> OcrRuntimeEvidence:
     return OcrRuntimeEvidence(
         provider="tesseract",
         provider_version=version,
@@ -41,8 +46,8 @@ def runtime(*, dpi: int, version: str = "5.5.0-test") -> OcrRuntimeEvidence:
         page_segmentation_mode=6,
         engine_mode=3,
         effective_ocr_dpi=dpi,
-        source_dpi_x=96,
-        source_dpi_y=96,
+        source_dpi_x=source_dpi,
+        source_dpi_y=source_dpi,
         traineddata=(
             OcrTrainedDataEvidence(
                 language="jpn",
@@ -70,6 +75,7 @@ def quality(
     recovered_anchors: tuple[str, ...],
     runtime_version: str = "5.5.0-test",
     token_count: int = 10,
+    source_dpi: float = 96,
 ) -> OcrQualityResult:
     blocks = tuple(
         OcrBlockEvaluation(
@@ -130,7 +136,11 @@ def quality(
         reference_id="synthetic-source-v1",
         reference_source_sha256=SOURCE_SHA256,
         observed_source_sha256=SOURCE_SHA256,
-        runtime=runtime(dpi=dpi, version=runtime_version),
+        runtime=runtime(
+            dpi=dpi,
+            version=runtime_version,
+            source_dpi=source_dpi,
+        ),
         expected_text="文書解析対象形式",
         observed_text="synthetic",
         text_character_accuracy=OcrMetricEvaluation(score=text_score, minimum=70),
@@ -170,6 +180,7 @@ def document(
     nontext_color: str | None = None,
     split_text: bool = False,
     parameters_digest: str = "3" * 64,
+    source_dpi: float = 96,
 ) -> DocumentIR:
     data = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
     page = data["pages"][0]
@@ -206,6 +217,30 @@ def document(
         second["provenance"][0]["source_refs"] = ["region-details"]
         insert_at = page["elements"].index(text) + 1
         page["elements"].insert(insert_at, second)
+    page["source"]["dpi_x"] = source_dpi
+    page["source"]["dpi_y"] = source_dpi
+    for element in page["elements"]:
+        if element["type"] != "text":
+            continue
+        source_bbox = element["provenance"][0]["source_bbox_px"]
+        left = round(source_bbox["x"] * 72 / source_dpi, 6)
+        top = round(source_bbox["y"] * 72 / source_dpi, 6)
+        right = round(
+            (source_bbox["x"] + source_bbox["width"]) * 72 / source_dpi,
+            6,
+        )
+        bottom = round(
+            (source_bbox["y"] + source_bbox["height"]) * 72 / source_dpi,
+            6,
+        )
+        element["bbox"] = {
+            "x": left,
+            "y": top,
+            "width": round(right - left, 6),
+            "height": round(bottom - top, 6),
+        }
+    if bbox_x != 48:
+        text["bbox"]["x"] = bbox_x
     if nontext_color is not None:
         line = next(
             element for element in page["elements"] if element["type"] == "line"
@@ -214,7 +249,7 @@ def document(
     return DocumentIR.from_dict(data)
 
 
-def transform(*, candidate: bool) -> dict[str, object]:
+def transform(*, candidate: bool, source_dpi: float = 96) -> dict[str, object]:
     def crop(
         *,
         region_ref: str,
@@ -224,7 +259,7 @@ def transform(*, candidate: bool) -> dict[str, object]:
         source_height: int,
         digest_character: str,
     ) -> dict[str, object]:
-        scale = 300 / 96 if candidate else 1
+        scale = 300 / source_dpi if candidate and source_dpi < 300 else 1
         working_width = int(source_width * scale + 0.5)
         working_height = int(source_height * scale + 0.5)
         return {
@@ -256,7 +291,7 @@ def transform(*, candidate: bool) -> dict[str, object]:
         "transform_version": "tesseract-raster-transform-v1",
         "enabled": candidate,
         "target_dpi": 300 if candidate else None,
-        "source_effective_dpi": 96.0,
+        "source_effective_dpi": float(source_dpi),
         "effective_ocr_dpi": 300 if candidate else 96,
         "max_working_pixels": 40_000_000,
         "pixel_mode": "RGB",
@@ -298,6 +333,7 @@ def run(
     recovered_anchors: tuple[str, ...],
     quality_override: OcrQualityResult | None = None,
     document_override: DocumentIR | None = None,
+    source_dpi: float = 96,
 ) -> OcrResolutionRun:
     return OcrResolutionRun(
         quality=quality_override
@@ -308,13 +344,15 @@ def run(
             anchor_score=anchor_score,
             recovered_blocks=recovered_blocks,
             recovered_anchors=recovered_anchors,
+            source_dpi=source_dpi,
         ),
         document=document_override
         or document(
             split_text=candidate,
             parameters_digest=("6" if candidate else "3") * 64,
+            source_dpi=source_dpi,
         ),
-        transform=transform(candidate=candidate),
+        transform=transform(candidate=candidate, source_dpi=source_dpi),
     )
 
 
@@ -671,6 +709,36 @@ class OcrResolutionComparisonTests(unittest.TestCase):
             "candidate:text:p001-text-0001-split:outside_parent_region",
             geometry.reasons,
         )
+
+    def test_real_png_dpi_uses_edge_rounded_point_geometry(self) -> None:
+        control = run(
+            candidate=False,
+            text_score=40,
+            block_score=50,
+            anchor_score=50,
+            recovered_blocks=("heading",),
+            recovered_anchors=("文書解析",),
+            source_dpi=96.012,
+        )
+        candidate = run(
+            candidate=True,
+            text_score=42,
+            block_score=100,
+            anchor_score=100,
+            recovered_blocks=("heading", "details"),
+            recovered_anchors=("文書解析", "対象形式"),
+            source_dpi=96.012,
+        )
+
+        result = compare_ocr_resolution(control, candidate)
+
+        self.assertEqual(result.decision, OcrResolutionDecision.SUPPORTED)
+        geometry = next(
+            check
+            for check in result.checks
+            if check.name == "source_geometry_and_provenance_integrity"
+        )
+        self.assertTrue(geometry.passed, geometry.reasons)
 
 
 if __name__ == "__main__":

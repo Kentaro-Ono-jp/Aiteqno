@@ -63,11 +63,12 @@ major version, and requested trained data before OCR begins.
 
 ## OCR working raster
 
-The Tesseract adapter defaults to a 300 DPI working raster when the decoded
-source metadata is below 300 DPI. Only each OCR crop (or the full-page OCR
-target when there are no regions) is enlarged: the decoded source, structure
-coordinates, assets, and Document IR page metadata remain untouched. The
-working raster stays RGB, uses Pillow LANCZOS resampling, is limited to
+The production Tesseract path keeps the decoded source resolution. Passing
+`target_dpi=300` explicitly enables the experimental working raster when the
+decoded source metadata is below 300 DPI. Only each OCR crop (or the full-page
+OCR target when there are no regions) is enlarged: the decoded source,
+structure coordinates, assets, and Document IR page metadata remain untouched.
+The working raster stays RGB, uses Pillow LANCZOS resampling, is limited to
 40,000,000 pixels per crop, and is never downscaled when the source is already
 300 DPI or higher.
 
@@ -79,8 +80,10 @@ positive source-pixel rectangles. The transform observer exposes the exact
 dimensions, scales, raster digests, effective DPI, and inverse-mapping policy
 used by a completed recognition call.
 
-`target_dpi=None` disables the working-raster resize and is retained for the
-controlled A/B baseline. OCR input resolution is adapter-specific and is not
+`target_dpi=None` is the production default and disables the working-raster
+resize. The real-runtime A/B runner invokes both settings explicitly. The
+current 300 DPI result is `regressed`, so the candidate is evidence only and is
+not a production default. OCR input resolution is adapter-specific and is not
 added to the portable `OcrOptions` contract.
 
 ## Ubuntu and GitHub Actions
