@@ -907,5 +907,20 @@ def validate_document(document: DocumentIR) -> None:
                 )
             )
 
+        topology_key = "jp.reactorfront.aiteqno.table_topology"
+        topology_value = page.extensions.get(topology_key)
+        if topology_value is not None:
+            # Imported lazily so the extension contract may reuse core geometry
+            # types without creating a module-import cycle.
+            from .table_topology import validate_table_topology_extension
+
+            issues.extend(
+                validate_table_topology_extension(
+                    page,
+                    topology_value,
+                    path=f'{page_path}.extensions["{topology_key}"]',
+                )
+            )
+
     if issues:
         raise DocumentIRValidationError(issues)

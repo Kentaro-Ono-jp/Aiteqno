@@ -56,6 +56,11 @@ from .ocr_resolution import (
 )
 from .preview import render_preview
 from .render import render_docx
+from .table_topology import (
+    TABLE_TOPOLOGY_BOUNDARY_TOLERANCE_PT,
+    TABLE_TOPOLOGY_PARAMETERS_DIGEST,
+    infer_table_topology,
+)
 
 __all__ = [
     "DEFAULT_LOGICAL_BLOCK_ACCURACY_THRESHOLD",
@@ -88,6 +93,8 @@ __all__ = [
     "SOURCE_BASELINE_EVALUATOR_NAME",
     "SOURCE_BASELINE_EVALUATOR_VERSION",
     "SourceBaselineConfig",
+    "TABLE_TOPOLOGY_BOUNDARY_TOLERANCE_PT",
+    "TABLE_TOPOLOGY_PARAMETERS_DIGEST",
     "PngExtractionError",
     "PngExtractionResult",
     "extract_png",
@@ -97,6 +104,7 @@ __all__ = [
     "evaluate_ocr_quality",
     "compare_ocr_resolution",
     "evaluate_source_baseline",
+    "infer_table_topology",
     "normalize_evaluation_text",
     "normalize_ocr_text",
     "normalize_source_text",

@@ -388,7 +388,29 @@ image region contained in the document MAY be cropped and stored as an asset.
 If an image candidate substantially covers the page, extraction MUST classify it
 for review rather than use it to bypass reconstruction.
 
-### 6.11 Versioning and compatibility
+### 6.11 Table-topology extension
+
+Closed, axis-aligned grids may be normalized without adding a fifth V1 element
+type. The page extension
+`jp.reactorfront.aiteqno.table_topology` stores schema-versioned tables, rows,
+columns, physical cells, spans, primitive support, and ordered text membership.
+All extension geometry remains in the same point coordinate system as the raw
+Document IR elements.
+
+The extension is derived evidence: raw `text`, `line`, and `rectangle` elements
+remain unchanged. Every line and rectangle receives exactly one semantic role,
+including page frame, page decoration, table border, row/column boundary, cell
+rectangle, duplicate support, or unassigned. Every text element is likewise
+accounted for as assigned, ambiguous, or outside a supported table. Unknown
+fields, duplicate topology IDs, invalid spans, incomplete grids, out-of-table
+geometry, and dangling element references are semantic validation failures.
+
+Stable table IDs follow page geometry order (`page-001-table-0000`); row,
+column, and cell IDs are derived from their logical indexes. The inference is
+independent of primitive array order. Renderers may consume this extension, but
+must never reclassify or delete its supporting raw primitives silently.
+
+### 6.12 Versioning and compatibility
 
 - `0.1.x` patch releases are backward-compatible clarifications or optional
   additions under existing extension points.
@@ -402,7 +424,7 @@ for review rather than use it to bypass reconstruction.
 - The schema is strict with `additionalProperties: false`; namespaced
   `extensions` is the compatibility escape hatch.
 
-### 6.12 Illustrative instance
+### 6.13 Illustrative instance
 
 This example explains the shape but is not the normative schema:
 

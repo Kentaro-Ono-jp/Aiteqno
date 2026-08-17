@@ -14,7 +14,12 @@ from unittest.mock import Mock, patch
 
 from PIL import Image
 
-from aiteqno.domain import DocumentIR
+from aiteqno.domain import (
+    TABLE_TOPOLOGY_EXTENSION_KEY,
+    DocumentIR,
+    TablePrimitiveRole,
+    read_page_table_topology,
+)
 from aiteqno.ports import (
     OcrRuntimeEvidence,
     OcrTrainedDataEvidence,
@@ -590,6 +595,11 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 events.append("compare")
                 return comparison
 
+            def completed_topology(document):
+                events.append("topology")
+                self.assertIs(document, control_ir)
+                return document
+
             def failed_render(document, path, **_kwargs):
                 events.append("render")
                 self.assertIs(document, control_ir)
@@ -624,6 +634,10 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 patch(
                     "scripts.run_real_baseline.compare_ocr_resolution",
                     side_effect=completed_comparison,
+                ),
+                patch(
+                    "scripts.run_real_baseline.infer_table_topology",
+                    side_effect=completed_topology,
                 ),
                 patch(
                     "scripts.run_real_baseline.render_docx",
@@ -674,6 +688,7 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                     "extract:control-bundle",
                     "extract:candidate-bundle",
                     "compare",
+                    "topology",
                     "render",
                 ],
             )
@@ -1149,7 +1164,84 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         self.assertTrue((output / "ocr-resolution-comparison.json").is_file())
         self.assertTrue((output / "control-bundle" / "document.ir.json").is_file())
         self.assertTrue((output / "candidate-bundle" / "document.ir.json").is_file())
+        control_document = DocumentIR.from_json(
+            (output / "control-bundle" / "document.ir.json").read_bytes()
+        )
+        selected_document = DocumentIR.from_json(
+            (output / "bundle" / "document.ir.json").read_bytes()
+        )
+        self.assertNotIn(
+            TABLE_TOPOLOGY_EXTENSION_KEY,
+            control_document.pages[0].extensions,
+        )
+        topology = read_page_table_topology(selected_document.pages[0])
+        self.assertIsNotNone(topology)
+        assert topology is not None
+        raw_type_counts = {
+            element_type: sum(
+                element.type.value == element_type
+                for element in selected_document.pages[0].elements
+            )
+            for element_type in ("text", "line", "rectangle", "image")
+        }
         self.assertEqual(
+            raw_type_counts,
+            {"text": 285, "line": 50, "rectangle": 51, "image": 0},
+        )
+        self.assertEqual(len(topology.tables), 5)
+        self.assertEqual(
+            tuple(
+                (table.logical_rows, table.logical_columns, len(table.cells))
+                for table in topology.tables
+            ),
+            ((4, 4, 14), (7, 2, 14), (4, 2, 8), (2, 3, 6), (3, 1, 3)),
+        )
+        self.assertEqual(sum(len(table.cells) for table in topology.tables), 45)
+        self.assertEqual(
+            sum(
+                len(cell.text_element_ids)
+                for table in topology.tables
+                for cell in table.cells
+            ),
+            210,
+        )
+        self.assertEqual(
+            tuple(
+                (cell.row_index, cell.column_index, cell.rowspan, cell.colspan)
+                for cell in topology.tables[0].cells
+                if cell.rowspan > 1 or cell.colspan > 1
+            ),
+            ((2, 2, 1, 2), (3, 2, 1, 2)),
+        )
+        self.assertEqual(topology.diagnostics.ambiguous_text_element_ids, ())
+        self.assertEqual(topology.diagnostics.ambiguous_primitive_element_ids, ())
+        self.assertEqual(topology.diagnostics.unassigned_primitive_element_ids, ())
+        self.assertEqual(len(topology.diagnostics.unassigned_text_element_ids), 75)
+        role_counts = {
+            role: sum(
+                assignment.role is role for assignment in topology.primitive_roles
+            )
+            for role in TablePrimitiveRole
+        }
+        self.assertEqual(role_counts[TablePrimitiveRole.PAGE_FRAME], 5)
+        self.assertEqual(role_counts[TablePrimitiveRole.PAGE_DECORATION], 4)
+        self.assertEqual(role_counts[TablePrimitiveRole.TABLE_OUTER_BORDER], 5)
+        self.assertEqual(role_counts[TablePrimitiveRole.CELL_RECTANGLE], 45)
+        self.assertEqual(
+            role_counts[TablePrimitiveRole.DUPLICATED_SUPPORTING_PRIMITIVE],
+            20,
+        )
+        self.assertEqual(role_counts[TablePrimitiveRole.ROW_BOUNDARY], 15)
+        self.assertEqual(role_counts[TablePrimitiveRole.COLUMN_BOUNDARY], 7)
+
+        control_data = control_document.to_dict()
+        selected_data = selected_document.to_dict()
+        selected_page_extensions = selected_data["pages"][0]["extensions"]
+        del selected_page_extensions[TABLE_TOPOLOGY_EXTENSION_KEY]
+        if not selected_page_extensions:
+            del selected_data["pages"][0]["extensions"]
+        self.assertEqual(selected_data, control_data)
+        self.assertNotEqual(
             (output / "bundle" / "document.ir.json").read_bytes(),
             (output / "control-bundle" / "document.ir.json").read_bytes(),
         )
@@ -1157,6 +1249,13 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
             (output / "bundle" / "document.ir.json").read_bytes(),
             (output / "candidate-bundle" / "document.ir.json").read_bytes(),
         )
+        preview_report = json.loads(
+            (output / "preview-render-report.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(len(preview_report["rendered_element_ids"]), 386)
+        self.assertEqual(preview_report["omitted_element_ids"], [])
+        self.assertEqual(preview_report["fallback_element_ids"], [])
+        self.assertEqual(preview_report["warnings"], [])
         self.assertTrue((output / "source-quality-evaluation.json").is_file())
         self.assertTrue((output / "ir-to-docx-restoration-evaluation.json").is_file())
         snapshot = output / "actual-docx-snapshot"

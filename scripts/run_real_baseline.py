@@ -52,6 +52,7 @@ from aiteqno.application import (
     evaluate_restoration,
     evaluate_source_baseline,
     extract_png,
+    infer_table_topology,
     render_docx,
     render_preview,
 )
@@ -112,9 +113,16 @@ def _write_json_new(path: Path, value: Any) -> None:
     _write_bytes_new(path, payload)
 
 
-def _copytree_new_atomic(source: Path, destination: Path) -> None:
+def _copytree_new_atomic(
+    source: Path,
+    destination: Path,
+    *,
+    document: DocumentIR | None = None,
+) -> None:
     """Publish a selected bundle without exposing a partial destination."""
 
+    if document is not None and not isinstance(document, DocumentIR):
+        raise TypeError("document must be a DocumentIR or null")
     staging = destination.with_name(f".{destination.name}.staging")
     if destination.exists() or staging.exists():
         raise FileExistsError(
@@ -123,6 +131,10 @@ def _copytree_new_atomic(source: Path, destination: Path) -> None:
         )
     try:
         shutil.copytree(source, staging)
+        if document is not None:
+            (staging / "document.ir.json").write_bytes(
+                document.to_json(indent=2).encode("utf-8")
+            )
         if destination.exists():
             raise FileExistsError(
                 "selected bundle destination appeared during publication; "
@@ -890,17 +902,21 @@ def _run_in_created_output(
     candidate_eligible = comparison.decision.value == "supported"
     candidate_adopted = False
     selected_extraction = control_extraction
-    selected_document = control_document
+    selected_document = infer_table_topology(control_document)
     selected_ocr_result = control_ocr_result
     selected_observation_bundle = control_bundle_directory
     selected_backend = control_backend
     selected_ocr_report = "ocr-quality-control-evaluation.json"
 
-    # The A/B observation bundles remain immutable evidence. Publish an atomic,
-    # create-only copy of the selected side at the established downstream path
-    # so document.ir.json, assets, and reconstructed files cannot disagree.
+    # The A/B observation bundles remain immutable OCR evidence. Add only the
+    # deterministic topology extension to the selected control, then publish an
+    # atomic create-only downstream bundle so IR, assets, and renders agree.
     bundle_directory = output_directory / "bundle"
-    _copytree_new_atomic(selected_observation_bundle, bundle_directory)
+    _copytree_new_atomic(
+        selected_observation_bundle,
+        bundle_directory,
+        document=selected_document,
+    )
 
     docx_path = bundle_directory / "reconstructed.docx"
     preview_path = bundle_directory / "reconstructed.png"
