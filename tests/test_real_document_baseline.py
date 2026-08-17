@@ -593,7 +593,8 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
             def failed_render(document, path, **_kwargs):
                 events.append("render")
                 self.assertIs(document, control_ir)
-                self.assertEqual(path, output / "bundle" / "reconstructed.docx")
+                self.assertTrue(path.parent.samefile(output / "bundle"))
+                self.assertEqual(path.name, "reconstructed.docx")
                 raise RuntimeError("forced downstream render failure")
 
             with (
@@ -773,7 +774,8 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
             def failed_render(document, path, **_kwargs):
                 events.append("render")
                 self.assertIs(document, control_ir)
-                self.assertEqual(path, output / "bundle" / "reconstructed.docx")
+                self.assertTrue(path.parent.samefile(output / "bundle"))
+                self.assertEqual(path.name, "reconstructed.docx")
                 raise RuntimeError("forced control downstream render failure")
 
             with (
