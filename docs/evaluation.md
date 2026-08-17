@@ -140,3 +140,12 @@ blocks are hard gates. Its create-only `ocr-quality-evaluation.json` checkpoint
 is written immediately after extraction, so a later DOCX or LibreOffice failure
 cannot erase the completed OCR evidence. See the real-runtime guide for the
 fixed input, runtime record, and intentional-failure CI policy.
+
+The real-runtime runner evaluates this unchanged contract twice in one process:
+first against a no-upscale control, then against the production 300 DPI
+OCR-working-raster path. `ocr-resolution-comparison.json` compares the two
+results and separately gates runtime identity, source/reference identity,
+source-coordinate integrity, and non-text IR identity. It does not change the
+OCR evaluator, its 70/60/100 thresholds, or its normalization. Exact scores are
+runtime observations; adoption depends on the same-run delta and no-regression
+rules documented in the real-runtime guide.

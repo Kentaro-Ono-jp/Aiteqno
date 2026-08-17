@@ -39,9 +39,10 @@ Tesseract backend.
 
 Consequently, this golden route is a deterministic IR-to-DOCX regression test,
 not a claim about real OCR or source-image restoration quality. The dedicated
-[real-runtime failure baseline](real-runtime-baseline.md) records real
-Tesseract quality before DOCX generation, then independently covers actual
-LibreOffice pages, visible-text OCR, and source-grounded evaluation.
+[real-runtime failure baseline](real-runtime-baseline.md) records a same-runtime
+no-upscale/300-DPI OCR comparison before DOCX generation, then independently
+covers actual LibreOffice pages, visible-text OCR, and source-grounded
+evaluation.
 
 ## Quality result
 
@@ -77,7 +78,8 @@ $env:AITEQNO_LIBREOFFICE_EXECUTABLE = "C:\Program Files\LibreOffice\program\soff
 CI runs the full deterministic suite on `ubuntu-latest` and `windows-latest`
 with Python 3.11 and 3.14 without machine-global document runtimes. A dedicated
 Ubuntu 24.04 job installs Tesseract, LibreOffice, Poppler, and Japanese fonts,
-then runs the real-runtime integrations and uploads their retained evidence.
+runs both OCR inputs consecutively, gates the same-run comparison, then runs the
+real-runtime DOCX integrations and uploads all retained evidence.
 
 ## Updating the golden contract
 

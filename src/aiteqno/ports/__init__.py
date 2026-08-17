@@ -76,6 +76,14 @@ from .ocr_quality import (
     OcrRuntimeEvidence,
     OcrTrainedDataEvidence,
 )
+from .ocr_resolution import (
+    OcrResolutionCheck,
+    OcrResolutionComparisonResult,
+    OcrResolutionDecision,
+    OcrResolutionMetricDelta,
+    OcrResolutionRecoveryDelta,
+    OcrResolutionRun,
+)
 from .preview import (
     PreviewFontSubstitution,
     PreviewRenderer,
@@ -150,6 +158,12 @@ __all__ = [
     "OcrRuntimeEvidence",
     "OcrToken",
     "OcrTrainedDataEvidence",
+    "OcrResolutionCheck",
+    "OcrResolutionComparisonResult",
+    "OcrResolutionDecision",
+    "OcrResolutionMetricDelta",
+    "OcrResolutionRecoveryDelta",
+    "OcrResolutionRun",
     "LowConfidenceTokenDiagnostic",
     "NormalizedBoundingBox",
     "ObservedElement",

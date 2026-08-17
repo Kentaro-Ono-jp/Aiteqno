@@ -7,13 +7,17 @@ image is processed by real Tesseract, reconstructed as DOCX, rendered by real
 LibreOffice, rasterized by Poppler, OCRed again from the actual pages, and then
 reported as an expected `fail`. Issue #45 adds an earlier OCR-only checkpoint so
 that recognition quality can be measured independently of every DOCX and
-rendering stage.
+rendering stage. Issue #47 adds a same-process OCR input-resolution A/B check:
+the original-resolution control and the 300 DPI working-raster candidate are
+measured with the same source, reference, regions, Tesseract runtime, and
+trained data before candidate DOCX work begins.
 
 ```text
-reviewed MIT source PNG
-  -> real Tesseract + current structure extraction
+reviewed MIT source PNG + deterministic structure extraction
+  -> control: real Tesseract without OCR-raster upscaling
+  -> candidate: real Tesseract with 300 DPI OCR-only working rasters
+  -> OCR reports + transform evidence + same-runtime A/B decision
   -> candidate Document IR
-  -> OCR-quality FAIL checkpoint (expected today)
   -> current DOCX renderer
   -> actual LibreOffice PDF
   -> Poppler page PNGs
@@ -21,10 +25,11 @@ reviewed MIT source PNG
   -> source-quality FAIL (expected today)
 ```
 
-No production OCR, structure extraction, Document IR, or DOCX reconstruction
-algorithm is changed by this baseline. A future improvement must move the same
-measurement without weakening the reference or silently accepting a changed
-runtime.
+Only the raster supplied inside the Tesseract adapter changes. The decoded
+source, structure extraction, source coordinates, Document IR schema, and DOCX
+reconstruction remain unchanged. Every returned token bbox is mapped back to
+the original source pixels. A future improvement must move the same measurement
+without weakening the reference or silently accepting a changed runtime.
 
 ## Licensed fixture and review
 
@@ -47,9 +52,15 @@ longer contains that image. `tests/fixtures/baseline/excluded-sources.json`
 retains only its URL, SHA-256, dimensions, and exclusion reason. Historical Git
 objects are not rewritten by this issue.
 
-## Four evidence layers
+## Evidence layers and the OCR A/B checkpoint
 
-The reports must not be collapsed into one ambiguous score.
+The reports must not be collapsed into one ambiguous score. Before the four
+quality layers, `ocr-quality-control-evaluation.json` and the existing
+`ocr-quality-evaluation.json` score the no-upscale control and 300 DPI candidate
+respectively. `ocr-input-transform.json` records the transform actually used by
+the backend, and `ocr-resolution-comparison.json` decides whether the candidate
+is a supported improvement. The runner does not infer working dimensions,
+scales, or effective DPI.
 
 1. `ocr-quality-evaluation.json` compares the reviewed source text directly
    with OCR text in the candidate IR. It is written immediately after real
@@ -84,9 +95,22 @@ retained for diagnosis, but confidence never substitutes for text correctness.
 
 The report also records the actual Tesseract provider/version, language order,
 PSM, OEM, the effective integer OCR DPI separately from decoded PNG metadata
-DPI, and trained-data hashes used for the observation. Exact runtime-dependent
-scores are not pinned; the dedicated real-runtime test independently asserts
-that the current OCR-only layer remains an expected `fail`.
+DPI, and trained-data hashes used for the observation. The candidate effective
+OCR DPI is 300 while the fixed PNG metadata remains approximately 96 DPI. Exact
+runtime-dependent scores are not pinned; the dedicated real-runtime test
+asserts the same-run delta and the comparison decision instead.
+
+The 300 DPI path is supported only when full-text character accuracy improves
+by at least 1.0 percentage point, block coverage and anchor recall do not fall,
+no previously recovered anchor or block is lost, essential-block misses do not
+increase, and runtime, source/reference, geometry, and non-text IR integrity all
+match. A candidate may remain an OCR-quality `fail` against 70/60/100 and still
+be a supported, narrowly measured improvement. Confidence and token counts are
+diagnostics, not adoption criteria.
+
+The later visible-page OCR remains on its original no-upscale path. The 300 DPI
+experiment therefore affects only source-to-candidate-IR recognition; it does
+not silently change the source-to-actual-DOCX measurement in the same issue.
 
 ## Source-quality contract
 
@@ -139,13 +163,18 @@ real-runtime-baseline/
 |-- preflight-environment.json
 |-- environment.json
 |-- baseline-summary.json
+|-- ocr-quality-control-evaluation.json
 |-- ocr-quality-evaluation.json
+|-- ocr-input-transform.json
+|-- ocr-resolution-comparison.json
 |-- source-quality-evaluation.json
 |-- ir-to-docx-restoration-evaluation.json
 |-- extraction-diagnostics.json
 |-- docx-observation.json
 |-- docx-render-report.json
 |-- preview-render-report.json
+|-- control-bundle/
+|   `-- document.ir.json
 |-- bundle/
 |   |-- document.ir.json
 |   |-- reconstructed.docx
@@ -157,20 +186,27 @@ real-runtime-baseline/
     `-- page-001.png ...
 ```
 
+The four OCR A/B artifacts are written create-only before DOCX or preview
+generation. A later rendering, LibreOffice, or Poppler failure therefore leaves
+the completed comparison available beside `operational-error.json`.
+
 `environment.json` records the OS, Python, Aiteqno, installed Python packages,
 git revision, options, executable versions, `jpn`/`eng` trained-data hashes,
 Ubuntu package versions, locale/timezone, and fontconfig mappings. Exact OCR
-scores may move when those runtimes move; CI asserts that the current decision
-is `fail`, not that runtime-dependent bytes are identical.
+scores may move when those runtimes move; CI does not pin those scores. It
+verifies that the comparison is valid and supported under the fixed adoption
+contract, while the combined source-to-DOCX decision remains the expected
+`fail`.
 
 ## CI lanes and intentional updates
 
 The normal Windows/Linux Python matrix runs deterministic tests without
 machine-global document runtimes. A dedicated Ubuntu 24.04/Python 3.14 job
 installs real Tesseract, LibreOffice, Poppler, Noto CJK, and Liberation fonts.
-Its test succeeds only when the whole process completes and the quality decision
-is the expected `fail`. Evidence is uploaded on every run, including operational
-failures.
+Its test succeeds only when both OCR observations complete, their comparison is
+valid and supported, the remaining process completes, and the combined quality
+decision is the expected `fail`. Evidence is uploaded on every run, including
+operational failures.
 
 When the baseline eventually becomes `pass`, do not merely change
 `expected_current_state`. Inspect every actual page, complete the human checks,

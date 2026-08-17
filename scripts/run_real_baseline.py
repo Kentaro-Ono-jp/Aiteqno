@@ -3,9 +3,9 @@
 This command is intentionally a measurement runner, not a product-quality
 shortcut.  It keeps the source-grounded score separate from the existing
 IR-to-DOCX restoration score, checkpoints OCR-only quality before DOCX work,
-and retains the actual LibreOffice PDF/pages used for the decision.  A known
-quality ``fail`` is a successful baseline run when ``--expect-state fail`` is
-supplied.
+compares no-upscale and 300-DPI OCR inputs in the same process, and retains the
+actual LibreOffice PDF/pages used for the decision.  A known end-to-end quality
+``fail`` is a successful baseline run when ``--expect-state fail`` is supplied.
 """
 
 from __future__ import annotations
@@ -39,10 +39,12 @@ from aiteqno.adapters import (
     PythonDocxRenderer,
     TesseractOcrBackend,
 )
+from aiteqno.adapters.tesseract import TesseractRasterTransformEvidence
 from aiteqno.application import (
     OcrQualityConfig,
     SourceBaselineConfig,
     build_evaluation_reference,
+    compare_ocr_resolution,
     evaluate_ocr_quality,
     evaluate_restoration,
     evaluate_source_baseline,
@@ -50,11 +52,13 @@ from aiteqno.application import (
     render_docx,
     render_preview,
 )
-from aiteqno.domain import ElementType
+from aiteqno.domain import DocumentIR, ElementType
 from aiteqno.ports import (
     EvaluationState,
     OcrOptions,
     OcrQualityObservation,
+    OcrQualityResult,
+    OcrResolutionRun,
     OcrRuntimeEvidence,
     OcrTrainedDataEvidence,
     SnapshotObservation,
@@ -76,6 +80,8 @@ OCR_OPTIONS = OcrOptions(page_segmentation_mode=6, engine_mode=3)
 OCR_PROVIDER = "tesseract"
 MINIMUM_TESSERACT_MAJOR_VERSION = 5
 SOURCE_DPI = 96
+CANDIDATE_OCR_DPI = 300
+REFERENCE_SHA256 = "45d3322ee7eea3d86fe981d93dba5cc9ac83b27ca638259051a62868c8f15a31"
 
 
 def _sha256(data: bytes) -> str:
@@ -158,7 +164,13 @@ def _read_fixture(
     manifest_path = fixture_directory / "manifest.json"
     reference_path = fixture_directory / "reference.json"
     manifest_value = json.loads(manifest_path.read_text(encoding="utf-8"))
-    reference_value = json.loads(reference_path.read_text(encoding="utf-8"))
+    reference_bytes = reference_path.read_bytes()
+    _require_contract_equal(
+        "reference JSON SHA-256",
+        _sha256(reference_bytes),
+        REFERENCE_SHA256,
+    )
+    reference_value = json.loads(reference_bytes)
     manifest = dict(_fixture_object(manifest_value, "manifest"))
     reference_data = _fixture_object(reference_value, "reference")
     source_contract = _fixture_object(manifest.get("source"), "manifest source")
@@ -303,15 +315,94 @@ def _read_fixture(
     return source_data, manifest, reference
 
 
-def _runtime() -> tuple[PillowPngDecoder, TesseractOcrBackend]:
+def _runtime() -> tuple[
+    PillowPngDecoder,
+    TesseractOcrBackend,
+    TesseractOcrBackend,
+    TesseractOcrBackend,
+    list[TesseractRasterTransformEvidence],
+    list[TesseractRasterTransformEvidence],
+]:
     decoder = PillowPngDecoder(fallback_dpi=SOURCE_DPI)
-    backend = TesseractOcrBackend(
-        executable_path=os.environ.get("AITEQNO_TESSERACT_EXECUTABLE") or None,
-        tessdata_prefix=os.environ.get("AITEQNO_TESSDATA_PREFIX") or None,
-        required_languages=LANGUAGES,
+    common = {
+        "executable_path": os.environ.get("AITEQNO_TESSERACT_EXECUTABLE") or None,
+        "tessdata_prefix": os.environ.get("AITEQNO_TESSDATA_PREFIX") or None,
+        "required_languages": LANGUAGES,
+    }
+    control_transforms: list[TesseractRasterTransformEvidence] = []
+    candidate_transforms: list[TesseractRasterTransformEvidence] = []
+    control_backend = TesseractOcrBackend(
+        **common,
+        target_dpi=None,
+        transform_observer=control_transforms.append,
     )
-    backend.healthcheck()
-    return decoder, backend
+    candidate_backend = TesseractOcrBackend(
+        **common,
+        target_dpi=CANDIDATE_OCR_DPI,
+        transform_observer=candidate_transforms.append,
+    )
+    snapshot_backend = TesseractOcrBackend(
+        **common,
+        target_dpi=None,
+    )
+    control_backend.healthcheck()
+    candidate_backend.healthcheck()
+    snapshot_backend.healthcheck()
+    return (
+        decoder,
+        control_backend,
+        candidate_backend,
+        snapshot_backend,
+        control_transforms,
+        candidate_transforms,
+    )
+
+
+def _one_transform_evidence(
+    records: list[TesseractRasterTransformEvidence],
+    *,
+    label: str,
+) -> TesseractRasterTransformEvidence:
+    if len(records) != 1:
+        raise RuntimeError(
+            f"{label} OCR transform evidence is incomplete: expected one "
+            f"recognize record, observed {len(records)}"
+        )
+    evidence = records[0]
+    if not hasattr(evidence, "effective_ocr_dpi") or not callable(
+        getattr(evidence, "to_dict", None)
+    ):
+        raise RuntimeError(f"{label} OCR transform evidence has an invalid type")
+    return evidence
+
+
+def _quality_config(manifest: Mapping[str, Any]) -> OcrQualityConfig:
+    quality = manifest["quality_contract"]
+    minima = quality["component_minimums"]
+    return OcrQualityConfig(
+        minimum_text_accuracy=minima["text_character_accuracy"],
+        minimum_logical_block_coverage=minima["logical_block_coverage"],
+        required_anchor_recall=quality["essential_anchor_recall"],
+    )
+
+
+def _evaluate_ocr_run(
+    *,
+    source_data: bytes,
+    reference: SourceBaselineReference,
+    document: DocumentIR,
+    runtime: OcrRuntimeEvidence,
+    config: OcrQualityConfig,
+) -> OcrQualityResult:
+    return evaluate_ocr_quality(
+        reference,
+        OcrQualityObservation(
+            source_sha256=_sha256(source_data),
+            candidate_ir=document,
+            runtime=runtime,
+        ),
+        config=config,
+    )
 
 
 def _docx_text(observation: Any) -> str:
@@ -449,6 +540,7 @@ def _ocr_runtime_evidence(
     *,
     decoder: PillowPngDecoder,
     backend: TesseractOcrBackend,
+    transform: TesseractRasterTransformEvidence,
 ) -> OcrRuntimeEvidence:
     capabilities = backend.healthcheck()
     source_image = decoder.decode(source_data)
@@ -478,9 +570,7 @@ def _ocr_runtime_evidence(
         languages=LANGUAGES,
         page_segmentation_mode=OCR_OPTIONS.page_segmentation_mode,
         engine_mode=OCR_OPTIONS.engine_mode,
-        effective_ocr_dpi=round(
-            (source_image.source.dpi_x + source_image.source.dpi_y) / 2
-        ),
+        effective_ocr_dpi=transform.effective_ocr_dpi,
         source_dpi_x=source_image.source.dpi_x,
         source_dpi_y=source_image.source.dpi_y,
         traineddata=tuple(traineddata),
@@ -640,7 +730,14 @@ def _run_in_created_output(
     source_path = output_directory / "source.png"
     _write_bytes_new(source_path, source_data)
 
-    decoder, backend = _runtime()
+    (
+        decoder,
+        control_backend,
+        candidate_backend,
+        snapshot_backend,
+        control_transforms,
+        candidate_transforms,
+    ) = _runtime()
     _write_json_new(
         output_directory / "preflight-environment.json",
         _environment_record(
@@ -648,9 +745,23 @@ def _run_in_created_output(
             manifest=manifest,
             source_data=source_data,
             reference_path=fixture_directory / "reference.json",
-            backend=backend,
+            backend=candidate_backend,
             snapshot=None,
         ),
+    )
+
+    control_bundle_directory = output_directory / "control-bundle"
+    control_extraction = extract_png(
+        source_data,
+        control_bundle_directory,
+        decoder=decoder,
+        structure_extractor=OpenCvStructureExtractor(),
+        ocr_backend=control_backend,
+        asset_encoder=PillowPngAssetEncoder(),
+        validator=JsonSchemaDocumentIRValidator(),
+        bundle_writer=FilesystemDocumentBundleWriter(),
+        languages=LANGUAGES,
+        ocr_options=OCR_OPTIONS,
     )
     bundle_directory = output_directory / "bundle"
     extraction = extract_png(
@@ -658,7 +769,7 @@ def _run_in_created_output(
         bundle_directory,
         decoder=decoder,
         structure_extractor=OpenCvStructureExtractor(),
-        ocr_backend=backend,
+        ocr_backend=candidate_backend,
         asset_encoder=PillowPngAssetEncoder(),
         validator=JsonSchemaDocumentIRValidator(),
         bundle_writer=FilesystemDocumentBundleWriter(),
@@ -666,29 +777,81 @@ def _run_in_created_output(
         ocr_options=OCR_OPTIONS,
     )
     document = extraction.document
+    control_document = control_extraction.document
     quality = manifest["quality_contract"]
     minima = quality["component_minimums"]
-    ocr_result = evaluate_ocr_quality(
-        reference,
-        OcrQualityObservation(
-            source_sha256=_sha256(source_data),
-            candidate_ir=document,
-            runtime=_ocr_runtime_evidence(
-                source_data,
-                decoder=decoder,
-                backend=backend,
-            ),
+    quality_config = _quality_config(manifest)
+    control_transform = _one_transform_evidence(
+        control_transforms,
+        label="control",
+    )
+    candidate_transform = _one_transform_evidence(
+        candidate_transforms,
+        label="candidate",
+    )
+    control_ocr_result = _evaluate_ocr_run(
+        source_data=source_data,
+        reference=reference,
+        document=control_document,
+        runtime=_ocr_runtime_evidence(
+            source_data,
+            decoder=decoder,
+            backend=control_backend,
+            transform=control_transform,
         ),
-        config=OcrQualityConfig(
-            minimum_text_accuracy=minima["text_character_accuracy"],
-            minimum_logical_block_coverage=minima["logical_block_coverage"],
-            required_anchor_recall=quality["essential_anchor_recall"],
+        config=quality_config,
+    )
+    ocr_result = _evaluate_ocr_run(
+        source_data=source_data,
+        reference=reference,
+        document=document,
+        runtime=_ocr_runtime_evidence(
+            source_data,
+            decoder=decoder,
+            backend=candidate_backend,
+            transform=candidate_transform,
         ),
+        config=quality_config,
+    )
+    _write_bytes_new(
+        output_directory / "ocr-quality-control-evaluation.json",
+        (control_ocr_result.to_json(indent=2) + "\n").encode("utf-8"),
     )
     _write_bytes_new(
         output_directory / "ocr-quality-evaluation.json",
         (ocr_result.to_json(indent=2) + "\n").encode("utf-8"),
     )
+    control_transform_dict = control_transform.to_dict()
+    candidate_transform_dict = candidate_transform.to_dict()
+    _write_json_new(
+        output_directory / "ocr-input-transform.json",
+        {
+            "schema_version": "1.0",
+            "control": control_transform_dict,
+            "candidate": candidate_transform_dict,
+        },
+    )
+    comparison = compare_ocr_resolution(
+        OcrResolutionRun(
+            quality=control_ocr_result,
+            document=control_document,
+            transform=control_transform_dict,
+        ),
+        OcrResolutionRun(
+            quality=ocr_result,
+            document=document,
+            transform=candidate_transform_dict,
+        ),
+    )
+    _write_bytes_new(
+        output_directory / "ocr-resolution-comparison.json",
+        (comparison.to_json(indent=2) + "\n").encode("utf-8"),
+    )
+    if comparison.decision.value != "supported":
+        raise RuntimeError(
+            "300 DPI OCR input is not a supported improvement: "
+            f"{comparison.decision.value}; review ocr-resolution-comparison.json"
+        )
 
     docx_path = bundle_directory / "reconstructed.docx"
     preview_path = bundle_directory / "reconstructed.png"
@@ -753,7 +916,7 @@ def _run_in_created_output(
         snapshot_directory,
         snapshot.pages,
         decoder=decoder,
-        backend=backend,
+        backend=snapshot_backend,
     )
     _write_json_new(
         snapshot_directory / "visible-ocr.json",
@@ -822,6 +985,13 @@ def _run_in_created_output(
         "expected_current_state": quality["expected_current_state"],
         "final_state": final_state,
         "layers": {
+            "ocr_input_resolution_comparison": {
+                "decision": comparison.decision.value,
+                "control_report": "ocr-quality-control-evaluation.json",
+                "candidate_report": "ocr-quality-evaluation.json",
+                "transform_evidence": "ocr-input-transform.json",
+                "report": "ocr-resolution-comparison.json",
+            },
             "source_to_candidate_ir_ocr": {
                 "state": ocr_result.state.value,
                 "text_character_accuracy": (ocr_result.text_character_accuracy.score),
@@ -853,7 +1023,7 @@ def _run_in_created_output(
         manifest=manifest,
         source_data=source_data,
         reference_path=fixture_directory / "reference.json",
-        backend=backend,
+        backend=candidate_backend,
         snapshot=snapshot,
     )
     _write_json_new(output_directory / "environment.json", environment)
