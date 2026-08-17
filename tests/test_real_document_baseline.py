@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import json
+import math
 import os
 import shutil
 import subprocess
@@ -19,7 +20,12 @@ from aiteqno.ports import (
     OcrTrainedDataEvidence,
     SourceBaselineReference,
 )
-from scripts.run_real_baseline import _read_fixture, run as run_real_baseline
+from scripts.run_real_baseline import (
+    _copytree_new_atomic,
+    _read_fixture,
+    _select_ocr_input,
+    run as run_real_baseline,
+)
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -32,6 +38,9 @@ FIXTURE_DIRECTORY = (
 LEGACY_UNLICENSED_SOURCE = REPOSITORY_ROOT / "input" / "form_blank_testClinic_v1.png"
 EXPECTED_SOURCE_SHA256 = (
     "df0b724d8fcc1b5d5e0483a60401c2cb3882675f71d1e37ecdbcff9e687ffc25"
+)
+EXPECTED_REFERENCE_SHA256 = (
+    "45d3322ee7eea3d86fe981d93dba5cc9ac83b27ca638259051a62868c8f15a31"
 )
 
 
@@ -49,6 +58,12 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
         )
 
         self.assertEqual(hashlib.sha256(source).hexdigest(), EXPECTED_SOURCE_SHA256)
+        self.assertEqual(
+            hashlib.sha256(
+                (FIXTURE_DIRECTORY / "reference.json").read_bytes()
+            ).hexdigest(),
+            EXPECTED_REFERENCE_SHA256,
+        )
         self.assertEqual(manifest["source"]["sha256"], EXPECTED_SOURCE_SHA256)
         self.assertEqual(reference.source_sha256, EXPECTED_SOURCE_SHA256)
         self.assertEqual(manifest["license"], "MIT")
@@ -155,7 +170,14 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 "reference",
                 ("source_dimensions", "pixel_height"),
                 992,
-                "reference source dimensions",
+                "reference JSON SHA-256",
+            ),
+            (
+                "reference text",
+                "reference",
+                ("essential_text_anchors", 0),
+                "都合のよい正解",
+                "reference JSON SHA-256",
             ),
             (
                 "ocr provider",
@@ -295,6 +317,172 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
             self.assertEqual(after, before)
             self.assertFalse((output / "operational-error.json").exists())
 
+    def test_ocr_input_selection_policy_covers_all_decision_classes(self):
+        self.assertEqual(_select_ocr_input("supported"), "control")
+        self.assertEqual(_select_ocr_input("inconclusive"), "control")
+        self.assertEqual(_select_ocr_input("regressed"), "control")
+        with self.assertRaisesRegex(RuntimeError, "comparison is invalid"):
+            _select_ocr_input("invalid")
+        with self.assertRaisesRegex(RuntimeError, "unknown OCR input"):
+            _select_ocr_input("unexpected")
+
+    def test_selected_bundle_publication_never_exposes_a_partial_bundle(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            source = root / "control-bundle"
+            source.mkdir()
+            (source / "document.ir.json").write_text("{}\n", encoding="utf-8")
+            destination = root / "bundle"
+            staging = root / ".bundle.staging"
+
+            def partial_copy(_source, target):
+                target.mkdir()
+                (target / "partial.txt").write_text("partial", encoding="utf-8")
+                raise OSError("forced copy failure")
+
+            with patch(
+                "scripts.run_real_baseline.shutil.copytree",
+                side_effect=partial_copy,
+            ):
+                with self.assertRaisesRegex(OSError, "forced copy failure"):
+                    _copytree_new_atomic(source, destination)
+
+            self.assertFalse(destination.exists())
+            self.assertFalse(staging.exists())
+
+            destination.mkdir()
+            sentinel = destination / "sentinel.txt"
+            sentinel.write_text("retain exactly\n", encoding="utf-8")
+            with self.assertRaisesRegex(FileExistsError, "already exists"):
+                _copytree_new_atomic(source, destination)
+            self.assertEqual(sentinel.read_text(encoding="utf-8"), "retain exactly\n")
+
+    def test_invalid_comparison_retains_ab_evidence_and_stops_before_publication(self):
+        document_payload = (
+            Path(__file__).resolve().parent
+            / "fixtures"
+            / "document_ir"
+            / "canonical.document.ir.json"
+        ).read_bytes()
+        documents = iter(
+            (
+                DocumentIR.from_json(document_payload),
+                DocumentIR.from_json(document_payload),
+            )
+        )
+
+        def transform(*, enabled, target_dpi, effective_ocr_dpi):
+            evidence = Mock(effective_ocr_dpi=effective_ocr_dpi)
+            evidence.to_dict.return_value = {
+                "schema_version": "1.0",
+                "enabled": enabled,
+                "target_dpi": target_dpi,
+                "effective_ocr_dpi": effective_ocr_dpi,
+            }
+            return evidence
+
+        control_transform = transform(
+            enabled=False,
+            target_dpi=None,
+            effective_ocr_dpi=96,
+        )
+        candidate_transform = transform(
+            enabled=True,
+            target_dpi=300,
+            effective_ocr_dpi=300,
+        )
+        quality_results = []
+        for label in ("control", "candidate"):
+            result = Mock()
+            result.to_json.return_value = json.dumps(
+                {"schema_version": "1.0", "observation": label},
+                sort_keys=True,
+            )
+            quality_results.append(result)
+        comparison = Mock(reasons=("comparison_invalid:transform_integrity",))
+        comparison.decision.value = "invalid"
+        comparison.to_json.return_value = json.dumps(
+            {
+                "schema_version": "1.0",
+                "decision": "invalid",
+                "reasons": ["comparison_invalid:transform_integrity"],
+            },
+            sort_keys=True,
+        )
+        render_docx_mock = Mock()
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            output = Path(temporary_directory) / "invalid-comparison"
+
+            def completed_extraction(_source_data, bundle_directory, **_kwargs):
+                bundle_directory.mkdir(parents=True)
+                (bundle_directory / "document.ir.json").write_bytes(document_payload)
+                return Mock(document=next(documents), diagnostics=())
+
+            with (
+                patch(
+                    "scripts.run_real_baseline._runtime",
+                    return_value=(
+                        Mock(),
+                        Mock(),
+                        Mock(),
+                        Mock(),
+                        [control_transform],
+                        [candidate_transform],
+                    ),
+                ),
+                patch(
+                    "scripts.run_real_baseline._environment_record",
+                    return_value={"phase": "deterministic-test"},
+                ),
+                patch(
+                    "scripts.run_real_baseline.extract_png",
+                    side_effect=completed_extraction,
+                ),
+                patch(
+                    "scripts.run_real_baseline._ocr_runtime_evidence",
+                    return_value=Mock(),
+                ),
+                patch(
+                    "scripts.run_real_baseline._evaluate_ocr_run",
+                    side_effect=quality_results,
+                ),
+                patch(
+                    "scripts.run_real_baseline.OcrResolutionRun",
+                    side_effect=lambda **values: values,
+                ),
+                patch(
+                    "scripts.run_real_baseline.compare_ocr_resolution",
+                    return_value=comparison,
+                ),
+                patch(
+                    "scripts.run_real_baseline.render_docx",
+                    render_docx_mock,
+                ),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "comparison is invalid"):
+                    run_real_baseline(FIXTURE_DIRECTORY, output, expect_state=None)
+
+            render_docx_mock.assert_not_called()
+            for relative_path in (
+                "ocr-quality-control-evaluation.json",
+                "ocr-quality-evaluation.json",
+                "ocr-input-transform.json",
+                "ocr-resolution-comparison.json",
+            ):
+                self.assertTrue((output / relative_path).is_file(), relative_path)
+            self.assertTrue((output / "control-bundle" / "document.ir.json").is_file())
+            self.assertTrue(
+                (output / "candidate-bundle" / "document.ir.json").is_file()
+            )
+            self.assertFalse((output / "bundle").exists())
+            self.assertFalse((output / ".bundle.staging").exists())
+            failure = json.loads(
+                (output / "operational-error.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(failure["error_type"], "RuntimeError")
+            self.assertIn("comparison is invalid", failure["message"])
+
     def test_new_output_owned_by_runner_retains_preflight_failure_evidence(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             temporary_root = Path(temporary_directory)
@@ -322,52 +510,104 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 {"operational-error.json"},
             )
 
-    def test_ocr_report_survives_a_deterministic_downstream_render_failure(self):
-        candidate_ir = DocumentIR.from_json(
-            (
-                Path(__file__).resolve().parent
-                / "fixtures"
-                / "document_ir"
-                / "canonical.document.ir.json"
-            ).read_bytes()
-        )
-        runtime = OcrRuntimeEvidence(
-            provider="tesseract",
-            provider_version="5.0.0-test",
-            executable="test-tesseract",
-            languages=("jpn", "eng"),
-            page_segmentation_mode=6,
-            engine_mode=3,
-            effective_ocr_dpi=96,
-            source_dpi_x=96,
-            source_dpi_y=96,
-            traineddata=(
-                OcrTrainedDataEvidence(
-                    language="jpn",
-                    size_bytes=1,
-                    sha256="1" * 64,
+    def test_supported_candidate_remains_unadopted_without_a_separate_change(self):
+        document_payload = (
+            Path(__file__).resolve().parent
+            / "fixtures"
+            / "document_ir"
+            / "canonical.document.ir.json"
+        ).read_bytes()
+        control_ir = DocumentIR.from_json(document_payload)
+        candidate_ir = DocumentIR.from_json(document_payload)
+
+        def runtime(effective_ocr_dpi):
+            return OcrRuntimeEvidence(
+                provider="tesseract",
+                provider_version="5.0.0-test",
+                executable="test-tesseract",
+                languages=("jpn", "eng"),
+                page_segmentation_mode=6,
+                engine_mode=3,
+                effective_ocr_dpi=effective_ocr_dpi,
+                source_dpi_x=96.012,
+                source_dpi_y=96.012,
+                traineddata=(
+                    OcrTrainedDataEvidence(
+                        language="jpn",
+                        size_bytes=1,
+                        sha256="1" * 64,
+                    ),
+                    OcrTrainedDataEvidence(
+                        language="eng",
+                        size_bytes=1,
+                        sha256="2" * 64,
+                    ),
                 ),
-                OcrTrainedDataEvidence(
-                    language="eng",
-                    size_bytes=1,
-                    sha256="2" * 64,
-                ),
-            ),
-            operating_system="deterministic-test-os",
-            python_version="3.test",
+                operating_system="deterministic-test-os",
+                python_version="3.test",
+            )
+
+        control_transform = Mock(effective_ocr_dpi=96)
+        control_transform.to_dict.return_value = {
+            "schema_version": "1.0",
+            "enabled": False,
+            "target_dpi": None,
+            "effective_ocr_dpi": 96,
+        }
+        candidate_transform = Mock(effective_ocr_dpi=300)
+        candidate_transform.to_dict.return_value = {
+            "schema_version": "1.0",
+            "enabled": True,
+            "target_dpi": 300,
+            "effective_ocr_dpi": 300,
+        }
+        comparison = Mock(reasons=())
+        comparison.decision.value = "supported"
+        comparison.to_json.return_value = json.dumps(
+            {
+                "schema_version": "1.0",
+                "decision": "supported",
+            },
+            sort_keys=True,
         )
 
         with tempfile.TemporaryDirectory() as temporary_directory:
             output = Path(temporary_directory) / "downstream-failure"
+            events = []
 
             def completed_extraction(_source_data, bundle_directory, **_kwargs):
                 bundle_directory.mkdir(parents=True)
-                return Mock(document=candidate_ir, diagnostics=())
+                label = bundle_directory.name
+                events.append(f"extract:{label}")
+                (bundle_directory / "selection.txt").write_text(
+                    label,
+                    encoding="utf-8",
+                )
+                document = control_ir if label == "control-bundle" else candidate_ir
+                return Mock(document=document, diagnostics=())
+
+            def completed_comparison(*_args, **_kwargs):
+                events.append("compare")
+                return comparison
+
+            def failed_render(document, path, **_kwargs):
+                events.append("render")
+                self.assertIs(document, control_ir)
+                self.assertTrue(path.parent.samefile(output / "bundle"))
+                self.assertEqual(path.name, "reconstructed.docx")
+                raise RuntimeError("forced downstream render failure")
 
             with (
                 patch(
                     "scripts.run_real_baseline._runtime",
-                    return_value=(Mock(), Mock()),
+                    return_value=(
+                        Mock(),
+                        Mock(),
+                        Mock(),
+                        Mock(),
+                        [control_transform],
+                        [candidate_transform],
+                    ),
                 ),
                 patch(
                     "scripts.run_real_baseline._environment_record",
@@ -379,11 +619,15 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 ),
                 patch(
                     "scripts.run_real_baseline._ocr_runtime_evidence",
-                    return_value=runtime,
+                    side_effect=(runtime(96), runtime(300)),
+                ),
+                patch(
+                    "scripts.run_real_baseline.compare_ocr_resolution",
+                    side_effect=completed_comparison,
                 ),
                 patch(
                     "scripts.run_real_baseline.render_docx",
-                    side_effect=RuntimeError("forced downstream render failure"),
+                    side_effect=failed_render,
                 ),
             ):
                 with self.assertRaisesRegex(
@@ -392,12 +636,47 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 ):
                     run_real_baseline(FIXTURE_DIRECTORY, output, expect_state=None)
 
+            control_report = json.loads(
+                (output / "ocr-quality-control-evaluation.json").read_text(
+                    encoding="utf-8"
+                )
+            )
             report = json.loads(
                 (output / "ocr-quality-evaluation.json").read_text(encoding="utf-8")
             )
+            self.assertEqual(
+                control_report["runtime"]["configuration"]["effective_ocr_dpi"],
+                96,
+            )
             self.assertEqual(report["schema_version"], "1.0")
             self.assertEqual(report["scope"]["text_source"], "candidate_ir")
+            self.assertEqual(
+                report["runtime"]["configuration"]["effective_ocr_dpi"],
+                300,
+            )
             self.assertEqual(report["state"], "fail")
+            transform = json.loads(
+                (output / "ocr-input-transform.json").read_text(encoding="utf-8")
+            )
+            self.assertFalse(transform["control"]["enabled"])
+            self.assertTrue(transform["candidate"]["enabled"])
+            resolution = json.loads(
+                (output / "ocr-resolution-comparison.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(resolution["decision"], "supported")
+            self.assertEqual(
+                (output / "bundle" / "selection.txt").read_text(encoding="utf-8"),
+                "control-bundle",
+            )
+            self.assertEqual(
+                events,
+                [
+                    "extract:control-bundle",
+                    "extract:candidate-bundle",
+                    "compare",
+                    "render",
+                ],
+            )
             self.assertFalse((output / "source-quality-evaluation.json").exists())
             self.assertFalse((output / "bundle" / "reconstructed.docx").exists())
             failure = json.loads(
@@ -405,6 +684,167 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
             )
             self.assertEqual(failure["error_type"], "RuntimeError")
             self.assertIn("forced downstream render failure", failure["message"])
+
+    def test_inconclusive_ocr_comparison_selects_control_for_downstream(self):
+        document_payload = (
+            Path(__file__).resolve().parent
+            / "fixtures"
+            / "document_ir"
+            / "canonical.document.ir.json"
+        ).read_bytes()
+        control_ir = DocumentIR.from_json(document_payload)
+        candidate_ir = DocumentIR.from_json(document_payload)
+
+        def runtime(effective_ocr_dpi):
+            return OcrRuntimeEvidence(
+                provider="tesseract",
+                provider_version="5.0.0-test",
+                executable="test-tesseract",
+                languages=("jpn", "eng"),
+                page_segmentation_mode=6,
+                engine_mode=3,
+                effective_ocr_dpi=effective_ocr_dpi,
+                source_dpi_x=96.012,
+                source_dpi_y=96.012,
+                traineddata=(
+                    OcrTrainedDataEvidence(
+                        language="jpn",
+                        size_bytes=1,
+                        sha256="1" * 64,
+                    ),
+                    OcrTrainedDataEvidence(
+                        language="eng",
+                        size_bytes=1,
+                        sha256="2" * 64,
+                    ),
+                ),
+                operating_system="deterministic-test-os",
+                python_version="3.test",
+            )
+
+        def transform(*, enabled, target_dpi, effective_ocr_dpi):
+            evidence = Mock(effective_ocr_dpi=effective_ocr_dpi)
+            evidence.to_dict.return_value = {
+                "schema_version": "1.0",
+                "enabled": enabled,
+                "target_dpi": target_dpi,
+                "effective_ocr_dpi": effective_ocr_dpi,
+            }
+            return evidence
+
+        control_transform = transform(
+            enabled=False,
+            target_dpi=None,
+            effective_ocr_dpi=96,
+        )
+        candidate_transform = transform(
+            enabled=True,
+            target_dpi=300,
+            effective_ocr_dpi=300,
+        )
+        comparison = Mock(reasons=("text_accuracy_delta_below_minimum:0<1",))
+        comparison.decision.value = "inconclusive"
+        comparison.to_json.return_value = json.dumps(
+            {
+                "schema_version": "1.0",
+                "decision": "inconclusive",
+                "reasons": ["text_accuracy_delta_below_minimum:0<1"],
+            },
+            sort_keys=True,
+        )
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            output = Path(temporary_directory) / "unsupported-comparison"
+            events = []
+
+            def completed_extraction(_source_data, bundle_directory, **_kwargs):
+                bundle_directory.mkdir(parents=True)
+                label = bundle_directory.name
+                events.append(f"extract:{label}")
+                (bundle_directory / "selection.txt").write_text(
+                    label,
+                    encoding="utf-8",
+                )
+                document = control_ir if label == "control-bundle" else candidate_ir
+                return Mock(document=document, diagnostics=())
+
+            def completed_comparison(*_args, **_kwargs):
+                events.append("compare")
+                return comparison
+
+            def failed_render(document, path, **_kwargs):
+                events.append("render")
+                self.assertIs(document, control_ir)
+                self.assertTrue(path.parent.samefile(output / "bundle"))
+                self.assertEqual(path.name, "reconstructed.docx")
+                raise RuntimeError("forced control downstream render failure")
+
+            with (
+                patch(
+                    "scripts.run_real_baseline._runtime",
+                    return_value=(
+                        Mock(),
+                        Mock(),
+                        Mock(),
+                        Mock(),
+                        [control_transform],
+                        [candidate_transform],
+                    ),
+                ),
+                patch(
+                    "scripts.run_real_baseline._environment_record",
+                    return_value={"phase": "deterministic-test"},
+                ),
+                patch(
+                    "scripts.run_real_baseline.extract_png",
+                    side_effect=completed_extraction,
+                ),
+                patch(
+                    "scripts.run_real_baseline._ocr_runtime_evidence",
+                    side_effect=(runtime(96), runtime(300)),
+                ),
+                patch(
+                    "scripts.run_real_baseline.compare_ocr_resolution",
+                    side_effect=completed_comparison,
+                ),
+                patch(
+                    "scripts.run_real_baseline.render_docx",
+                    side_effect=failed_render,
+                ),
+            ):
+                with self.assertRaisesRegex(
+                    RuntimeError,
+                    "forced control downstream render failure",
+                ):
+                    run_real_baseline(FIXTURE_DIRECTORY, output, expect_state=None)
+
+            self.assertTrue((output / "ocr-quality-control-evaluation.json").is_file())
+            self.assertTrue((output / "ocr-quality-evaluation.json").is_file())
+            self.assertTrue((output / "ocr-input-transform.json").is_file())
+            comparison_report = json.loads(
+                (output / "ocr-resolution-comparison.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(comparison_report["decision"], "inconclusive")
+            self.assertEqual(
+                (output / "bundle" / "selection.txt").read_text(encoding="utf-8"),
+                "control-bundle",
+            )
+            self.assertEqual(
+                events,
+                [
+                    "extract:control-bundle",
+                    "extract:candidate-bundle",
+                    "compare",
+                    "render",
+                ],
+            )
+            self.assertFalse((output / "bundle" / "reconstructed.docx").exists())
+            self.assertFalse((output / "source-quality-evaluation.json").exists())
+            failure = json.loads(
+                (output / "operational-error.json").read_text(encoding="utf-8")
+            )
+            self.assertIn(
+                "forced control downstream render failure", failure["message"]
+            )
 
 
 @unittest.skipUnless(
@@ -451,7 +891,15 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         )
         self.assertEqual(
             summary["layers"]["source_to_candidate_ir_ocr"]["text_evidence"],
-            "candidate_ir",
+            "control_ir",
+        )
+        self.assertEqual(
+            summary["layers"]["source_to_candidate_ir_ocr"]["selected_input"],
+            "control",
+        )
+        self.assertEqual(
+            summary["layers"]["source_to_candidate_ir_ocr"]["report"],
+            "ocr-quality-control-evaluation.json",
         )
         self.assertEqual(
             summary["layers"]["source_to_actual_docx"]["state"],
@@ -491,6 +939,9 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         )
         self.assertTrue((output / "preflight-environment.json").is_file())
         self.assertTrue((output / "environment.json").is_file())
+        control_ocr_evaluation = json.loads(
+            (output / "ocr-quality-control-evaluation.json").read_text(encoding="utf-8")
+        )
         ocr_evaluation = json.loads(
             (output / "ocr-quality-evaluation.json").read_text(encoding="utf-8")
         )
@@ -514,8 +965,52 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
             3,
         )
         self.assertEqual(
-            ocr_evaluation["runtime"]["configuration"]["effective_ocr_dpi"],
+            control_ocr_evaluation["runtime"]["configuration"]["effective_ocr_dpi"],
             96,
+        )
+        self.assertEqual(
+            ocr_evaluation["runtime"]["configuration"]["effective_ocr_dpi"],
+            300,
+        )
+        for report in (control_ocr_evaluation, ocr_evaluation):
+            source_metadata_dpi = report["runtime"]["configuration"][
+                "source_metadata_dpi"
+            ]
+            self.assertAlmostEqual(source_metadata_dpi["x"], 96.012, places=3)
+            self.assertAlmostEqual(source_metadata_dpi["y"], 96.012, places=3)
+        self.assertEqual(
+            control_ocr_evaluation["source_digest"],
+            ocr_evaluation["source_digest"],
+        )
+        self.assertEqual(
+            control_ocr_evaluation["reference_id"],
+            ocr_evaluation["reference_id"],
+        )
+        self.assertEqual(
+            control_ocr_evaluation["runtime"]["provider"],
+            ocr_evaluation["runtime"]["provider"],
+        )
+        self.assertEqual(
+            control_ocr_evaluation["runtime"]["provider_version"],
+            ocr_evaluation["runtime"]["provider_version"],
+        )
+        self.assertEqual(
+            control_ocr_evaluation["runtime"]["configuration"]["languages"],
+            ocr_evaluation["runtime"]["configuration"]["languages"],
+        )
+        self.assertEqual(
+            control_ocr_evaluation["runtime"]["configuration"][
+                "page_segmentation_mode"
+            ],
+            ocr_evaluation["runtime"]["configuration"]["page_segmentation_mode"],
+        )
+        self.assertEqual(
+            control_ocr_evaluation["runtime"]["configuration"]["engine_mode"],
+            ocr_evaluation["runtime"]["configuration"]["engine_mode"],
+        )
+        self.assertEqual(
+            control_ocr_evaluation["runtime"]["traineddata"],
+            ocr_evaluation["runtime"]["traineddata"],
         )
         self.assertEqual(
             ocr_evaluation["thresholds"]["text_character_accuracy"],
@@ -529,7 +1024,139 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
             ocr_evaluation["thresholds"]["essential_anchor_recall"],
             100.0,
         )
+        transform = json.loads(
+            (output / "ocr-input-transform.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(transform["schema_version"], "1.0")
+        self.assertFalse(transform["control"]["enabled"])
+        self.assertIsNone(transform["control"]["target_dpi"])
+        self.assertEqual(transform["control"]["effective_ocr_dpi"], 96)
+        self.assertTrue(transform["candidate"]["enabled"])
+        self.assertEqual(transform["candidate"]["target_dpi"], 300)
+        self.assertEqual(transform["candidate"]["effective_ocr_dpi"], 300)
+        self.assertAlmostEqual(
+            transform["candidate"]["source_effective_dpi"],
+            96.012,
+            places=3,
+        )
+        self.assertTrue(transform["candidate"]["crops"])
+        self.assertEqual(
+            len(transform["control"]["crops"]),
+            len(transform["candidate"]["crops"]),
+        )
+        candidate_scale = 300 / transform["candidate"]["source_effective_dpi"]
+        for control_crop, candidate_crop in zip(
+            transform["control"]["crops"],
+            transform["candidate"]["crops"],
+        ):
+            self.assertEqual(
+                control_crop["region_ref"],
+                candidate_crop["region_ref"],
+            )
+            self.assertEqual(
+                control_crop["source_bbox"],
+                candidate_crop["source_bbox"],
+            )
+            self.assertEqual(
+                control_crop["source_dimensions"],
+                candidate_crop["source_dimensions"],
+            )
+            self.assertFalse(control_crop["resized"])
+            self.assertEqual(
+                control_crop["working_dimensions"],
+                control_crop["source_dimensions"],
+            )
+            self.assertTrue(candidate_crop["resized"])
+            for axis in ("width", "height"):
+                source_dimension = candidate_crop["source_dimensions"][axis]
+                working_dimension = candidate_crop["working_dimensions"][axis]
+                self.assertGreater(working_dimension, source_dimension)
+                self.assertEqual(
+                    working_dimension,
+                    max(1, math.floor(source_dimension * candidate_scale + 0.5)),
+                )
+            self.assertLessEqual(
+                candidate_crop["working_dimensions"]["width"]
+                * candidate_crop["working_dimensions"]["height"],
+                40_000_000,
+            )
+        comparison = json.loads(
+            (output / "ocr-resolution-comparison.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(comparison["schema_version"], "1.0")
+        self.assertEqual(comparison["decision"], "regressed")
+        self.assertGreater(
+            comparison["metrics"]["text_character_accuracy"]["candidate"],
+            comparison["metrics"]["text_character_accuracy"]["control"],
+        )
+        self.assertGreater(
+            comparison["metrics"]["logical_block_coverage"]["candidate"],
+            comparison["metrics"]["logical_block_coverage"]["control"],
+        )
+        self.assertGreater(
+            comparison["metrics"]["essential_anchor_recall"]["candidate"],
+            comparison["metrics"]["essential_anchor_recall"]["control"],
+        )
+        self.assertFalse(comparison["recovery"]["anchors"]["lost"])
+        self.assertEqual(
+            comparison["recovery"]["logical_blocks"]["lost"],
+            ["request-language-label"],
+        )
+        self.assertLessEqual(
+            comparison["recovery"]["essential_blocks"]["unrecovered_count_delta"],
+            0,
+        )
+        self.assertTrue(
+            all(check["status"] == "pass" for check in comparison["checks"].values())
+        )
+        self.assertEqual(
+            summary["layers"]["ocr_input_resolution_comparison"]["decision"],
+            "regressed",
+        )
+        self.assertEqual(
+            summary["layers"]["ocr_input_resolution_comparison"]["selected_input"],
+            "control",
+        )
+        self.assertFalse(
+            summary["layers"]["ocr_input_resolution_comparison"]["candidate_adopted"]
+        )
+        self.assertFalse(
+            summary["layers"]["ocr_input_resolution_comparison"]["candidate_eligible"]
+        )
+        self.assertEqual(
+            summary["layers"]["ocr_input_resolution_comparison"]["reasons"],
+            comparison["reasons"],
+        )
+        self.assertEqual(
+            comparison["reasons"],
+            ["regression:lost_logical_block:request-language-label"],
+        )
+        self.assertEqual(
+            summary["layers"]["candidate_300_dpi_experiment"]["adopted"],
+            False,
+        )
+        self.assertEqual(
+            summary["layers"]["candidate_300_dpi_experiment"]["eligible"],
+            False,
+        )
+        self.assertEqual(
+            summary["layers"]["candidate_ir_to_docx"]["selected_input"],
+            "control",
+        )
+        self.assertTrue((output / "ocr-quality-control-evaluation.json").is_file())
         self.assertTrue((output / "ocr-quality-evaluation.json").is_file())
+        self.assertTrue((output / "ocr-input-transform.json").is_file())
+        self.assertTrue((output / "ocr-resolution-comparison.json").is_file())
+        self.assertTrue((output / "control-bundle" / "document.ir.json").is_file())
+        self.assertTrue((output / "candidate-bundle" / "document.ir.json").is_file())
+        self.assertEqual(
+            (output / "bundle" / "document.ir.json").read_bytes(),
+            (output / "control-bundle" / "document.ir.json").read_bytes(),
+        )
+        self.assertNotEqual(
+            (output / "bundle" / "document.ir.json").read_bytes(),
+            (output / "candidate-bundle" / "document.ir.json").read_bytes(),
+        )
         self.assertTrue((output / "source-quality-evaluation.json").is_file())
         self.assertTrue((output / "ir-to-docx-restoration-evaluation.json").is_file())
         snapshot = output / "actual-docx-snapshot"

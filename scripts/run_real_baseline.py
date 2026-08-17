@@ -3,9 +3,11 @@
 This command is intentionally a measurement runner, not a product-quality
 shortcut.  It keeps the source-grounded score separate from the existing
 IR-to-DOCX restoration score, checkpoints OCR-only quality before DOCX work,
-and retains the actual LibreOffice PDF/pages used for the decision.  A known
-quality ``fail`` is a successful baseline run when ``--expect-state fail`` is
-supplied.
+compares no-upscale and 300-DPI OCR inputs in the same process, and retains the
+actual LibreOffice PDF/pages from the selected no-upscale control.  The
+experimental candidate is never adopted without a separate reviewed change. A
+known end-to-end quality ``fail`` is a successful baseline run when
+``--expect-state fail`` is supplied.
 """
 
 from __future__ import annotations
@@ -18,6 +20,7 @@ import json
 import locale
 import os
 import platform
+import shutil
 import subprocess
 import sys
 from collections import Counter
@@ -39,10 +42,12 @@ from aiteqno.adapters import (
     PythonDocxRenderer,
     TesseractOcrBackend,
 )
+from aiteqno.adapters.tesseract import TesseractRasterTransformEvidence
 from aiteqno.application import (
     OcrQualityConfig,
     SourceBaselineConfig,
     build_evaluation_reference,
+    compare_ocr_resolution,
     evaluate_ocr_quality,
     evaluate_restoration,
     evaluate_source_baseline,
@@ -50,11 +55,13 @@ from aiteqno.application import (
     render_docx,
     render_preview,
 )
-from aiteqno.domain import ElementType
+from aiteqno.domain import DocumentIR, ElementType
 from aiteqno.ports import (
     EvaluationState,
     OcrOptions,
     OcrQualityObservation,
+    OcrQualityResult,
+    OcrResolutionRun,
     OcrRuntimeEvidence,
     OcrTrainedDataEvidence,
     SnapshotObservation,
@@ -76,6 +83,8 @@ OCR_OPTIONS = OcrOptions(page_segmentation_mode=6, engine_mode=3)
 OCR_PROVIDER = "tesseract"
 MINIMUM_TESSERACT_MAJOR_VERSION = 5
 SOURCE_DPI = 96
+CANDIDATE_OCR_DPI = 300
+REFERENCE_SHA256 = "45d3322ee7eea3d86fe981d93dba5cc9ac83b27ca638259051a62868c8f15a31"
 
 
 def _sha256(data: bytes) -> str:
@@ -101,6 +110,42 @@ def _write_json_new(path: Path, value: Any) -> None:
         json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     ).encode("utf-8")
     _write_bytes_new(path, payload)
+
+
+def _copytree_new_atomic(source: Path, destination: Path) -> None:
+    """Publish a selected bundle without exposing a partial destination."""
+
+    staging = destination.with_name(f".{destination.name}.staging")
+    if destination.exists() or staging.exists():
+        raise FileExistsError(
+            "selected bundle destination already exists; no files were overwritten: "
+            f"{destination}"
+        )
+    try:
+        shutil.copytree(source, staging)
+        if destination.exists():
+            raise FileExistsError(
+                "selected bundle destination appeared during publication; "
+                f"no files were overwritten: {destination}"
+            )
+        staging.rename(destination)
+    except Exception:
+        if staging.is_dir():
+            shutil.rmtree(staging)
+        raise
+
+
+def _select_ocr_input(decision: str) -> str:
+    """Keep downstream on control until a separate adoption change is reviewed."""
+
+    if decision in {"supported", "inconclusive", "regressed"}:
+        return "control"
+    if decision == "invalid":
+        raise RuntimeError(
+            "300 DPI OCR input comparison is invalid; downstream selection cannot "
+            "be trusted; review ocr-resolution-comparison.json"
+        )
+    raise RuntimeError(f"unknown OCR input comparison decision: {decision!r}")
 
 
 def _fixture_object(value: Any, label: str) -> Mapping[str, Any]:
@@ -158,7 +203,13 @@ def _read_fixture(
     manifest_path = fixture_directory / "manifest.json"
     reference_path = fixture_directory / "reference.json"
     manifest_value = json.loads(manifest_path.read_text(encoding="utf-8"))
-    reference_value = json.loads(reference_path.read_text(encoding="utf-8"))
+    reference_bytes = reference_path.read_bytes()
+    _require_contract_equal(
+        "reference JSON SHA-256",
+        _sha256(reference_bytes),
+        REFERENCE_SHA256,
+    )
+    reference_value = json.loads(reference_bytes)
     manifest = dict(_fixture_object(manifest_value, "manifest"))
     reference_data = _fixture_object(reference_value, "reference")
     source_contract = _fixture_object(manifest.get("source"), "manifest source")
@@ -303,15 +354,94 @@ def _read_fixture(
     return source_data, manifest, reference
 
 
-def _runtime() -> tuple[PillowPngDecoder, TesseractOcrBackend]:
+def _runtime() -> tuple[
+    PillowPngDecoder,
+    TesseractOcrBackend,
+    TesseractOcrBackend,
+    TesseractOcrBackend,
+    list[TesseractRasterTransformEvidence],
+    list[TesseractRasterTransformEvidence],
+]:
     decoder = PillowPngDecoder(fallback_dpi=SOURCE_DPI)
-    backend = TesseractOcrBackend(
-        executable_path=os.environ.get("AITEQNO_TESSERACT_EXECUTABLE") or None,
-        tessdata_prefix=os.environ.get("AITEQNO_TESSDATA_PREFIX") or None,
-        required_languages=LANGUAGES,
+    common = {
+        "executable_path": os.environ.get("AITEQNO_TESSERACT_EXECUTABLE") or None,
+        "tessdata_prefix": os.environ.get("AITEQNO_TESSDATA_PREFIX") or None,
+        "required_languages": LANGUAGES,
+    }
+    control_transforms: list[TesseractRasterTransformEvidence] = []
+    candidate_transforms: list[TesseractRasterTransformEvidence] = []
+    control_backend = TesseractOcrBackend(
+        **common,
+        target_dpi=None,
+        transform_observer=control_transforms.append,
     )
-    backend.healthcheck()
-    return decoder, backend
+    candidate_backend = TesseractOcrBackend(
+        **common,
+        target_dpi=CANDIDATE_OCR_DPI,
+        transform_observer=candidate_transforms.append,
+    )
+    snapshot_backend = TesseractOcrBackend(
+        **common,
+        target_dpi=None,
+    )
+    control_backend.healthcheck()
+    candidate_backend.healthcheck()
+    snapshot_backend.healthcheck()
+    return (
+        decoder,
+        control_backend,
+        candidate_backend,
+        snapshot_backend,
+        control_transforms,
+        candidate_transforms,
+    )
+
+
+def _one_transform_evidence(
+    records: list[TesseractRasterTransformEvidence],
+    *,
+    label: str,
+) -> TesseractRasterTransformEvidence:
+    if len(records) != 1:
+        raise RuntimeError(
+            f"{label} OCR transform evidence is incomplete: expected one "
+            f"recognize record, observed {len(records)}"
+        )
+    evidence = records[0]
+    if not hasattr(evidence, "effective_ocr_dpi") or not callable(
+        getattr(evidence, "to_dict", None)
+    ):
+        raise RuntimeError(f"{label} OCR transform evidence has an invalid type")
+    return evidence
+
+
+def _quality_config(manifest: Mapping[str, Any]) -> OcrQualityConfig:
+    quality = manifest["quality_contract"]
+    minima = quality["component_minimums"]
+    return OcrQualityConfig(
+        minimum_text_accuracy=minima["text_character_accuracy"],
+        minimum_logical_block_coverage=minima["logical_block_coverage"],
+        required_anchor_recall=quality["essential_anchor_recall"],
+    )
+
+
+def _evaluate_ocr_run(
+    *,
+    source_data: bytes,
+    reference: SourceBaselineReference,
+    document: DocumentIR,
+    runtime: OcrRuntimeEvidence,
+    config: OcrQualityConfig,
+) -> OcrQualityResult:
+    return evaluate_ocr_quality(
+        reference,
+        OcrQualityObservation(
+            source_sha256=_sha256(source_data),
+            candidate_ir=document,
+            runtime=runtime,
+        ),
+        config=config,
+    )
 
 
 def _docx_text(observation: Any) -> str:
@@ -449,6 +579,7 @@ def _ocr_runtime_evidence(
     *,
     decoder: PillowPngDecoder,
     backend: TesseractOcrBackend,
+    transform: TesseractRasterTransformEvidence,
 ) -> OcrRuntimeEvidence:
     capabilities = backend.healthcheck()
     source_image = decoder.decode(source_data)
@@ -478,9 +609,7 @@ def _ocr_runtime_evidence(
         languages=LANGUAGES,
         page_segmentation_mode=OCR_OPTIONS.page_segmentation_mode,
         engine_mode=OCR_OPTIONS.engine_mode,
-        effective_ocr_dpi=round(
-            (source_image.source.dpi_x + source_image.source.dpi_y) / 2
-        ),
+        effective_ocr_dpi=transform.effective_ocr_dpi,
         source_dpi_x=source_image.source.dpi_x,
         source_dpi_y=source_image.source.dpi_y,
         traineddata=tuple(traineddata),
@@ -640,7 +769,14 @@ def _run_in_created_output(
     source_path = output_directory / "source.png"
     _write_bytes_new(source_path, source_data)
 
-    decoder, backend = _runtime()
+    (
+        decoder,
+        control_backend,
+        candidate_backend,
+        snapshot_backend,
+        control_transforms,
+        candidate_transforms,
+    ) = _runtime()
     _write_json_new(
         output_directory / "preflight-environment.json",
         _environment_record(
@@ -648,17 +784,31 @@ def _run_in_created_output(
             manifest=manifest,
             source_data=source_data,
             reference_path=fixture_directory / "reference.json",
-            backend=backend,
+            backend=candidate_backend,
             snapshot=None,
         ),
     )
-    bundle_directory = output_directory / "bundle"
-    extraction = extract_png(
+
+    control_bundle_directory = output_directory / "control-bundle"
+    control_extraction = extract_png(
         source_data,
-        bundle_directory,
+        control_bundle_directory,
         decoder=decoder,
         structure_extractor=OpenCvStructureExtractor(),
-        ocr_backend=backend,
+        ocr_backend=control_backend,
+        asset_encoder=PillowPngAssetEncoder(),
+        validator=JsonSchemaDocumentIRValidator(),
+        bundle_writer=FilesystemDocumentBundleWriter(),
+        languages=LANGUAGES,
+        ocr_options=OCR_OPTIONS,
+    )
+    candidate_bundle_directory = output_directory / "candidate-bundle"
+    extraction = extract_png(
+        source_data,
+        candidate_bundle_directory,
+        decoder=decoder,
+        structure_extractor=OpenCvStructureExtractor(),
+        ocr_backend=candidate_backend,
         asset_encoder=PillowPngAssetEncoder(),
         validator=JsonSchemaDocumentIRValidator(),
         bundle_writer=FilesystemDocumentBundleWriter(),
@@ -666,41 +816,103 @@ def _run_in_created_output(
         ocr_options=OCR_OPTIONS,
     )
     document = extraction.document
+    control_document = control_extraction.document
     quality = manifest["quality_contract"]
     minima = quality["component_minimums"]
-    ocr_result = evaluate_ocr_quality(
-        reference,
-        OcrQualityObservation(
-            source_sha256=_sha256(source_data),
-            candidate_ir=document,
-            runtime=_ocr_runtime_evidence(
-                source_data,
-                decoder=decoder,
-                backend=backend,
-            ),
+    quality_config = _quality_config(manifest)
+    control_transform = _one_transform_evidence(
+        control_transforms,
+        label="control",
+    )
+    candidate_transform = _one_transform_evidence(
+        candidate_transforms,
+        label="candidate",
+    )
+    control_ocr_result = _evaluate_ocr_run(
+        source_data=source_data,
+        reference=reference,
+        document=control_document,
+        runtime=_ocr_runtime_evidence(
+            source_data,
+            decoder=decoder,
+            backend=control_backend,
+            transform=control_transform,
         ),
-        config=OcrQualityConfig(
-            minimum_text_accuracy=minima["text_character_accuracy"],
-            minimum_logical_block_coverage=minima["logical_block_coverage"],
-            required_anchor_recall=quality["essential_anchor_recall"],
+        config=quality_config,
+    )
+    ocr_result = _evaluate_ocr_run(
+        source_data=source_data,
+        reference=reference,
+        document=document,
+        runtime=_ocr_runtime_evidence(
+            source_data,
+            decoder=decoder,
+            backend=candidate_backend,
+            transform=candidate_transform,
         ),
+        config=quality_config,
+    )
+    _write_bytes_new(
+        output_directory / "ocr-quality-control-evaluation.json",
+        (control_ocr_result.to_json(indent=2) + "\n").encode("utf-8"),
     )
     _write_bytes_new(
         output_directory / "ocr-quality-evaluation.json",
         (ocr_result.to_json(indent=2) + "\n").encode("utf-8"),
     )
+    control_transform_dict = control_transform.to_dict()
+    candidate_transform_dict = candidate_transform.to_dict()
+    _write_json_new(
+        output_directory / "ocr-input-transform.json",
+        {
+            "schema_version": "1.0",
+            "control": control_transform_dict,
+            "candidate": candidate_transform_dict,
+        },
+    )
+    comparison = compare_ocr_resolution(
+        OcrResolutionRun(
+            quality=control_ocr_result,
+            document=control_document,
+            transform=control_transform_dict,
+        ),
+        OcrResolutionRun(
+            quality=ocr_result,
+            document=document,
+            transform=candidate_transform_dict,
+        ),
+    )
+    _write_bytes_new(
+        output_directory / "ocr-resolution-comparison.json",
+        (comparison.to_json(indent=2) + "\n").encode("utf-8"),
+    )
+    selected_input = _select_ocr_input(comparison.decision.value)
+    candidate_eligible = comparison.decision.value == "supported"
+    candidate_adopted = False
+    selected_extraction = control_extraction
+    selected_document = control_document
+    selected_ocr_result = control_ocr_result
+    selected_observation_bundle = control_bundle_directory
+    selected_backend = control_backend
+    selected_ocr_report = "ocr-quality-control-evaluation.json"
+
+    # The A/B observation bundles remain immutable evidence. Publish an atomic,
+    # create-only copy of the selected side at the established downstream path
+    # so document.ir.json, assets, and reconstructed files cannot disagree.
+    bundle_directory = output_directory / "bundle"
+    _copytree_new_atomic(selected_observation_bundle, bundle_directory)
 
     docx_path = bundle_directory / "reconstructed.docx"
     preview_path = bundle_directory / "reconstructed.png"
     docx_render = render_docx(
-        document,
+        selected_document,
         docx_path,
         renderer=PythonDocxRenderer(
             asset_resolver=BundleAssetResolver(bundle_directory)
         ),
     )
     preview_render = render_preview(
-        document,
+        selected_document,
         preview_path,
         renderer=PillowPreviewRenderer(
             asset_resolver=BundleAssetResolver(bundle_directory)
@@ -711,9 +923,13 @@ def _run_in_created_output(
     _write_json_new(
         output_directory / "extraction-diagnostics.json",
         {
-            "count": len(extraction.diagnostics),
+            "count": len(selected_extraction.diagnostics),
             "by_code": dict(
-                sorted(Counter(item.code for item in extraction.diagnostics).items())
+                sorted(
+                    Counter(
+                        item.code for item in selected_extraction.diagnostics
+                    ).items()
+                )
             ),
             "items": [
                 {
@@ -722,7 +938,7 @@ def _run_in_created_output(
                     "message": item.message,
                     "source_ref": item.source_ref,
                 }
-                for item in extraction.diagnostics
+                for item in selected_extraction.diagnostics
             ],
         },
     )
@@ -753,7 +969,7 @@ def _run_in_created_output(
         snapshot_directory,
         snapshot.pages,
         decoder=decoder,
-        backend=backend,
+        backend=snapshot_backend,
     )
     _write_json_new(
         snapshot_directory / "visible-ocr.json",
@@ -774,7 +990,7 @@ def _run_in_created_output(
     )
     source_observation = SourceBaselineObservation(
         source_sha256=_sha256(source_data),
-        candidate_ir=document,
+        candidate_ir=selected_document,
         final_docx_text=_docx_text(docx_observation),
         visible_rendered_text=visible_text,
         rendered_page_count=snapshot.page_count,
@@ -790,12 +1006,12 @@ def _run_in_created_output(
     )
 
     restoration_reference = build_evaluation_reference(
-        document,
-        reference_id=f"{reference.reference_id}-candidate-ir",
+        selected_document,
+        reference_id=f"{reference.reference_id}-{selected_input}-ir",
         reviewed=True,
     )
     restoration_result = evaluate_restoration(
-        document,
+        selected_document,
         restoration_reference,
         docx_path,
         docx_render.report,
@@ -813,7 +1029,7 @@ def _run_in_created_output(
     )
 
     final_state = _final_state(
-        ocr_result.state,
+        selected_ocr_result.state,
         source_result.state,
         restoration_result.state,
     )
@@ -822,11 +1038,39 @@ def _run_in_created_output(
         "expected_current_state": quality["expected_current_state"],
         "final_state": final_state,
         "layers": {
+            "ocr_input_resolution_comparison": {
+                "decision": comparison.decision.value,
+                "selected_input": selected_input,
+                "candidate_eligible": candidate_eligible,
+                "candidate_adopted": candidate_adopted,
+                "reasons": list(comparison.reasons),
+                "control_report": "ocr-quality-control-evaluation.json",
+                "candidate_report": "ocr-quality-evaluation.json",
+                "transform_evidence": "ocr-input-transform.json",
+                "report": "ocr-resolution-comparison.json",
+            },
             "source_to_candidate_ir_ocr": {
+                "state": selected_ocr_result.state.value,
+                "text_character_accuracy": (
+                    selected_ocr_result.text_character_accuracy.score
+                ),
+                "logical_block_coverage": (
+                    selected_ocr_result.logical_block_coverage.score
+                ),
+                "essential_anchor_recall": (
+                    selected_ocr_result.essential_anchor_recall.score
+                ),
+                "selected_input": selected_input,
+                "text_evidence": f"{selected_input}_ir",
+                "report": selected_ocr_report,
+            },
+            "candidate_300_dpi_experiment": {
                 "state": ocr_result.state.value,
-                "text_character_accuracy": (ocr_result.text_character_accuracy.score),
-                "logical_block_coverage": (ocr_result.logical_block_coverage.score),
-                "essential_anchor_recall": (ocr_result.essential_anchor_recall.score),
+                "text_character_accuracy": ocr_result.text_character_accuracy.score,
+                "logical_block_coverage": ocr_result.logical_block_coverage.score,
+                "essential_anchor_recall": ocr_result.essential_anchor_recall.score,
+                "adopted": candidate_adopted,
+                "eligible": candidate_eligible,
                 "text_evidence": "candidate_ir",
                 "report": "ocr-quality-evaluation.json",
             },
@@ -838,7 +1082,10 @@ def _run_in_created_output(
             "candidate_ir_to_docx": {
                 "state": restoration_result.state.value,
                 "overall_score": restoration_result.overall_score,
-                "scope": "IR preservation only; not OCR or source-image accuracy",
+                "selected_input": selected_input,
+                "scope": (
+                    "selected IR preservation only; not OCR or source-image accuracy"
+                ),
             },
             "actual_docx_snapshot": {
                 "page_count": snapshot.page_count,
@@ -853,7 +1100,7 @@ def _run_in_created_output(
         manifest=manifest,
         source_data=source_data,
         reference_path=fixture_directory / "reference.json",
-        backend=backend,
+        backend=selected_backend,
         snapshot=snapshot,
     )
     _write_json_new(output_directory / "environment.json", environment)

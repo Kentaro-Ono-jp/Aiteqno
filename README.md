@@ -150,8 +150,8 @@ and exit codes, see the [OCR runtime guide](docs/ocr-runtime.md) and the
 - [Golden E2E guide](docs/e2e.md) documents the source-free round trip across
   Windows and Linux.
 - [Real-runtime failure baseline](docs/real-runtime-baseline.md) records the
-  reviewed Japanese source, an OCR-only checkpoint, actual LibreOffice pages,
-  and the current expected failures without changing production algorithms.
+  reviewed Japanese source, a same-runtime no-upscale/300-DPI OCR comparison,
+  actual LibreOffice pages, and the current expected end-to-end failures.
 - [Windows demo and release guide](docs/demo-release.md) documents the
   downloadable package and its reproducible archive contract.
 - [Golden fixture manifest](tests/fixtures/e2e/manifest.json) records fixture
@@ -160,9 +160,13 @@ and exit codes, see the [OCR runtime guide](docs/ocr-runtime.md) and the
 The deterministic representative golden scores `78.79 / 100` against a
 threshold of `70` after fixed fake OCR observations. That number measures
 candidate IR preservation in DOCX; it is not real OCR accuracy. The separate
-real-runtime Japanese baseline records OCR immediately after Tesseract as
-`ocr-quality-evaluation.json`, before DOCX generation, and currently expects
-that layer and the end-to-end layer to `fail`. A numeric pass is never
+real-runtime Japanese baseline records control and 300 DPI candidate OCR
+immediately after Tesseract, before DOCX generation. Although the 300 DPI trial
+improves aggregate OCR metrics in the current Ubuntu lane, it loses a logical
+block recovered by the no-upscale control and is therefore rejected. The
+downstream `bundle/` and DOCX remain control-derived; both observations and the
+comparison evidence are retained for diagnosis. The end-to-end layer currently
+remains `fail`. A numeric pass is never
 sufficient by itself: essential text, structure, output validity, source
 independence, actual page evidence, and human readability are separate gates.
 

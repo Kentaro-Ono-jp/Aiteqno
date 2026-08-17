@@ -48,6 +48,12 @@ from .ocr_quality import (
     normalize_ocr_text,
     ocr_character_accuracy,
 )
+from .ocr_resolution import (
+    DEFAULT_MINIMUM_TEXT_ACCURACY_DELTA,
+    OCR_RESOLUTION_EVALUATOR_NAME,
+    OCR_RESOLUTION_EVALUATOR_VERSION,
+    compare_ocr_resolution,
+)
 from .preview import render_preview
 from .render import render_docx
 
@@ -75,6 +81,9 @@ __all__ = [
     "OCR_QUALITY_EVALUATOR_NAME",
     "OCR_QUALITY_EVALUATOR_VERSION",
     "OcrQualityConfig",
+    "DEFAULT_MINIMUM_TEXT_ACCURACY_DELTA",
+    "OCR_RESOLUTION_EVALUATOR_NAME",
+    "OCR_RESOLUTION_EVALUATOR_VERSION",
     "SOURCE_BASELINE_COMPONENT_WEIGHTS",
     "SOURCE_BASELINE_EVALUATOR_NAME",
     "SOURCE_BASELINE_EVALUATOR_VERSION",
@@ -86,6 +95,7 @@ __all__ = [
     "evaluate_restoration",
     "evaluate_restoration_input",
     "evaluate_ocr_quality",
+    "compare_ocr_resolution",
     "evaluate_source_baseline",
     "normalize_evaluation_text",
     "normalize_ocr_text",
