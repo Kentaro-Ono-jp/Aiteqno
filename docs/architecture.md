@@ -407,8 +407,9 @@ geometry, and dangling element references are semantic validation failures.
 
 Stable table IDs follow page geometry order (`page-001-table-0000`); row,
 column, and cell IDs are derived from their logical indexes. The inference is
-independent of primitive array order. Renderers may consume this extension, but
-must never reclassify or delete its supporting raw primitives silently.
+independent of primitive array order. The DOCX renderer consumes supported
+tables directly; renderers must never reclassify or delete their supporting raw
+primitives silently.
 
 ### 6.12 Versioning and compatibility
 
@@ -495,19 +496,31 @@ DrawingML.
 The renderer uses this deterministic strategy:
 
 1. Validate the complete IR and assets before creating output.
-2. Sort elements by normalized reading order and `z_index`.
-3. Cluster elements into horizontal bands using vertical overlap and a
-   point-based tolerance.
-4. Derive approximate column boundaries from X positions.
-5. Build fixed-width, borderless tables for multi-column bands.
-6. Place text as paragraphs/runs and images as inline pictures inside cells.
-7. Express axis-aligned lines and rectangles with paragraph or table borders.
-8. Record every approximation, fallback, or omission in a render report.
+2. Read the validated table-topology extension when present.
+3. Convert each supported topology table to one fixed-grid native Word table,
+   including logical row/column sizes, horizontal/vertical merges, cell borders,
+   and ordered cell text.
+4. Encode each source text token as an editable, source-tagged OOXML run. This
+   permits natural same-line layout while retaining one-to-one read-back.
+5. Render text outside those tables as source-tagged flow paragraphs in page
+   order, and map the page frame to one section border.
+6. Treat all supporting table primitives as consumed exactly once; do not draw
+   duplicated cell, boundary, and outer-border evidence on top of the native
+   table.
+7. For pages without a supported topology extension, retain the established
+   horizontal-band/fixed-width-table compatibility path.
+8. Record every native-table consumption, approximation, fallback, or omission
+   in a render report.
 
 This strategy intentionally trades exact coordinates for readability and DOCX
 interoperability. Raw OOXML MAY be used behind the DOCX adapter when the
 high-level library lacks a required feature, but it MUST have Word and
 LibreOffice compatibility tests.
+
+For topology pages, vertical row extents are scaled uniformly to 85% and
+inter-band gaps to 75%, with row heights emitted as `atLeast`. These fixed
+factors preserve source proportions while allowing Word and LibreOffice to keep
+the reviewed one-page fixture on one page without clipping editable cell text.
 
 ### 7.3 IR-to-DOCX mapping
 
@@ -515,6 +528,8 @@ LibreOffice compatibility tests.
 | --- | --- | --- |
 | Page size/orientation | Word section page properties | Fail if invalid |
 | Text | Paragraph and runs in a spatial band/cell | Substitute font and warn |
+| Table topology | One identifiable fixed-grid native Word table per topology table | Legacy flow path when the extension is absent |
+| Cell span | `gridSpan` / `vMerge` native merge | Fail validation for an invalid span |
 | Horizontal/vertical line | Paragraph or table border | Element-only raster fallback or warn |
 | Rectangle | One-cell table/borders and optional shading | Square-corner approximation |
 | Image | Inline picture sized from point bbox | Placeholder + warning in best-effort mode |
@@ -537,6 +552,8 @@ Rendering returns the artifact and a machine-readable report containing:
 - omitted element IDs
 - warnings and errors
 - font substitutions
+- native topology table IDs
+- raw element IDs consumed by native topology tables
 
 No element may disappear silently.
 

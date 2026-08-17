@@ -12,6 +12,8 @@ from io import BytesIO
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+from docx import Document as open_docx
+from docx.oxml.ns import qn
 from PIL import Image
 
 from aiteqno.domain import (
@@ -1256,13 +1258,88 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         self.assertEqual(preview_report["omitted_element_ids"], [])
         self.assertEqual(preview_report["fallback_element_ids"], [])
         self.assertEqual(preview_report["warnings"], [])
+        docx_report = json.loads(
+            (output / "docx-render-report.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            docx_report["native_table_ids"],
+            [table.id for table in topology.tables],
+        )
+        self.assertEqual(
+            len(docx_report["native_table_consumed_element_ids"]),
+            302,
+        )
+        self.assertEqual(len(docx_report["rendered_element_ids"]), 386)
+        consumed = set(docx_report["native_table_consumed_element_ids"])
+        self.assertFalse(
+            any(
+                warning["code"]
+                in {"vertical_position_approximated", "z_order_approximated"}
+                and warning["element_id"] in consumed
+                for warning in docx_report["warnings"]
+            )
+        )
+        reconstructed = open_docx(output / "bundle" / "reconstructed.docx")
+        self.assertEqual(len(reconstructed.tables), 5)
+        self.assertEqual(
+            [
+                table._tbl.tblPr.find(qn("w:tblCaption")).get(qn("w:val"))
+                for table in reconstructed.tables
+            ],
+            [f"aiteqno-table:{table.id}" for table in topology.tables],
+        )
+        self.assertEqual(
+            [
+                node.get(qn("w:val"))
+                for node in reconstructed.tables[0]._tbl.xpath(".//w:gridSpan")
+            ],
+            ["2", "2"],
+        )
+        observation = json.loads(
+            (output / "docx-observation.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(observation["errors"], [])
+        self.assertEqual(
+            sum(
+                element["source_element_id"] is not None
+                for element in observation["elements"]
+                if element["type"] == "text"
+            ),
+            285,
+        )
         self.assertTrue((output / "source-quality-evaluation.json").is_file())
         self.assertTrue((output / "ir-to-docx-restoration-evaluation.json").is_file())
+        restoration = json.loads(
+            (output / "ir-to-docx-restoration-evaluation.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        restoration_components = {
+            component["name"]: component["score"]
+            for component in restoration["components"]
+        }
+        self.assertEqual(restoration["state"], "pass")
+        self.assertGreaterEqual(restoration["overall_score"], 70.0)
+        self.assertEqual(restoration_components["text_similarity"], 100.0)
+        self.assertGreaterEqual(
+            restoration_components["element_coverage"],
+            85.289747,
+        )
+        self.assertGreater(restoration_components["structure_similarity"], 0.0)
+        self.assertEqual(restoration_components["geometry_similarity"], 0.0)
+        self.assertEqual(
+            summary["layers"]["candidate_ir_to_docx"]["state"],
+            "pass",
+        )
         snapshot = output / "actual-docx-snapshot"
         self.assertTrue((snapshot / "snapshot.pdf").is_file())
         self.assertTrue((snapshot / "page-001.png").is_file())
         self.assertTrue((snapshot / "snapshot-evidence.json").is_file())
         self.assertTrue((snapshot / "visible-ocr.json").is_file())
+        snapshot_evidence = json.loads(
+            (snapshot / "snapshot-evidence.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(snapshot_evidence["page_count"], 1)
 
 
 if __name__ == "__main__":

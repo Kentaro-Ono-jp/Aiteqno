@@ -40,6 +40,8 @@ _REQUIRED_PACKAGE_PARTS = frozenset(
     {"[Content_Types].xml", "_rels/.rels", "word/document.xml"}
 )
 _BORDER_SIDES = ("top", "left", "bottom", "right")
+_SOURCE_TAG_PREFIX = "aiteqno-source:"
+_TABLE_CAPTION_PREFIX = "aiteqno-table:"
 
 
 @dataclass(slots=True)
@@ -56,6 +58,7 @@ class _ObservationCollector:
     rectangle_count: int = 0
     paragraph_count: int = 0
     table_count: int = 0
+    source_element_ids: set[str] = field(default_factory=set)
 
     def relationship(
         self,
@@ -217,11 +220,14 @@ class PythonDocxObserver:
                     media_payloads=media_payloads,
                 )
             elif child.tag == f"{_W}tbl":
-                block_key = f"docx-table-{collector.table_count:04d}"
+                fallback_key = f"docx-table-{collector.table_count:04d}"
                 collector.table_count += 1
+                source_table_key = _source_table_key(child)
+                block_key = source_table_key or fallback_key
                 self._observe_table(
                     child,
                     table_key=block_key,
+                    source_addressable=source_table_key is not None,
                     collector=collector,
                     relationship_targets=relationship_targets,
                     media_payloads=media_payloads,
@@ -252,24 +258,29 @@ class PythonDocxObserver:
     ) -> None:
         # The renderer uses U+200B only as an OOXML layout marker in otherwise
         # empty bordered cells. It is not visible document content.
-        text = _paragraph_text(paragraph).replace("\u200b", "")
-        if text.strip():
-            element_id = f"docx-text-{collector.text_count:04d}"
-            collector.elements.append(
-                ObservedElement(
-                    id=element_id,
-                    element_type=ElementType.TEXT,
-                    text=text,
-                    reading_order=collector.text_count,
+        tagged_texts = _source_tagged_texts(paragraph)
+        if tagged_texts:
+            for source_element_id, text in tagged_texts:
+                if source_element_id in collector.source_element_ids:
+                    collector.error(
+                        f"DOCX repeats source-tagged text element {source_element_id!r}"
+                    )
+                collector.source_element_ids.add(source_element_id)
+                self._record_text(
+                    text,
+                    block_key=block_key,
+                    source_element_id=source_element_id,
+                    collector=collector,
                 )
-            )
-            collector.text_ids.append(element_id)
-            collector.text_count += 1
-            collector.relationship(
-                RelationshipKind.CONTAINMENT,
-                block_key,
-                element_id,
-            )
+        else:
+            text = _paragraph_text(paragraph).replace("\u200b", "")
+            if text.strip():
+                self._record_text(
+                    text,
+                    block_key=block_key,
+                    source_element_id=None,
+                    collector=collector,
+                )
 
         paragraph_properties = paragraph.find(f"{_W}pPr")
         paragraph_borders = (
@@ -297,19 +308,57 @@ class PythonDocxObserver:
             media_payloads=media_payloads,
         )
 
+    @staticmethod
+    def _record_text(
+        text: str,
+        *,
+        block_key: str,
+        source_element_id: str | None,
+        collector: _ObservationCollector,
+    ) -> None:
+        element_id = f"docx-text-{collector.text_count:04d}"
+        collector.elements.append(
+            ObservedElement(
+                id=element_id,
+                element_type=ElementType.TEXT,
+                text=text,
+                reading_order=collector.text_count,
+                source_element_id=source_element_id,
+            )
+        )
+        collector.text_ids.append(element_id)
+        collector.text_count += 1
+        collector.relationship(
+            RelationshipKind.CONTAINMENT,
+            block_key,
+            element_id,
+        )
+
     def _observe_table(
         self,
         table: ElementTree.Element,
         *,
         table_key: str,
+        source_addressable: bool,
         collector: _ObservationCollector,
         relationship_targets: dict[str, str],
         media_payloads: dict[str, bytes],
     ) -> None:
+        active_vertical_merges: dict[int, str] = {}
         for row_index, row in enumerate(table.findall(f"{_W}tr")):
             previous_cell: str | None = None
-            for column_index, cell in enumerate(row.findall(f"{_W}tc")):
-                cell_key = f"{table_key}-cell-r{row_index:03d}-c{column_index:03d}"
+            logical_column = 0
+            for cell in row.findall(f"{_W}tc"):
+                span = _cell_grid_span(cell)
+                vertical_merge = _cell_vertical_merge(cell)
+                if vertical_merge == "continue":
+                    if logical_column not in active_vertical_merges:
+                        collector.error(
+                            "vertical table merge continuation has no restart cell"
+                        )
+                    logical_column += span
+                    continue
+                cell_key = f"{table_key}-cell-r{row_index:03d}-c{logical_column:03d}"
                 collector.relationship(
                     RelationshipKind.CONTAINMENT,
                     table_key,
@@ -322,6 +371,13 @@ class PythonDocxObserver:
                         cell_key,
                     )
                 previous_cell = cell_key
+
+                if vertical_merge == "restart":
+                    for column in range(logical_column, logical_column + span):
+                        active_vertical_merges[column] = cell_key
+                else:
+                    for column in range(logical_column, logical_column + span):
+                        active_vertical_merges.pop(column, None)
 
                 cell_properties = cell.find(f"{_W}tcPr")
                 cell_borders = (
@@ -360,6 +416,7 @@ class PythonDocxObserver:
                             line_id,
                         )
 
+                text_start = len(collector.text_ids)
                 self._observe_container(
                     cell,
                     parent_key=cell_key,
@@ -367,6 +424,14 @@ class PythonDocxObserver:
                     relationship_targets=relationship_targets,
                     media_payloads=media_payloads,
                 )
+                if source_addressable:
+                    for text_id in collector.text_ids[text_start:]:
+                        collector.relationship(
+                            RelationshipKind.CONTAINMENT,
+                            cell_key,
+                            text_id,
+                        )
+                logical_column += span
 
     @staticmethod
     def _observe_images(
@@ -488,6 +553,56 @@ def _paragraph_text(paragraph: ElementTree.Element) -> str:
         elif node.tag == f"{_W}br":
             parts.append("\n")
     return "".join(parts)
+
+
+def _source_tagged_texts(
+    paragraph: ElementTree.Element,
+) -> tuple[tuple[str, str], ...]:
+    tagged: list[tuple[str, str]] = []
+    for control in paragraph.iter(f"{_W}sdt"):
+        properties = control.find(f"{_W}sdtPr")
+        tag = None if properties is None else properties.find(f"{_W}tag")
+        value = None if tag is None else tag.get(f"{_W}val")
+        if value is None or not value.startswith(_SOURCE_TAG_PREFIX):
+            continue
+        source_element_id = value.removeprefix(_SOURCE_TAG_PREFIX)
+        content = control.find(f"{_W}sdtContent")
+        if not source_element_id or content is None:
+            continue
+        text = _paragraph_text(content).replace("\u200b", "")
+        if text:
+            tagged.append((source_element_id, text))
+    return tuple(tagged)
+
+
+def _source_table_key(table: ElementTree.Element) -> str | None:
+    properties = table.find(f"{_W}tblPr")
+    caption = None if properties is None else properties.find(f"{_W}tblCaption")
+    value = None if caption is None else caption.get(f"{_W}val")
+    if value is None or not value.startswith(_TABLE_CAPTION_PREFIX):
+        return None
+    table_id = value.removeprefix(_TABLE_CAPTION_PREFIX)
+    return table_id or None
+
+
+def _cell_grid_span(cell: ElementTree.Element) -> int:
+    properties = cell.find(f"{_W}tcPr")
+    grid_span = None if properties is None else properties.find(f"{_W}gridSpan")
+    value = None if grid_span is None else grid_span.get(f"{_W}val")
+    if value is None:
+        return 1
+    try:
+        return max(1, int(value))
+    except ValueError:
+        return 1
+
+
+def _cell_vertical_merge(cell: ElementTree.Element) -> str | None:
+    properties = cell.find(f"{_W}tcPr")
+    merge = None if properties is None else properties.find(f"{_W}vMerge")
+    if merge is None:
+        return None
+    return merge.get(f"{_W}val", "continue")
 
 
 def _visible_border_sides(

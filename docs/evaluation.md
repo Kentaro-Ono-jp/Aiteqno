@@ -58,6 +58,14 @@ essential structure, DOCX/package integrity, repair-free snapshot opening,
 required assets, the no-source-background rule, and the no-external-relationship
 rule are hard gates.
 
+For a topology-aware DOCX, the generated restoration reference supplies the
+source-addressable relationships that the OOXML actually encodes: table/cell
+containment, cell/text containment, physical-cell adjacency, and reading order.
+The native renderer embeds source element IDs in editable text controls and
+table IDs in standard table captions. This changes neither the weighted formula
+nor its threshold; it prevents a visually compact cell line from collapsing
+multiple OCR elements into one anonymous read-back paragraph.
+
 The final states are:
 
 - `pass`: score meets the threshold and every requirement is established;
