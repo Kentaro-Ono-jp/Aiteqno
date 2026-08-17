@@ -167,8 +167,10 @@ improves aggregate OCR metrics in the current Ubuntu lane, it loses a logical
 block recovered by the no-upscale control and is therefore rejected. The
 downstream `bundle/` and DOCX remain control-derived; both observations and the
 comparison evidence are retained for diagnosis. The end-to-end layer currently
-remains `fail`. A numeric pass is never
-sufficient by itself: essential text, structure, output validity, source
+remains `fail`. The selected IR's validated topology is now rendered as five
+editable native Word tables; this improves the separate IR-to-DOCX layer
+without claiming any OCR improvement. A numeric pass is never sufficient by
+itself: essential text, structure, output validity, source
 independence, actual page evidence, and human readability are separate gates.
 
 ## Development

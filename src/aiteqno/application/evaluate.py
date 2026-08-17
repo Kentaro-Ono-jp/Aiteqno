@@ -10,7 +10,13 @@ from difflib import SequenceMatcher
 from os import PathLike
 from typing import Final
 
-from aiteqno.domain import DocumentIR, ElementType, ImageElement, TextElement
+from aiteqno.domain import (
+    DocumentIR,
+    ElementType,
+    ImageElement,
+    TextElement,
+    read_page_table_topology,
+)
 from aiteqno.domain import validate_document
 from aiteqno.ports import DocxRenderReport
 from aiteqno.ports.evaluation import (
@@ -23,6 +29,7 @@ from aiteqno.ports.evaluation import (
     NormalizedBoundingBox,
     ObservedElement,
     ReferenceElement,
+    RelationshipKind,
     RestorationEvaluationInput,
     RestorationEvaluationResult,
     SnapshotObservation,
@@ -150,6 +157,83 @@ def build_evaluation_reference(
         essential_text_anchors=tuple(essential_text_anchors),
         required_human_checks=tuple(required_human_checks),
     )
+
+
+def build_docx_structure_relationships(
+    document: DocumentIR,
+) -> tuple[StructuralRelationship, ...]:
+    """Describe the source-addressable structure emitted by the DOCX adapter.
+
+    The score formula remains unchanged. This helper supplies the evaluator with
+    the table, cell, and text relationships that are explicitly encoded in the
+    generated OOXML, instead of treating an empty relationship set as the
+    expected structure.
+    """
+
+    if not isinstance(document, DocumentIR):
+        raise TypeError("document must be a DocumentIR")
+    validate_document(document)
+    relationships: list[StructuralRelationship] = []
+    ordered_text_ids: list[str] = []
+
+    for page in document.pages:
+        ordered_text_ids.extend(
+            element.id
+            for element in sorted(
+                (
+                    element
+                    for element in page.elements
+                    if isinstance(element, TextElement)
+                ),
+                key=lambda element: element.reading_order,
+            )
+        )
+        topology = read_page_table_topology(page)
+        if topology is None:
+            continue
+        for table in topology.tables:
+            for cell in table.cells:
+                relationships.append(
+                    StructuralRelationship(
+                        kind=RelationshipKind.CONTAINMENT,
+                        source=table.id,
+                        target=cell.id,
+                    )
+                )
+                relationships.extend(
+                    StructuralRelationship(
+                        kind=RelationshipKind.CONTAINMENT,
+                        source=cell.id,
+                        target=text_element_id,
+                    )
+                    for text_element_id in cell.text_element_ids
+                )
+            for row_index in range(table.logical_rows):
+                row_cells = tuple(
+                    cell for cell in table.cells if cell.row_index == row_index
+                )
+                relationships.extend(
+                    StructuralRelationship(
+                        kind=RelationshipKind.ADJACENCY,
+                        source=left.id,
+                        target=right.id,
+                    )
+                    for left, right in zip(row_cells, row_cells[1:], strict=False)
+                )
+
+    relationships.extend(
+        StructuralRelationship(
+            kind=RelationshipKind.READING_ORDER,
+            source=source,
+            target=target,
+        )
+        for source, target in zip(
+            ordered_text_ids,
+            ordered_text_ids[1:],
+            strict=False,
+        )
+    )
+    return tuple(relationships)
 
 
 def evaluate_restoration(
@@ -699,6 +783,7 @@ __all__ = [
     "GEOMETRY_IOU_WEIGHT",
     "MIN_TEXT_ELEMENT_SIMILARITY",
     "build_evaluation_reference",
+    "build_docx_structure_relationships",
     "evaluate_restoration",
     "evaluate_restoration_input",
     "normalize_evaluation_text",

@@ -46,6 +46,7 @@ from aiteqno.adapters.tesseract import TesseractRasterTransformEvidence
 from aiteqno.application import (
     OcrQualityConfig,
     SourceBaselineConfig,
+    build_docx_structure_relationships,
     build_evaluation_reference,
     compare_ocr_resolution,
     evaluate_ocr_quality,
@@ -1025,6 +1026,7 @@ def _run_in_created_output(
         selected_document,
         reference_id=f"{reference.reference_id}-{selected_input}-ir",
         reviewed=True,
+        relationships=build_docx_structure_relationships(selected_document),
     )
     restoration_result = evaluate_restoration(
         selected_document,

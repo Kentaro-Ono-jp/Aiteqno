@@ -71,6 +71,8 @@ class DocxRenderReport:
     warnings: tuple[RenderWarning, ...]
     errors: tuple[str, ...]
     font_substitutions: tuple[FontSubstitution, ...]
+    native_table_ids: tuple[str, ...] = ()
+    native_table_consumed_element_ids: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -87,6 +89,10 @@ class DocxRenderReport:
             "font_substitutions": [
                 substitution.to_dict() for substitution in self.font_substitutions
             ],
+            "native_table_ids": list(self.native_table_ids),
+            "native_table_consumed_element_ids": list(
+                self.native_table_consumed_element_ids
+            ),
         }
 
 

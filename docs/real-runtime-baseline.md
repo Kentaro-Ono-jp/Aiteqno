@@ -221,18 +221,29 @@ select control in this runner; `supported` records eligibility for a separate
 adoption change. `invalid` stops before topology/publication because the
 comparison evidence cannot be trusted.
 
-The current DOCX renderer intentionally does not consume this extension yet;
-its output remains the existing failing baseline. Native Word-table rendering
-from the reviewed topology is isolated to the next issue so structure inference
-and DOCX layout are never debugged in the same change.
+The DOCX renderer consumes the validated extension only after the selected
+control bundle is published. Each of the five topology tables becomes one
+identifiable, editable native Word table. Cell text is kept as source-tagged
+editable runs, so the read-back observer retains all 285 OCR text elements while
+Word and LibreOffice can lay out tokens naturally inside 45 physical cells.
+Supporting table primitives remain unchanged in the IR and are accounted for
+once in `native_table_consumed_element_ids`; duplicate border evidence is not
+drawn again. Pages without topology continue through the legacy renderer.
+
+The IR-to-DOCX reference includes only structure explicitly encoded in this
+DOCX: table-to-cell containment, cell-to-text containment, physical-cell
+adjacency, and source reading order. The evaluator formula and threshold are
+unchanged. Geometry remains `0` until actual rendered regions can be observed;
+the retained PDF/PNG and the one-page gate remain the visual authority.
 
 `environment.json` records the OS, Python, Aiteqno, installed Python packages,
 git revision, options, executable versions, `jpn`/`eng` trained-data hashes,
 Ubuntu package versions, locale/timezone, and fontconfig mappings. Exact OCR
 scores may move when those runtimes move; CI does not pin those scores. It
 verifies the fixed integrity contract, the current truthful `regressed`
-decision, and the fixed 5-table/45-cell/210-text topology while the combined
-control-derived source-to-DOCX decision remains the expected `fail`.
+decision, the fixed 5-table/45-cell/210-text topology, native-table consumption,
+and an IR-to-DOCX score of at least 70 while the combined control-derived
+source-to-DOCX decision remains the expected `fail` because OCR is unchanged.
 
 ## CI lanes and intentional updates
 

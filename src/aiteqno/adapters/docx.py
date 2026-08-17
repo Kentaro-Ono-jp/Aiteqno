@@ -3,8 +3,10 @@
 The adapter treats Document IR as the visual authority. It maps page settings,
 text, lines, rectangles, and verified bundle-local images to interoperable
 WordprocessingML. Coordinate-perfect layering is intentionally replaced by
-deterministic horizontal bands and fixed-width tables; every approximation is
-reported against the affected element ID.
+deterministic flow layout. Pages carrying the validated table-topology
+extension use real editable Word tables; other pages retain the legacy
+horizontal-band path. Every approximation is reported against the affected
+element ID.
 """
 
 from __future__ import annotations
@@ -50,10 +52,15 @@ from aiteqno.domain import (
     LineDash,
     LineElement,
     Page,
+    PageTableTopology,
     RectangleElement,
+    TableCellTopology,
+    TablePrimitiveRole,
+    TableTopology,
     TextAlign,
     TextElement,
     TextStyle,
+    read_page_table_topology,
     validate_document,
 )
 from aiteqno.ports import (
@@ -84,6 +91,11 @@ _MIN_LAYOUT_COLUMN_PT = 1.0
 _MAX_WORD_BORDER_PT = 12.0
 _MIN_WORD_BORDER_PT = 0.25
 _SOURCE_PAGE_COVERAGE_LIMIT = 0.90
+_TOPOLOGY_PAGE_MARGIN_PT = 18.0
+_TOPOLOGY_ROW_HEIGHT_SCALE = 0.85
+_TOPOLOGY_GAP_SCALE = 0.75
+_SOURCE_TAG_PREFIX = "aiteqno-source:"
+_TABLE_CAPTION_PREFIX = "aiteqno-table:"
 
 _ALIGNMENT_MAP = {
     TextAlign.LEFT: WD_ALIGN_PARAGRAPH.LEFT,
@@ -109,17 +121,33 @@ class _RenderState:
     fallback_seen: set[str] = field(default_factory=set)
     omitted_ids: list[str] = field(default_factory=list)
     warnings: list[RenderWarning] = field(default_factory=list)
-    warning_seen: set[tuple[str, str | None, str | None]] = field(
-        default_factory=set
-    )
+    warning_seen: set[tuple[str, str | None, str | None]] = field(default_factory=set)
     substitutions: list[FontSubstitution] = field(default_factory=list)
     resolved_assets: dict[str, ResolvedAsset] = field(default_factory=dict)
     unavailable_images: dict[str, tuple[str, str]] = field(default_factory=dict)
+    native_table_ids: list[str] = field(default_factory=list)
+    native_table_seen: set[str] = field(default_factory=set)
+    native_table_consumed_ids: list[str] = field(default_factory=list)
+    native_table_consumed_seen: set[str] = field(default_factory=set)
 
     def record_rendered(self, element_id: str) -> None:
         if element_id not in self.rendered_seen:
             self.rendered_seen.add(element_id)
             self.rendered_ids.append(element_id)
+
+    def record_native_table(
+        self,
+        table_id: str,
+        consumed_element_ids: Iterable[str],
+    ) -> None:
+        if table_id not in self.native_table_seen:
+            self.native_table_seen.add(table_id)
+            self.native_table_ids.append(table_id)
+        for element_id in consumed_element_ids:
+            if element_id not in self.native_table_consumed_seen:
+                self.native_table_consumed_seen.add(element_id)
+                self.native_table_consumed_ids.append(element_id)
+            self.record_rendered(element_id)
 
     def warn_fallback(
         self,
@@ -228,14 +256,30 @@ class PythonDocxRenderer:
                 section = word_document.sections[0]
             else:
                 section = word_document.add_section(WD_SECTION.NEW_PAGE)
-            horizontal_margin, vertical_margin = self._configure_section(section, page)
-            self._render_page(
-                word_document,
+            topology = read_page_table_topology(page)
+            horizontal_margin, vertical_margin = self._configure_section(
+                section,
                 page,
-                horizontal_margin=horizontal_margin,
-                vertical_margin=vertical_margin,
-                state=state,
+                topology_page=topology is not None and bool(topology.tables),
             )
+            if topology is not None and topology.tables:
+                self._render_topology_page(
+                    word_document,
+                    section,
+                    page,
+                    topology,
+                    horizontal_margin=horizontal_margin,
+                    vertical_margin=vertical_margin,
+                    state=state,
+                )
+            else:
+                self._render_page(
+                    word_document,
+                    page,
+                    horizontal_margin=horizontal_margin,
+                    vertical_margin=vertical_margin,
+                    state=state,
+                )
 
         self._reject_strict_fallbacks(selected_policy, state)
         self._save_atomically(word_document, target)
@@ -253,6 +297,8 @@ class PythonDocxRenderer:
             warnings=tuple(state.warnings),
             errors=(),
             font_substitutions=tuple(state.substitutions),
+            native_table_ids=tuple(state.native_table_ids),
+            native_table_consumed_element_ids=tuple(state.native_table_consumed_ids),
         )
         return DocxRenderResult(output_path=resolved_target, report=report)
 
@@ -261,9 +307,7 @@ class PythonDocxRenderer:
         policy: RenderPolicy,
         state: _RenderState,
     ) -> None:
-        if policy is RenderPolicy.STRICT and (
-            state.fallback_ids or state.omitted_ids
-        ):
+        if policy is RenderPolicy.STRICT and (state.fallback_ids or state.omitted_ids):
             details = ", ".join((*state.fallback_ids, *state.omitted_ids))
             raise DocxRenderError(
                 f"strict rendering rejected approximated or omitted elements: {details}"
@@ -306,7 +350,10 @@ class PythonDocxRenderer:
                         message=message,
                     )
                     continue
-                if asset.id not in state.resolved_assets and asset.id not in resolution_errors:
+                if (
+                    asset.id not in state.resolved_assets
+                    and asset.id not in resolution_errors
+                ):
                     try:
                         resolved = state.resolver.resolve(asset)
                         if resolved.asset_id != asset.id:
@@ -351,9 +398,7 @@ class PythonDocxRenderer:
             and asset.pixel_height == page.source.pixel_height
         )
         if area_coverage >= _SOURCE_PAGE_COVERAGE_LIMIT or (
-            source_size_match
-            and width_coverage >= 0.75
-            and height_coverage >= 0.75
+            source_size_match and width_coverage >= 0.75 and height_coverage >= 0.75
         ):
             return (
                 f"image {element.id!r} substantially covers page {page.id!r}; "
@@ -362,7 +407,12 @@ class PythonDocxRenderer:
         return None
 
     @staticmethod
-    def _configure_section(section: Section, page: Page) -> tuple[float, float]:
+    def _configure_section(
+        section: Section,
+        page: Page,
+        *,
+        topology_page: bool = False,
+    ) -> tuple[float, float]:
         width = page.size.width
         height = page.size.height
         section.orientation = (
@@ -371,14 +421,579 @@ class PythonDocxRenderer:
         section.page_width = Pt(width)
         section.page_height = Pt(height)
 
-        horizontal_margin = min(DEFAULT_PAGE_MARGIN_PT, width / 4)
-        vertical_margin = min(DEFAULT_PAGE_MARGIN_PT, height / 4)
+        horizontal_requested = (
+            _TOPOLOGY_PAGE_MARGIN_PT if topology_page else DEFAULT_PAGE_MARGIN_PT
+        )
+        vertical_requested = 0.0 if topology_page else DEFAULT_PAGE_MARGIN_PT
+        horizontal_margin = min(horizontal_requested, width / 4)
+        vertical_margin = min(vertical_requested, height / 4)
         section.left_margin = Pt(horizontal_margin)
         section.right_margin = Pt(horizontal_margin)
         section.top_margin = Pt(vertical_margin)
         section.bottom_margin = Pt(vertical_margin)
         section.gutter = Pt(0)
         return horizontal_margin, vertical_margin
+
+    def _render_topology_page(
+        self,
+        word_document: WordDocument,
+        section: Section,
+        page: Page,
+        topology: PageTableTopology,
+        *,
+        horizontal_margin: float,
+        vertical_margin: float,
+        state: _RenderState,
+    ) -> None:
+        """Render one validated topology page without legacy layout tables."""
+
+        table_element_ids = {
+            element_id
+            for table in topology.tables
+            for element_id in (
+                *table.supporting_element_ids,
+                *(text_id for cell in table.cells for text_id in cell.text_element_ids),
+            )
+        }
+        page_frame_ids = {
+            assignment.element_id
+            for assignment in topology.primitive_roles
+            if assignment.role is TablePrimitiveRole.PAGE_FRAME
+        }
+        self._render_page_frame(
+            section,
+            page,
+            page_frame_ids=page_frame_ids,
+            state=state,
+        )
+
+        remaining = tuple(
+            element
+            for element in page.elements
+            if element.id not in table_element_ids and element.id not in page_frame_ids
+        )
+        blocks: list[tuple[float, int, str, _LayoutBand | TableTopology]] = [
+            (band.top, 0, min(element.id for element in band.elements), band)
+            for band in self._cluster_bands(remaining)
+        ]
+        blocks.extend((table.bbox.y, 1, table.id, table) for table in topology.tables)
+        blocks.sort(key=lambda item: (item[0], item[1], item[2]))
+
+        previous_bottom = vertical_margin
+        for _top, _kind, _identifier, block in blocks:
+            if isinstance(block, TableTopology):
+                previous_bottom = self._render_native_table(
+                    word_document,
+                    page,
+                    topology,
+                    block,
+                    horizontal_margin=horizontal_margin,
+                    previous_bottom=previous_bottom,
+                    state=state,
+                )
+                continue
+            if all(isinstance(element, TextElement) for element in block.elements):
+                previous_bottom = self._render_topology_text_band(
+                    word_document,
+                    page,
+                    block,
+                    horizontal_margin=horizontal_margin,
+                    previous_bottom=previous_bottom,
+                    state=state,
+                )
+                continue
+            if all(
+                isinstance(element, LineElement) and self._is_horizontal_line(element)
+                for element in block.elements
+            ):
+                for element in block.elements:
+                    assert isinstance(element, LineElement)
+                    previous_bottom = self._render_topology_horizontal_line(
+                        word_document,
+                        page,
+                        element,
+                        horizontal_margin=horizontal_margin,
+                        previous_bottom=previous_bottom,
+                        state=state,
+                    )
+                continue
+            if all(
+                isinstance(element, TextElement)
+                or (
+                    isinstance(element, LineElement)
+                    and self._is_horizontal_line(element)
+                )
+                for element in block.elements
+            ):
+                text_elements = tuple(
+                    element
+                    for element in block.elements
+                    if isinstance(element, TextElement)
+                )
+                if text_elements:
+                    text_band = _LayoutBand(
+                        elements=text_elements,
+                        top=min(element.bbox.y for element in text_elements),
+                        bottom=max(element.bbox.bottom for element in text_elements),
+                    )
+                    previous_bottom = self._render_topology_text_band(
+                        word_document,
+                        page,
+                        text_band,
+                        horizontal_margin=horizontal_margin,
+                        previous_bottom=previous_bottom,
+                        state=state,
+                    )
+                for element in block.elements:
+                    if not isinstance(element, LineElement):
+                        continue
+                    previous_bottom = self._render_topology_horizontal_line(
+                        word_document,
+                        page,
+                        element,
+                        horizontal_margin=horizontal_margin,
+                        previous_bottom=previous_bottom,
+                        state=state,
+                    )
+                continue
+
+            # Non-grid decorations remain on the established best-effort path.
+            previous_bottom = self._render_table_band(
+                word_document,
+                page,
+                block,
+                horizontal_margin=horizontal_margin,
+                previous_bottom=previous_bottom,
+                state=state,
+                tag_source_elements=True,
+            )
+
+    def _render_page_frame(
+        self,
+        section: Section,
+        page: Page,
+        *,
+        page_frame_ids: set[str],
+        state: _RenderState,
+    ) -> None:
+        if not page_frame_ids:
+            return
+        elements = {
+            element.id: element
+            for element in page.elements
+            if element.id in page_frame_ids
+        }
+        rectangle = next(
+            (
+                element
+                for element in elements.values()
+                if isinstance(element, RectangleElement)
+            ),
+            None,
+        )
+        line = next(
+            (
+                element
+                for element in elements.values()
+                if isinstance(element, LineElement)
+            ),
+            None,
+        )
+        if rectangle is not None:
+            if (
+                rectangle.style.stroke_width_pt <= 0
+                or rectangle.style.stroke_color is None
+            ):
+                border = {"val": "nil"}
+            else:
+                border = self._visual_border(
+                    page,
+                    rectangle,
+                    width_pt=rectangle.style.stroke_width_pt,
+                    color=rectangle.style.stroke_color,
+                    dash=LineDash.SOLID,
+                    state=state,
+                )
+        elif line is not None:
+            border = self._line_border(page, line, state)
+        else:
+            return
+        self._set_section_page_borders(section, border)
+        for element in page.elements:
+            if element.id in page_frame_ids:
+                state.record_rendered(element.id)
+
+    def _render_topology_text_band(
+        self,
+        word_document: WordDocument,
+        page: Page,
+        band: _LayoutBand,
+        *,
+        horizontal_margin: float,
+        previous_bottom: float,
+        state: _RenderState,
+    ) -> float:
+        elements = tuple(
+            sorted(
+                (
+                    element
+                    for element in band.elements
+                    if isinstance(element, TextElement)
+                ),
+                key=lambda element: element.reading_order,
+            )
+        )
+        paragraph = word_document.add_paragraph()
+        left = min(element.bbox.x for element in elements)
+        right = max(element.bbox.right for element in elements)
+        content_right = page.size.width - horizontal_margin
+        paragraph_format = paragraph.paragraph_format
+        paragraph_format.left_indent = Pt(max(0.0, left - horizontal_margin))
+        paragraph_format.right_indent = Pt(max(0.0, content_right - right))
+        paragraph_format.space_before = Pt(
+            max(0.0, band.top - previous_bottom) * _TOPOLOGY_GAP_SCALE
+        )
+        paragraph_format.space_after = Pt(0)
+        paragraph_format.keep_together = True
+        previous: TextElement | None = None
+        for element in elements:
+            self._append_text_gap(paragraph, previous, element)
+            self._apply_text_style(
+                paragraph,
+                page,
+                element,
+                state=state,
+                source_element_id=element.id,
+            )
+            state.record_rendered(element.id)
+            previous = element
+        return max(previous_bottom, band.bottom)
+
+    def _render_topology_horizontal_line(
+        self,
+        word_document: WordDocument,
+        page: Page,
+        element: LineElement,
+        *,
+        horizontal_margin: float,
+        previous_bottom: float,
+        state: _RenderState,
+    ) -> float:
+        paragraph = word_document.add_paragraph()
+        paragraph_format = paragraph.paragraph_format
+        content_right = page.size.width - horizontal_margin
+        left = min(element.start.x, element.end.x)
+        right = max(element.start.x, element.end.x)
+        paragraph_format.left_indent = Pt(max(0.0, left - horizontal_margin))
+        paragraph_format.right_indent = Pt(max(0.0, content_right - right))
+        paragraph_format.space_before = Pt(
+            max(0.0, min(element.start.y, element.end.y) - previous_bottom)
+            * _TOPOLOGY_GAP_SCALE
+        )
+        paragraph_format.space_after = Pt(0)
+        paragraph_format.line_spacing = Pt(1)
+        run = paragraph.add_run("\u200b")
+        run.font.size = Pt(1)
+        run.font.hidden = True
+        self._set_paragraph_bottom_border(
+            paragraph,
+            self._line_border(page, element, state),
+        )
+        state.record_rendered(element.id)
+        return max(previous_bottom, max(element.start.y, element.end.y))
+
+    def _render_native_table(
+        self,
+        word_document: WordDocument,
+        page: Page,
+        page_topology: PageTableTopology,
+        table_topology: TableTopology,
+        *,
+        horizontal_margin: float,
+        previous_bottom: float,
+        state: _RenderState,
+    ) -> float:
+        gap = max(0.0, table_topology.bbox.y - previous_bottom) * _TOPOLOGY_GAP_SCALE
+        self._add_flow_spacer(word_document, gap)
+
+        column_widths = tuple(
+            column.end - column.start for column in table_topology.columns
+        )
+        table = word_document.add_table(
+            rows=table_topology.logical_rows,
+            cols=table_topology.logical_columns,
+        )
+        self._configure_native_table(
+            table,
+            table_id=table_topology.id,
+            column_widths=column_widths,
+            table_width=table_topology.bbox.width,
+            indent=max(0.0, table_topology.bbox.x - horizontal_margin),
+        )
+        for row, axis in zip(table.rows, table_topology.rows, strict=True):
+            row.height = Pt((axis.end - axis.start) * _TOPOLOGY_ROW_HEIGHT_SCALE)
+            row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
+            row_properties = row._tr.get_or_add_trPr()
+            cannot_split = OxmlElement("w:cantSplit")
+            row_properties.append(cannot_split)
+
+        for cell_topology in table_topology.cells:
+            if cell_topology.rowspan == 1 and cell_topology.colspan == 1:
+                continue
+            start = table.cell(
+                cell_topology.row_index,
+                cell_topology.column_index,
+            )
+            end = table.cell(
+                cell_topology.row_index + cell_topology.rowspan - 1,
+                cell_topology.column_index + cell_topology.colspan - 1,
+            )
+            start.merge(end)
+
+        elements = {element.id: element for element in page.elements}
+        cell_rectangles = {
+            assignment.cell_id: assignment.element_id
+            for assignment in page_topology.primitive_roles
+            if assignment.role is TablePrimitiveRole.CELL_RECTANGLE
+            and assignment.table_id == table_topology.id
+            and assignment.cell_id is not None
+        }
+        for cell_topology in table_topology.cells:
+            cell = table.cell(
+                cell_topology.row_index,
+                cell_topology.column_index,
+            )
+            width = sum(
+                column_widths[
+                    cell_topology.column_index : cell_topology.column_index
+                    + cell_topology.colspan
+                ]
+            )
+            self._configure_cell(cell, width)
+            self._clear_cell(cell)
+            rectangle_id = cell_rectangles[cell_topology.id]
+            rectangle = elements[rectangle_id]
+            assert isinstance(rectangle, RectangleElement)
+            self._render_rectangle(cell, page, rectangle, state)
+            self._render_native_cell_text(
+                cell,
+                page,
+                cell_topology,
+                elements=elements,
+                state=state,
+            )
+
+        consumed_ids = {
+            *table_topology.supporting_element_ids,
+            *(
+                text_id
+                for cell in table_topology.cells
+                for text_id in cell.text_element_ids
+            ),
+        }
+        state.record_native_table(
+            table_topology.id,
+            (element.id for element in page.elements if element.id in consumed_ids),
+        )
+        return max(previous_bottom, table_topology.bbox.bottom)
+
+    def _render_native_cell_text(
+        self,
+        cell: _Cell,
+        page: Page,
+        cell_topology: TableCellTopology,
+        *,
+        elements: dict[str, DocumentElement],
+        state: _RenderState,
+    ) -> None:
+        text_elements = tuple(
+            elements[element_id] for element_id in cell_topology.text_element_ids
+        )
+        if not text_elements:
+            return
+        assert all(isinstance(element, TextElement) for element in text_elements)
+        lines = self._cluster_text_lines(
+            tuple(
+                element for element in text_elements if isinstance(element, TextElement)
+            )
+        )
+        for line_index, line in enumerate(lines):
+            paragraph = cell.paragraphs[0] if line_index == 0 else cell.add_paragraph()
+            paragraph_format = paragraph.paragraph_format
+            paragraph_format.space_before = Pt(0)
+            paragraph_format.space_after = Pt(0)
+            paragraph_format.keep_together = True
+            line_left = min(element.bbox.x for element in line)
+            line_right = max(element.bbox.right for element in line)
+            paragraph_format.left_indent = Pt(
+                max(0.0, line_left - cell_topology.bbox.x)
+            )
+            paragraph_format.right_indent = Pt(
+                max(0.0, cell_topology.bbox.right - line_right)
+            )
+            previous: TextElement | None = None
+            for element in line:
+                self._append_text_gap(paragraph, previous, element)
+                self._apply_text_style(
+                    paragraph,
+                    page,
+                    element,
+                    state=state,
+                    source_element_id=element.id,
+                )
+                previous = element
+
+    @staticmethod
+    def _cluster_text_lines(
+        elements: tuple[TextElement, ...],
+    ) -> tuple[tuple[TextElement, ...], ...]:
+        lines: list[list[TextElement]] = []
+        line_bottoms: list[float] = []
+        for element in sorted(elements, key=lambda item: item.reading_order):
+            candidate_index = next(
+                (
+                    index
+                    for index, bottom in enumerate(line_bottoms)
+                    if element.bbox.y <= bottom + _BAND_TOLERANCE_PT
+                    and element.bbox.bottom
+                    >= min(item.bbox.y for item in lines[index]) - _BAND_TOLERANCE_PT
+                ),
+                None,
+            )
+            if candidate_index is None:
+                lines.append([element])
+                line_bottoms.append(element.bbox.bottom)
+            else:
+                lines[candidate_index].append(element)
+                line_bottoms[candidate_index] = max(
+                    line_bottoms[candidate_index], element.bbox.bottom
+                )
+        return tuple(tuple(line) for line in lines)
+
+    @staticmethod
+    def _append_text_gap(
+        paragraph: Paragraph,
+        previous: TextElement | None,
+        current: TextElement,
+    ) -> None:
+        if previous is None:
+            return
+        gap = max(0.0, current.bbox.x - previous.bbox.right)
+        character_width = max(
+            1.0,
+            min(previous.style.font_size_pt, current.style.font_size_pt) * 0.5,
+        )
+        spaces = max(1, min(8, round(gap / character_width)))
+        separator = paragraph.add_run(" " * spaces)
+        separator.font.size = Pt(
+            min(previous.style.font_size_pt, current.style.font_size_pt)
+        )
+
+    @staticmethod
+    def _add_flow_spacer(word_document: WordDocument, gap: float) -> None:
+        if gap <= GEOMETRY_TOLERANCE_PT:
+            return
+        spacer = word_document.add_paragraph()
+        spacer.paragraph_format.space_before = Pt(max(0.0, gap - 1.0))
+        spacer.paragraph_format.space_after = Pt(0)
+        spacer.paragraph_format.line_spacing = Pt(1)
+        run = spacer.add_run("\u200b")
+        run.font.size = Pt(1)
+        run.font.hidden = True
+
+    @staticmethod
+    def _configure_native_table(
+        table: Table,
+        *,
+        table_id: str,
+        column_widths: tuple[float, ...],
+        table_width: float,
+        indent: float,
+    ) -> None:
+        table.alignment = WD_TABLE_ALIGNMENT.LEFT
+        table.autofit = False
+        properties = table._tbl.tblPr
+
+        width = properties.find(qn("w:tblW"))
+        if width is None:
+            width = OxmlElement("w:tblW")
+            properties.insert(0, width)
+        width.set(qn("w:type"), "dxa")
+        width.set(qn("w:w"), str(_points_to_twips(table_width)))
+
+        table_indent = properties.find(qn("w:tblInd"))
+        if table_indent is None:
+            table_indent = OxmlElement("w:tblInd")
+            properties.append(table_indent)
+        table_indent.set(qn("w:type"), "dxa")
+        table_indent.set(qn("w:w"), str(_points_to_twips(indent)))
+
+        layout = properties.find(qn("w:tblLayout"))
+        if layout is None:
+            layout = OxmlElement("w:tblLayout")
+            properties.append(layout)
+        layout.set(qn("w:type"), "fixed")
+
+        caption = properties.find(qn("w:tblCaption"))
+        if caption is None:
+            caption = OxmlElement("w:tblCaption")
+            properties.append(caption)
+        caption.set(qn("w:val"), f"{_TABLE_CAPTION_PREFIX}{table_id}")
+
+        description = properties.find(qn("w:tblDescription"))
+        if description is None:
+            description = OxmlElement("w:tblDescription")
+            properties.append(description)
+        description.set(
+            qn("w:val"),
+            f"Editable table reconstructed from Document IR topology {table_id}",
+        )
+
+        borders = properties.find(qn("w:tblBorders"))
+        if borders is None:
+            borders = OxmlElement("w:tblBorders")
+            properties.append(borders)
+        for edge in ("top", "left", "bottom", "right", "insideH", "insideV"):
+            node = borders.find(qn(f"w:{edge}"))
+            if node is None:
+                node = OxmlElement(f"w:{edge}")
+                borders.append(node)
+            node.set(qn("w:val"), "nil")
+
+        widths_twips = _distributed_twips(column_widths, table_width)
+        grid = table._tbl.tblGrid
+        for child in list(grid):
+            grid.remove(child)
+        for width_twips in widths_twips:
+            grid_column = OxmlElement("w:gridCol")
+            grid_column.set(qn("w:w"), str(width_twips))
+            grid.append(grid_column)
+
+    @staticmethod
+    def _clear_cell(cell: _Cell) -> None:
+        for paragraph in tuple(cell._tc.findall(qn("w:p"))):
+            cell._tc.remove(paragraph)
+        cell.add_paragraph()
+
+    @staticmethod
+    def _set_section_page_borders(
+        section: Section,
+        border: dict[str, str],
+    ) -> None:
+        section_properties = section._sectPr
+        borders = section_properties.find(qn("w:pgBorders"))
+        if borders is None:
+            borders = OxmlElement("w:pgBorders")
+            section_properties.append(borders)
+        borders.set(qn("w:offsetFrom"), "page")
+        for edge in ("top", "left", "bottom", "right"):
+            node = borders.find(qn(f"w:{edge}"))
+            if node is None:
+                node = OxmlElement(f"w:{edge}")
+                borders.append(node)
+            for key, value in border.items():
+                node.set(qn(f"w:{key}"), value)
+            node.set(qn("w:space"), "0")
 
     def _render_page(
         self,
@@ -391,9 +1006,7 @@ class PythonDocxRenderer:
     ) -> None:
         previous_bottom = vertical_margin
         for band in self._cluster_bands(page.elements):
-            if len(band.elements) == 1 and isinstance(
-                band.elements[0], TextElement
-            ):
+            if len(band.elements) == 1 and isinstance(band.elements[0], TextElement):
                 element = band.elements[0]
                 paragraph = word_document.add_paragraph()
                 previous_bottom = self._apply_text_position(
@@ -407,9 +1020,11 @@ class PythonDocxRenderer:
                 self._apply_text_style(paragraph, page, element, state=state)
                 state.record_rendered(element.id)
                 continue
-            if len(band.elements) == 1 and isinstance(
-                band.elements[0], LineElement
-            ) and self._is_horizontal_line(band.elements[0]):
+            if (
+                len(band.elements) == 1
+                and isinstance(band.elements[0], LineElement)
+                and self._is_horizontal_line(band.elements[0])
+            ):
                 previous_bottom = self._render_horizontal_line(
                     word_document,
                     page,
@@ -558,6 +1173,7 @@ class PythonDocxRenderer:
         horizontal_margin: float,
         previous_bottom: float,
         state: _RenderState,
+        tag_source_elements: bool = False,
     ) -> float:
         if band.top < previous_bottom - GEOMETRY_TOLERANCE_PT:
             for element in band.elements:
@@ -597,7 +1213,13 @@ class PythonDocxRenderer:
             self._configure_cell(cell, segment.width)
             if segment.slot is None:
                 continue
-            self._render_slot(cell, page, segment.slot, state)
+            self._render_slot(
+                cell,
+                page,
+                segment.slot,
+                state,
+                tag_source_elements=tag_source_elements,
+            )
         return max(previous_bottom, band.bottom)
 
     def _derive_segments(
@@ -754,6 +1376,8 @@ class PythonDocxRenderer:
         page: Page,
         slot: _LayoutSlot,
         state: _RenderState,
+        *,
+        tag_source_elements: bool = False,
     ) -> None:
         ordered_elements = sorted(
             slot.elements,
@@ -768,7 +1392,13 @@ class PythonDocxRenderer:
                 self._render_line_in_cell(cell, page, element, state)
             elif isinstance(element, TextElement):
                 paragraph = self._available_cell_paragraph(cell)
-                self._apply_text_style(paragraph, page, element, state=state)
+                self._apply_text_style(
+                    paragraph,
+                    page,
+                    element,
+                    state=state,
+                    source_element_id=(element.id if tag_source_elements else None),
+                )
             state.record_rendered(element.id)
 
     def _render_rectangle(
@@ -1011,6 +1641,7 @@ class PythonDocxRenderer:
         element: TextElement,
         *,
         state: _RenderState,
+        source_element_id: str | None = None,
     ) -> None:
         style = element.style
         paragraph.alignment = _ALIGNMENT_MAP[style.align]
@@ -1037,6 +1668,8 @@ class PythonDocxRenderer:
             )
 
         self._set_run_font(run, resolved_font, style)
+        if source_element_id is not None:
+            self._wrap_run_with_source_tag(run, source_element_id)
         if style.font_weight not in {400, 700}:
             mapped_weight = 700 if style.font_weight >= 600 else 400
             state.warn_fallback(
@@ -1066,6 +1699,29 @@ class PythonDocxRenderer:
                 code="opacity_approximated",
                 message="text opacity is unsupported and was rendered opaque",
             )
+
+    @staticmethod
+    def _wrap_run_with_source_tag(run: Run, source_element_id: str) -> None:
+        run_element = run._r
+        paragraph = run_element.getparent()
+        if paragraph is None:
+            raise DocxRenderError("text run has no OOXML paragraph parent")
+        index = paragraph.index(run_element)
+        paragraph.remove(run_element)
+
+        control = OxmlElement("w:sdt")
+        properties = OxmlElement("w:sdtPr")
+        tag = OxmlElement("w:tag")
+        tag.set(qn("w:val"), f"{_SOURCE_TAG_PREFIX}{source_element_id}")
+        properties.append(tag)
+        alias = OxmlElement("w:alias")
+        alias.set(qn("w:val"), source_element_id)
+        properties.append(alias)
+        content = OxmlElement("w:sdtContent")
+        content.append(run_element)
+        control.append(properties)
+        control.append(content)
+        paragraph.insert(index, control)
 
     @staticmethod
     def _set_run_font(run: Run, font_name: str, style: TextStyle) -> None:
@@ -1138,3 +1794,19 @@ class PythonDocxRenderer:
 
 def _points_to_twips(points: float) -> int:
     return max(1, round(points * 20))
+
+
+def _distributed_twips(
+    widths: tuple[float, ...],
+    total_width: float,
+) -> tuple[int, ...]:
+    """Round grid widths while preserving the exact rounded table width."""
+
+    if not widths:
+        raise ValueError("native table requires at least one column")
+    rounded = [max(1, round(width * 20)) for width in widths]
+    target = _points_to_twips(total_width)
+    rounded[-1] += target - sum(rounded)
+    if rounded[-1] < 1:
+        raise DocxRenderError("native table column widths collapse after rounding")
+    return tuple(rounded)
