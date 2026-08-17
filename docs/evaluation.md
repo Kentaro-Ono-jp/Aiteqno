@@ -1,8 +1,17 @@
 # Restoration evaluation
 
-Aiteqno's restoration score measures the generated DOCX, not OCR accuracy and
-not the diagnostic PNG preview. A result near 70 is deliberately acceptable
-when its important content remains readable.
+Aiteqno has two deliberately separate quality measurements. The existing
+restoration score measures how much of a candidate Document IR survives in the
+generated DOCX. It does not measure OCR accuracy and does not inspect the source
+image. The source baseline compares human-reviewed source truth with candidate
+IR and text observed on actual rendered DOCX pages. Neither evaluator uses the
+diagnostic PNG preview as proof of the DOCX appearance.
+
+The representative `78.79` result belongs only to the first measurement and
+uses fixed `FakeOcrBackend` observations. It is not evidence of real Tesseract
+accuracy or realistic Japanese-form restoration. The real-runtime source
+baseline is intentionally `fail`; see
+[Real-runtime failure baseline](real-runtime-baseline.md).
 
 ## Inputs
 
@@ -26,6 +35,8 @@ See [V1 golden round-trip](e2e.md) for fixture provenance, CI coverage, and the
 intentional-update policy.
 
 ## Decision model
+
+### IR-to-DOCX restoration
 
 The fixed V1 score is:
 
@@ -92,3 +103,21 @@ The create-only artifact records:
 
 Serialization is deterministic UTF-8 JSON. Re-evaluating identical evidence
 produces identical JSON.
+
+## Source-grounded baseline
+
+`evaluate_source_baseline()` consumes a `SourceBaselineReference` whose text,
+logical regions, structures, source digest, and review status are independent
+of candidate IDs. It evaluates NFKC/whitespace-normalized character accuracy,
+logical block coverage, structure similarity, and geometry similarity with
+component-specific minimums. Reviewed reading-order, containment, and adjacency
+relationships are evaluated from candidate order and geometry without assuming
+candidate IDs. Text OCRed from actual LibreOffice page PNGs takes
+precedence over OOXML read-back text, so invisible, clipped, or severely
+overlapped XML text cannot earn readability credit merely by existing in the
+package.
+
+Manual evidence uses explicit `pending`, `passed`, and `failed` states. Pending
+evidence prevents an otherwise clean automatic pass; a failed human check is a
+hard failure. See the baseline guide for weights, thresholds, artifacts, and CI
+runtime recording.

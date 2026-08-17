@@ -1,5 +1,18 @@
 """Use-case orchestration built on the domain and ports layers."""
 
+from .baseline import (
+    DEFAULT_LOGICAL_BLOCK_ACCURACY_THRESHOLD,
+    DEFAULT_SOURCE_BASELINE_COMPONENT_MINIMA,
+    DEFAULT_SOURCE_BASELINE_THRESHOLD,
+    DEFAULT_STRUCTURE_MATCH_THRESHOLD,
+    SOURCE_BASELINE_COMPONENT_WEIGHTS,
+    SOURCE_BASELINE_EVALUATOR_NAME,
+    SOURCE_BASELINE_EVALUATOR_VERSION,
+    SourceBaselineConfig,
+    evaluate_source_baseline,
+    normalize_source_text,
+    source_character_accuracy,
+)
 from .extract import (
     EXTRACTION_PROVIDER,
     EXTRACTION_PROVIDER_VERSION,
@@ -27,6 +40,10 @@ from .preview import render_preview
 from .render import render_docx
 
 __all__ = [
+    "DEFAULT_LOGICAL_BLOCK_ACCURACY_THRESHOLD",
+    "DEFAULT_SOURCE_BASELINE_COMPONENT_MINIMA",
+    "DEFAULT_SOURCE_BASELINE_THRESHOLD",
+    "DEFAULT_STRUCTURE_MATCH_THRESHOLD",
     "EXTRACTION_PROVIDER",
     "EXTRACTION_PROVIDER_VERSION",
     "PAGE_COVERING_IMAGE_FRACTION",
@@ -39,13 +56,20 @@ __all__ = [
     "GEOMETRY_CENTER_WEIGHT",
     "GEOMETRY_IOU_WEIGHT",
     "MIN_TEXT_ELEMENT_SIMILARITY",
+    "SOURCE_BASELINE_COMPONENT_WEIGHTS",
+    "SOURCE_BASELINE_EVALUATOR_NAME",
+    "SOURCE_BASELINE_EVALUATOR_VERSION",
+    "SourceBaselineConfig",
     "PngExtractionError",
     "PngExtractionResult",
     "extract_png",
     "build_evaluation_reference",
     "evaluate_restoration",
     "evaluate_restoration_input",
+    "evaluate_source_baseline",
     "normalize_evaluation_text",
+    "normalize_source_text",
     "render_docx",
     "render_preview",
+    "source_character_accuracy",
 ]

@@ -27,3 +27,13 @@ Tesseract実行ファイルとtrained-dataはAiteqnoのwheelへ同梱せず、�
 
 対応版、Windows / CI導入手順、公式参照先は
 [docs/ocr-runtime.md](docs/ocr-runtime.md)に記録します。
+
+## Test fixture provenance
+
+公開テストfixtureは、Aiteqno向けに独自作成したMIT素材、または再配布条件を
+明示的に確認できる素材だけを使用します。出所が分かっても再配布許諾を確認
+できない文書は、画像そのものを現在のツリーへ保持しません。診断上必要な場合
+も、外部URL、SHA-256、寸法、除外理由だけを記録します。
+
+実ランタイムbaselineのfixture、確認者、source hash、除外記録は
+[docs/real-runtime-baseline.md](docs/real-runtime-baseline.md)を参照してください。

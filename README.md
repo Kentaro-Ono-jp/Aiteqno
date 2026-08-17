@@ -6,7 +6,10 @@
 
 Aiteqno is a local, source-independent document round-trip tool. V1 extracts
 text and visual structure from one single-page PNG into a versioned Document
-IR, then reconstructs a readable DOCX and comparison PNG from that IR alone.
+IR, then attempts to reconstruct a readable DOCX and comparison PNG from that
+IR alone. The current realistic Japanese real-runtime baseline is an explicit
+failure; the repository records that gap instead of presenting the diagnostic
+preview as proof of success.
 
 ```text
 single-page PNG
@@ -20,7 +23,7 @@ single-page PNG
 ```
 
 The reconstructed document is an approximation, not a pixel-perfect copy. The
-formal result is a DOCX that preserves the important text and document
+intended formal result is a DOCX that preserves the important text and document
 relationships well enough to read and use. The full source page is never kept
 as a background shortcut.
 
@@ -146,15 +149,20 @@ and exit codes, see the [OCR runtime guide](docs/ocr-runtime.md) and the
   readability hard gates.
 - [Golden E2E guide](docs/e2e.md) documents the source-free round trip across
   Windows and Linux.
+- [Real-runtime failure baseline](docs/real-runtime-baseline.md) records the
+  reviewed Japanese source, real Tesseract, actual LibreOffice pages, and the
+  current expected failure without changing production algorithms.
 - [Windows demo and release guide](docs/demo-release.md) documents the
   downloadable package and its reproducible archive contract.
 - [Golden fixture manifest](tests/fixtures/e2e/manifest.json) records fixture
   provenance, hashes, reviewed content, and the accepted score.
 
-The representative golden round trip scores `78.79 / 100` against a threshold
-of `70`. A numeric pass is never sufficient by itself: essential text,
-structure, output validity, source independence, and no-repair DOCX opening are
-separate hard gates.
+The deterministic representative golden scores `78.79 / 100` against a
+threshold of `70` after fixed fake OCR observations. That number measures
+candidate IR preservation in DOCX; it is not real OCR accuracy. The separate
+real-runtime Japanese baseline currently expects `fail`. A numeric pass is
+never sufficient by itself: essential text, structure, output validity, source
+independence, actual page evidence, and human readability are separate gates.
 
 ## Development
 
@@ -170,9 +178,10 @@ Install the development tools and run the same deterministic checks used by CI:
 .\.venv\Scripts\python.exe scripts\verify_distribution.py
 ```
 
-CI runs on Windows and Linux with Python 3.11 and 3.14. Linux CI also exercises
-real Tesseract and LibreOffice integrations; deterministic fakes keep the core
-golden round trip reproducible on every supported machine.
+CI runs deterministic tests on Windows and Linux with Python 3.11 and 3.14
+without depending on machine-global document runtimes. A dedicated Ubuntu 24.04
+job exercises real Tesseract, LibreOffice, Poppler, and Japanese fonts, then
+uploads the complete expected-failure baseline evidence.
 
 ## Migrating from the pre-V1 prototype
 

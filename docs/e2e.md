@@ -37,9 +37,15 @@ extraction, schema validation, bundle publication, DOCX/PNG rendering, DOCX
 read-back, and evaluation. Separate opt-in integration tests exercise the real
 Tesseract backend.
 
+Consequently, this golden route is a deterministic IR-to-DOCX regression test,
+not a claim about real OCR or source-image restoration quality. The dedicated
+[real-runtime failure baseline](real-runtime-baseline.md) covers real Tesseract,
+actual LibreOffice pages, visible-text OCR, and source-grounded evaluation.
+
 ## Quality result
 
-The representative DOCX scores `78.79` against the inclusive threshold `70`.
+With the fixed fake OCR observations, the representative DOCX scores `78.79`
+against the inclusive threshold `70`.
 LibreOffice V1 evidence proves repair-free opening by converting the DOCX to a
 temporary PDF through an isolated headless profile. It does not invent page
 coordinates, so the golden evaluation deliberately receives zero geometry

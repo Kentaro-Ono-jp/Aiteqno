@@ -21,7 +21,11 @@ from .evaluation import FilesystemEvaluationWriter, PythonDocxObserver
 from .json_schema import JsonSchemaDocumentIRValidator
 from .libreoffice import (
     DEFAULT_LIBREOFFICE_TIMEOUT_SECONDS,
+    DEFAULT_SNAPSHOT_DPI,
     LIBREOFFICE_RENDERER_NAME,
+    PDFTOPPM_RASTERIZER_NAME,
+    LibreOfficeSnapshotEvidence,
+    LibreOfficeSnapshotPage,
     LibreOfficeSnapshotRenderer,
 )
 from .ocr_fake import (
@@ -61,6 +65,7 @@ __all__ = [
     "DEFAULT_MAX_PNG_BYTES",
     "DEFAULT_MAX_PNG_PIXELS",
     "DEFAULT_LIBREOFFICE_TIMEOUT_SECONDS",
+    "DEFAULT_SNAPSHOT_DPI",
     "DEFAULT_PAGE_MARGIN_PT",
     "DEFAULT_PREVIEW_DPI",
     "DEFAULT_PREVIEW_FONT_FALLBACKS",
@@ -74,6 +79,9 @@ __all__ = [
     "FilesystemDocumentBundleWriter",
     "JsonSchemaDocumentIRValidator",
     "LIBREOFFICE_RENDERER_NAME",
+    "PDFTOPPM_RASTERIZER_NAME",
+    "LibreOfficeSnapshotEvidence",
+    "LibreOfficeSnapshotPage",
     "LibreOfficeSnapshotRenderer",
     "BundleAssetResolver",
     "PillowPreviewRenderer",

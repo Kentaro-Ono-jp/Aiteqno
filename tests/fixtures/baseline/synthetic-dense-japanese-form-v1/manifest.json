@@ -1,0 +1,48 @@
+{
+  "manifest_version": 1,
+  "fixture_id": "synthetic-dense-japanese-form-v1",
+  "role": "real_runtime_failure_baseline",
+  "source": {
+    "path": "source.png.b64",
+    "encoding": "base64",
+    "sha256": "df0b724d8fcc1b5d5e0483a60401c2cb3882675f71d1e37ecdbcff9e687ffc25",
+    "pixel_width": 700,
+    "pixel_height": 991,
+    "dpi": 96
+  },
+  "license": "MIT",
+  "provenance": "Original synthetic Japanese form authored and rasterized for Aiteqno by scripts/build_real_baseline_fixture.py; wording and layout are project-original and do not reproduce the excluded third-party form.",
+  "redistribution_allowed": true,
+  "contains_personal_data": false,
+  "review": {
+    "status": "reviewed",
+    "reviewer": "Kentaro Ono",
+    "reviewed_at": "2026-08-17",
+    "reference_revision": 1
+  },
+  "ocr_contract": {
+    "provider": "tesseract",
+    "minimum_major_version": 5,
+    "languages": [
+      "jpn",
+      "eng"
+    ],
+    "page_segmentation_mode": 6,
+    "engine_mode": 3,
+    "source_dpi": 96
+  },
+  "quality_contract": {
+    "normalization": "NFKC then remove every Unicode whitespace character",
+    "overall_minimum": 70.0,
+    "component_minimums": {
+      "text_character_accuracy": 70.0,
+      "logical_block_coverage": 60.0,
+      "structure_similarity": 60.0,
+      "geometry_similarity": 50.0
+    },
+    "essential_anchor_recall": 100.0,
+    "expected_page_count": 1,
+    "expected_current_state": "fail",
+    "score_drift_policy": "Real runtime versions may change exact component values. CI asserts the decision and hard-gate contract, not byte-identical OCR scores."
+  }
+}
