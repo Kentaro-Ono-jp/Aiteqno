@@ -49,6 +49,7 @@ from .ocr_quality import (
     normalize_ocr_text,
     ocr_character_accuracy,
 )
+from .ocr_experiment import compare_ocr_experiment
 from .ocr_resolution import (
     DEFAULT_MINIMUM_TEXT_ACCURACY_DELTA,
     OCR_RESOLUTION_EVALUATOR_NAME,
@@ -104,6 +105,7 @@ __all__ = [
     "evaluate_restoration",
     "evaluate_restoration_input",
     "evaluate_ocr_quality",
+    "compare_ocr_experiment",
     "compare_ocr_resolution",
     "evaluate_source_baseline",
     "infer_table_topology",

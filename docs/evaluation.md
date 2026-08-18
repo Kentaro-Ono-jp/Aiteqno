@@ -149,6 +149,16 @@ is written immediately after extraction, so a later DOCX or LibreOffice failure
 cannot erase the completed OCR evidence. See the real-runtime guide for the
 fixed input, runtime record, and intentional-failure CI policy.
 
+`compare_ocr_experiment()` applies the common same-runtime adoption policy to
+two already-scored OCR observations. An immutable experiment contract declares
+the only runtime fields that may differ and the exact hypothesis-specific
+integrity checks that must be present. Reference, thresholds, normalization,
+source geometry, OCR provenance, non-text IR, assets, and table topology remain
+common hard checks. Confidence and token counts remain diagnostics. The legacy
+`compare_ocr_resolution()` API is a compatibility wrapper that adds the fixed
+300 DPI transform check before using this common decision engine; its artifact
+schema and Issue #47 decision remain unchanged.
+
 The real-runtime runner evaluates this unchanged contract twice in one process:
 first against the production no-upscale control, then against an experimental
 300 DPI OCR-working-raster path. `ocr-resolution-comparison.json` compares the two
