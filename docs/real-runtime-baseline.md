@@ -270,10 +270,40 @@ from `文妻吾解析評価ント` (55.555556%) to exact `文書解析評価シ�
 the singleton phone observation remained `二話` and every singleton/protected/
 smoke/topology check passed. Because +1.0 was not reached, that runtime correctly
 classified the candidate as `inconclusive`; it is reconnaissance, not the
-cross-runtime adoption authority. If the formal Ubuntu observation also leaves
-the 70/60/100 contract or hard gates unmet, this project stops Tesseract
-microtuning and moves the next OCR design to an alternate engine/trained-data
-track.
+cross-runtime adoption authority.
+
+The formal Ubuntu 24.04 / Tesseract 5.3.4 observation is recorded by
+[CI run 32144917106](https://github.com/Kentaro-Ono-jp/Aiteqno/actions/runs/32144917106)
+and artifact
+`real-runtime-baseline-4b233cd18edbb93d7012ffda51eb20b802748bff`.
+It reproduced the same fixed plan shape: 79 source regions became 50 candidate
+crops containing 11 groups and 39 unchanged singletons. Exact OCR-only results
+were:
+
+| Metric | singleton control | grouped candidate | Delta |
+| --- | ---: | ---: | ---: |
+| Text character accuracy | 76.136364 | 76.893939 | +0.757575 |
+| Logical block coverage | 70.833333 | 75.000000 | +4.166667 |
+| Essential anchor recall | 66.666667 | 75.000000 | +8.333333 |
+
+The candidate newly recovered logical blocks `title` and `created-date`, with
+`title` recovered exactly. It lost no control-recovered block or anchor,
+reduced essential misses from three to two, and passed every region-plan,
+runtime, trained-data, source geometry,
+provenance, non-text IR, table-topology, singleton, protected-literal, and
+multilingual-smoke check. `phone-label` remained the unchanged singleton `二話`.
+`content-structure` remained unrecovered and its character accuracy changed
+from `33.333333` to `26.315789`.
+
+Because the fixed full-text gain is below `+1.0`, the exact decision is
+`inconclusive`. The grouped candidate is neither eligible nor adopted;
+`selected_grouping` remains `single-regions`, so the canonical bundle and
+downstream DOCX continue from the 2px + ordered `jpn` control. The production
+control still misses essential blocks `title`, `phone-label`, and
+`content-structure`, and exact anchors `文書解析評価シート`, `電話`, `対象形式`, and
+`環境情報を保存する`. The third Tesseract micro-hypothesis is therefore closed.
+Issue #61 moves the next design to an alternate OCR engine or trained-data
+track without adding further PSM/DPI/padding/grouping tuning.
 
 ## Source-quality contract
 

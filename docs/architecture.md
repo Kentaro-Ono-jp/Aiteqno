@@ -622,6 +622,14 @@ Issue #20 fixes the V1 orchestration rules as follows:
   and published through a same-filesystem rename. An existing output directory
   is never overwritten.
 
+The planner remains an explicit experiment option rather than the portable
+production default. Issue #59's formal Ubuntu 24.04 comparison recovered the
+title and improved block/anchor metrics, but full-text accuracy improved only
+`+0.757575` points against the fixed `+1.0` adoption gate. Its decision is
+therefore `inconclusive`; production continues to send the adopted 2px + `jpn`
+singleton region plan to the OCR port. Further Tesseract microtuning is closed,
+and the next OCR architecture boundary is tracked by Issue #61.
+
 ### 9.2 OCR adapter protocol
 
 The adapter boundary is conceptually:

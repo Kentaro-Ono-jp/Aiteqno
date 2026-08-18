@@ -1321,15 +1321,14 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
                 encoding="utf-8"
             )
         )
-        self.assertIn(
-            grouping_comparison["decision"],
-            {"supported", "inconclusive", "regressed"},
+        self.assertEqual(grouping_comparison["decision"], "inconclusive")
+        self.assertEqual(
+            grouping_comparison["reasons"],
+            ["text_accuracy_delta_below_minimum:0.757575<1"],
         )
-        grouping_supported = grouping_comparison["decision"] == "supported"
-        expected_grouping = (
-            "geometry-line-groups" if grouping_supported else "single-regions"
-        )
-        expected_grouping_side = "candidate" if grouping_supported else "control"
+        grouping_supported = False
+        expected_grouping = "single-regions"
+        expected_grouping_side = "control"
         self.assertEqual(summary["final_state"], "fail")
         self.assertEqual(summary["expected_current_state"], "fail")
         self.assertEqual(
@@ -1864,15 +1863,33 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         self.assertEqual(singleton_observations["status"], "pass")
         self.assertEqual(singleton_observations["changed_region_refs"], [])
         self.assertEqual(grouping_comparison["multilingual_smoke"]["status"], "pass")
+        self.assertEqual(
+            grouping_comparison["metrics"],
+            {
+                "essential_anchor_recall": {
+                    "candidate": 75.0,
+                    "control": 66.666667,
+                    "delta_percentage_points": 8.333333,
+                },
+                "logical_block_coverage": {
+                    "candidate": 75.0,
+                    "control": 70.833333,
+                    "delta_percentage_points": 4.166667,
+                },
+                "text_character_accuracy": {
+                    "candidate": 76.893939,
+                    "control": 76.136364,
+                    "delta_percentage_points": 0.757575,
+                },
+            },
+        )
         self.assertEqual(grouping_plans["control"]["counts"]["source_regions"], 79)
         self.assertEqual(grouping_plans["control"]["counts"]["planned_regions"], 79)
         self.assertEqual(grouping_plans["control"]["counts"]["groups"], 0)
         self.assertEqual(grouping_plans["candidate"]["counts"]["source_regions"], 79)
-        self.assertLess(
-            grouping_plans["candidate"]["counts"]["planned_regions"],
-            grouping_plans["control"]["counts"]["planned_regions"],
-        )
-        self.assertGreater(grouping_plans["candidate"]["counts"]["groups"], 0)
+        self.assertEqual(grouping_plans["candidate"]["counts"]["planned_regions"], 50)
+        self.assertEqual(grouping_plans["candidate"]["counts"]["groups"], 11)
+        self.assertEqual(grouping_plans["candidate"]["counts"]["singletons"], 39)
         control_blocks = {
             value["reference_id"]: value for value in grouping_control["blocks"]
         }
@@ -1891,6 +1908,13 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
             "文書解析評価シート",
         )
         self.assertEqual(
+            control_blocks["content-structure"]["character_accuracy"], 33.333333
+        )
+        self.assertEqual(
+            candidate_blocks["content-structure"]["character_accuracy"], 26.315789
+        )
+        self.assertFalse(candidate_blocks["content-structure"]["recovered"])
+        self.assertEqual(
             summary["layers"]["ocr_region_grouping_comparison"]["decision"],
             grouping_comparison["decision"],
         )
@@ -1900,7 +1924,10 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         )
         self.assertEqual(
             summary["layers"]["ocr_region_grouping_comparison"]["candidate_adopted"],
-            grouping_supported,
+            False,
+        )
+        self.assertFalse(
+            summary["layers"]["ocr_region_grouping_comparison"]["candidate_eligible"]
         )
         self.assertTrue((output / "ocr-quality-control-evaluation.json").is_file())
         self.assertTrue((output / "ocr-quality-evaluation.json").is_file())
