@@ -196,6 +196,26 @@ essential blocks were `title`, `phone-label`, and `content-structure`. These
 exact values select and explain the hypothesis but are not cross-runtime pins.
 The dedicated Ubuntu 24.04 same-process artifact is the adoption authority.
 
+The formal Ubuntu 24.04/Tesseract 5.3.4 observation classifies the candidate as
+`supported`. Independent push and pull-request artifacts emitted byte-identical
+`ocr-language/comparison.json` evidence for this observation:
+
+| Metric | `jpn,eng` control | `jpn` candidate | Delta (percentage points) |
+|---|---:|---:|---:|
+| Text-character accuracy | 66.856061 | 76.136364 | +9.280303 |
+| Logical-block coverage | 58.333333 | 70.833333 | +12.500000 |
+| Essential-anchor recall | 66.666667 | 66.666667 | 0.000000 |
+
+No control-recovered logical block, anchor, or protected literal was lost. The
+candidate reduced the essential-block misses by four; `title`, `phone-label`,
+and `content-structure` remain. The mixed-language smoke observed Japanese text,
+`AITEQNO`, and `2026`. Both profiles used the same 2,471,260-byte
+`jpn.traineddata` with SHA-256
+`1f5de9236d2e85f5fdf4b3c500f2d4926f8d9449f28f5394472d9e8d83b91b4d`,
+while the candidate runtime evidence contained no `eng.traineddata`. These
+numbers record the adoption observation; CI continues to assert the fixed gates
+rather than cross-runtime score constants.
+
 `supported` requires at least +1.0 text point, nondecreasing block/anchor
 metrics, no lost recovered block/anchor/protected literal, no increase in
 essential misses, identical source/reference/threshold/geometry/provenance and
