@@ -3,9 +3,9 @@
 This command is intentionally a measurement runner, not a product-quality
 shortcut.  It keeps the source-grounded score separate from the existing
 IR-to-DOCX restoration score, checkpoints OCR-only quality before DOCX work,
-compares no-upscale and 300-DPI OCR inputs in the same process, and retains the
-actual LibreOffice PDF/pages from the selected no-upscale control.  The
-experimental candidate is never adopted without a separate reviewed change. A
+compares no-upscale and 300-DPI OCR inputs as retained diagnostics, separately
+compares zero and two-source-pixel white crop padding in the same process, and
+retains the actual LibreOffice PDF/pages from the crop-padding selection.  A
 known end-to-end quality ``fail`` is a successful baseline run when
 ``--expect-state fail`` is supplied.
 """
@@ -40,6 +40,7 @@ from aiteqno.adapters import (
     PillowPreviewRenderer,
     PythonDocxObserver,
     PythonDocxRenderer,
+    TesseractCropPaddingEvidence,
     TesseractOcrBackend,
 )
 from aiteqno.adapters.tesseract import TesseractRasterTransformEvidence
@@ -48,6 +49,7 @@ from aiteqno.application import (
     SourceBaselineConfig,
     build_docx_structure_relationships,
     build_evaluation_reference,
+    compare_ocr_padding,
     compare_ocr_resolution,
     evaluate_ocr_quality,
     evaluate_restoration,
@@ -60,6 +62,7 @@ from aiteqno.application import (
 from aiteqno.domain import DocumentIR, ElementType
 from aiteqno.ports import (
     EvaluationState,
+    OcrExperimentRun,
     OcrOptions,
     OcrQualityObservation,
     OcrQualityResult,
@@ -86,6 +89,7 @@ OCR_PROVIDER = "tesseract"
 MINIMUM_TESSERACT_MAJOR_VERSION = 5
 SOURCE_DPI = 96
 CANDIDATE_OCR_DPI = 300
+OCR_REGION_PADDING_PX = 2
 REFERENCE_SHA256 = "45d3322ee7eea3d86fe981d93dba5cc9ac83b27ca638259051a62868c8f15a31"
 
 
@@ -159,6 +163,21 @@ def _select_ocr_input(decision: str) -> str:
             "be trusted; review ocr-resolution-comparison.json"
         )
     raise RuntimeError(f"unknown OCR input comparison decision: {decision!r}")
+
+
+def _select_padding_input(decision: str) -> str:
+    """Adopt only a valid padding candidate that satisfies every fixed gate."""
+
+    if decision == "supported":
+        return "two-pixel-padding"
+    if decision in {"inconclusive", "regressed"}:
+        return "control"
+    if decision == "invalid":
+        raise RuntimeError(
+            "2px OCR crop-padding comparison is invalid; downstream selection "
+            "cannot be trusted; review ocr-padding/comparison.json"
+        )
+    raise RuntimeError(f"unknown OCR padding comparison decision: {decision!r}")
 
 
 def _fixture_object(value: Any, label: str) -> Mapping[str, Any]:
@@ -372,8 +391,11 @@ def _runtime() -> tuple[
     TesseractOcrBackend,
     TesseractOcrBackend,
     TesseractOcrBackend,
+    TesseractOcrBackend,
     list[TesseractRasterTransformEvidence],
     list[TesseractRasterTransformEvidence],
+    list[TesseractCropPaddingEvidence],
+    list[TesseractCropPaddingEvidence],
 ]:
     decoder = PillowPngDecoder(fallback_dpi=SOURCE_DPI)
     common = {
@@ -383,30 +405,46 @@ def _runtime() -> tuple[
     }
     control_transforms: list[TesseractRasterTransformEvidence] = []
     candidate_transforms: list[TesseractRasterTransformEvidence] = []
+    control_paddings: list[TesseractCropPaddingEvidence] = []
+    candidate_paddings: list[TesseractCropPaddingEvidence] = []
     control_backend = TesseractOcrBackend(
         **common,
         target_dpi=None,
+        region_padding_px=0,
         transform_observer=control_transforms.append,
+        padding_observer=control_paddings.append,
     )
-    candidate_backend = TesseractOcrBackend(
+    resolution_candidate_backend = TesseractOcrBackend(
         **common,
         target_dpi=CANDIDATE_OCR_DPI,
+        region_padding_px=0,
         transform_observer=candidate_transforms.append,
+    )
+    padding_candidate_backend = TesseractOcrBackend(
+        **common,
+        target_dpi=None,
+        region_padding_px=OCR_REGION_PADDING_PX,
+        padding_observer=candidate_paddings.append,
     )
     snapshot_backend = TesseractOcrBackend(
         **common,
         target_dpi=None,
+        region_padding_px=0,
     )
     control_backend.healthcheck()
-    candidate_backend.healthcheck()
+    resolution_candidate_backend.healthcheck()
+    padding_candidate_backend.healthcheck()
     snapshot_backend.healthcheck()
     return (
         decoder,
         control_backend,
-        candidate_backend,
+        resolution_candidate_backend,
+        padding_candidate_backend,
         snapshot_backend,
         control_transforms,
         candidate_transforms,
+        control_paddings,
+        candidate_paddings,
     )
 
 
@@ -425,6 +463,24 @@ def _one_transform_evidence(
         getattr(evidence, "to_dict", None)
     ):
         raise RuntimeError(f"{label} OCR transform evidence has an invalid type")
+    return evidence
+
+
+def _one_padding_evidence(
+    records: list[TesseractCropPaddingEvidence],
+    *,
+    label: str,
+) -> TesseractCropPaddingEvidence:
+    if len(records) != 1:
+        raise RuntimeError(
+            f"{label} OCR crop-padding evidence is incomplete: expected one "
+            f"recognize record, observed {len(records)}"
+        )
+    evidence = records[0]
+    if not hasattr(evidence, "effective_ocr_dpi") or not callable(
+        getattr(evidence, "to_dict", None)
+    ):
+        raise RuntimeError(f"{label} OCR crop-padding evidence has an invalid type")
     return evidence
 
 
@@ -592,7 +648,7 @@ def _ocr_runtime_evidence(
     *,
     decoder: PillowPngDecoder,
     backend: TesseractOcrBackend,
-    transform: TesseractRasterTransformEvidence,
+    transform: TesseractRasterTransformEvidence | TesseractCropPaddingEvidence,
 ) -> OcrRuntimeEvidence:
     capabilities = backend.healthcheck()
     source_image = decoder.decode(source_data)
@@ -785,10 +841,13 @@ def _run_in_created_output(
     (
         decoder,
         control_backend,
-        candidate_backend,
+        resolution_candidate_backend,
+        padding_candidate_backend,
         snapshot_backend,
         control_transforms,
         candidate_transforms,
+        control_paddings,
+        candidate_paddings,
     ) = _runtime()
     _write_json_new(
         output_directory / "preflight-environment.json",
@@ -797,7 +856,7 @@ def _run_in_created_output(
             manifest=manifest,
             source_data=source_data,
             reference_path=fixture_directory / "reference.json",
-            backend=candidate_backend,
+            backend=padding_candidate_backend,
             snapshot=None,
         ),
     )
@@ -815,20 +874,43 @@ def _run_in_created_output(
         languages=LANGUAGES,
         ocr_options=OCR_OPTIONS,
     )
+    padding_control_bundle_directory = (
+        output_directory / "ocr-padding" / "control" / "bundle"
+    )
+    _copytree_new_atomic(
+        control_bundle_directory,
+        padding_control_bundle_directory,
+    )
     candidate_bundle_directory = output_directory / "candidate-bundle"
-    extraction = extract_png(
+    resolution_extraction = extract_png(
         source_data,
         candidate_bundle_directory,
         decoder=decoder,
         structure_extractor=OpenCvStructureExtractor(),
-        ocr_backend=candidate_backend,
+        ocr_backend=resolution_candidate_backend,
         asset_encoder=PillowPngAssetEncoder(),
         validator=JsonSchemaDocumentIRValidator(),
         bundle_writer=FilesystemDocumentBundleWriter(),
         languages=LANGUAGES,
         ocr_options=OCR_OPTIONS,
     )
-    document = extraction.document
+    padding_candidate_bundle_directory = (
+        output_directory / "ocr-padding" / "candidate" / "bundle"
+    )
+    padding_extraction = extract_png(
+        source_data,
+        padding_candidate_bundle_directory,
+        decoder=decoder,
+        structure_extractor=OpenCvStructureExtractor(),
+        ocr_backend=padding_candidate_backend,
+        asset_encoder=PillowPngAssetEncoder(),
+        validator=JsonSchemaDocumentIRValidator(),
+        bundle_writer=FilesystemDocumentBundleWriter(),
+        languages=LANGUAGES,
+        ocr_options=OCR_OPTIONS,
+    )
+    resolution_document = resolution_extraction.document
+    padding_document = padding_extraction.document
     control_document = control_extraction.document
     quality = manifest["quality_contract"]
     minima = quality["component_minimums"]
@@ -839,6 +921,14 @@ def _run_in_created_output(
     )
     candidate_transform = _one_transform_evidence(
         candidate_transforms,
+        label="candidate",
+    )
+    control_padding = _one_padding_evidence(
+        control_paddings,
+        label="control",
+    )
+    candidate_padding = _one_padding_evidence(
+        candidate_paddings,
         label="candidate",
     )
     control_ocr_result = _evaluate_ocr_run(
@@ -856,12 +946,24 @@ def _run_in_created_output(
     ocr_result = _evaluate_ocr_run(
         source_data=source_data,
         reference=reference,
-        document=document,
+        document=resolution_document,
         runtime=_ocr_runtime_evidence(
             source_data,
             decoder=decoder,
-            backend=candidate_backend,
+            backend=resolution_candidate_backend,
             transform=candidate_transform,
+        ),
+        config=quality_config,
+    )
+    padding_ocr_result = _evaluate_ocr_run(
+        source_data=source_data,
+        reference=reference,
+        document=padding_document,
+        runtime=_ocr_runtime_evidence(
+            source_data,
+            decoder=decoder,
+            backend=padding_candidate_backend,
+            transform=candidate_padding,
         ),
         config=quality_config,
     )
@@ -872,6 +974,14 @@ def _run_in_created_output(
     _write_bytes_new(
         output_directory / "ocr-quality-evaluation.json",
         (ocr_result.to_json(indent=2) + "\n").encode("utf-8"),
+    )
+    _write_bytes_new(
+        output_directory / "ocr-padding" / "control" / "ocr-quality-evaluation.json",
+        (control_ocr_result.to_json(indent=2) + "\n").encode("utf-8"),
+    )
+    _write_bytes_new(
+        output_directory / "ocr-padding" / "candidate" / "ocr-quality-evaluation.json",
+        (padding_ocr_result.to_json(indent=2) + "\n").encode("utf-8"),
     )
     control_transform_dict = control_transform.to_dict()
     candidate_transform_dict = candidate_transform.to_dict()
@@ -891,7 +1001,7 @@ def _run_in_created_output(
         ),
         OcrResolutionRun(
             quality=ocr_result,
-            document=document,
+            document=resolution_document,
             transform=candidate_transform_dict,
         ),
     )
@@ -899,18 +1009,56 @@ def _run_in_created_output(
         output_directory / "ocr-resolution-comparison.json",
         (comparison.to_json(indent=2) + "\n").encode("utf-8"),
     )
-    selected_input = _select_ocr_input(comparison.decision.value)
+    control_padding_dict = control_padding.to_dict()
+    candidate_padding_dict = candidate_padding.to_dict()
+    _write_json_new(
+        output_directory / "ocr-padding" / "crop-padding-evidence.json",
+        {
+            "schema_version": "1.0",
+            "control": control_padding_dict,
+            "candidate": candidate_padding_dict,
+        },
+    )
+    padding_comparison = compare_ocr_padding(
+        OcrExperimentRun(
+            quality=control_ocr_result,
+            document=control_document,
+            evidence=control_padding_dict,
+        ),
+        OcrExperimentRun(
+            quality=padding_ocr_result,
+            document=padding_document,
+            evidence=candidate_padding_dict,
+        ),
+    )
+    _write_bytes_new(
+        output_directory / "ocr-padding" / "comparison.json",
+        (padding_comparison.to_json(indent=2) + "\n").encode("utf-8"),
+    )
+    resolution_selected_input = _select_ocr_input(comparison.decision.value)
+    selected_input = _select_padding_input(padding_comparison.decision.value)
     candidate_eligible = comparison.decision.value == "supported"
     candidate_adopted = False
-    selected_extraction = control_extraction
-    selected_document = infer_table_topology(control_document)
-    selected_ocr_result = control_ocr_result
-    selected_observation_bundle = control_bundle_directory
-    selected_backend = control_backend
-    selected_ocr_report = "ocr-quality-control-evaluation.json"
+    padding_candidate_eligible = padding_comparison.decision.value == "supported"
+    padding_candidate_adopted = selected_input == "two-pixel-padding"
+    if padding_candidate_adopted:
+        selected_extraction = padding_extraction
+        selected_observation_document = padding_document
+        selected_ocr_result = padding_ocr_result
+        selected_observation_bundle = padding_candidate_bundle_directory
+        selected_backend = padding_candidate_backend
+        selected_ocr_report = "ocr-padding/candidate/ocr-quality-evaluation.json"
+    else:
+        selected_extraction = control_extraction
+        selected_observation_document = control_document
+        selected_ocr_result = control_ocr_result
+        selected_observation_bundle = control_bundle_directory
+        selected_backend = control_backend
+        selected_ocr_report = "ocr-padding/control/ocr-quality-evaluation.json"
+    selected_document = infer_table_topology(selected_observation_document)
 
     # The A/B observation bundles remain immutable OCR evidence. Add only the
-    # deterministic topology extension to the selected control, then publish an
+    # deterministic topology extension to the selected padding decision, then publish an
     # atomic create-only downstream bundle so IR, assets, and renders agree.
     bundle_directory = output_directory / "bundle"
     _copytree_new_atomic(
@@ -1058,7 +1206,7 @@ def _run_in_created_output(
         "layers": {
             "ocr_input_resolution_comparison": {
                 "decision": comparison.decision.value,
-                "selected_input": selected_input,
+                "selected_input": resolution_selected_input,
                 "candidate_eligible": candidate_eligible,
                 "candidate_adopted": candidate_adopted,
                 "reasons": list(comparison.reasons),
@@ -1066,6 +1214,19 @@ def _run_in_created_output(
                 "candidate_report": "ocr-quality-evaluation.json",
                 "transform_evidence": "ocr-input-transform.json",
                 "report": "ocr-resolution-comparison.json",
+            },
+            "ocr_crop_padding_comparison": {
+                "decision": padding_comparison.decision.value,
+                "selected_input": selected_input,
+                "candidate_eligible": padding_candidate_eligible,
+                "candidate_adopted": padding_candidate_adopted,
+                "reasons": list(padding_comparison.reasons),
+                "control_report": ("ocr-padding/control/ocr-quality-evaluation.json"),
+                "candidate_report": (
+                    "ocr-padding/candidate/ocr-quality-evaluation.json"
+                ),
+                "padding_evidence": "ocr-padding/crop-padding-evidence.json",
+                "report": "ocr-padding/comparison.json",
             },
             "source_to_candidate_ir_ocr": {
                 "state": selected_ocr_result.state.value,
@@ -1091,6 +1252,22 @@ def _run_in_created_output(
                 "eligible": candidate_eligible,
                 "text_evidence": "candidate_ir",
                 "report": "ocr-quality-evaluation.json",
+            },
+            "candidate_two_pixel_padding_experiment": {
+                "state": padding_ocr_result.state.value,
+                "text_character_accuracy": (
+                    padding_ocr_result.text_character_accuracy.score
+                ),
+                "logical_block_coverage": (
+                    padding_ocr_result.logical_block_coverage.score
+                ),
+                "essential_anchor_recall": (
+                    padding_ocr_result.essential_anchor_recall.score
+                ),
+                "adopted": padding_candidate_adopted,
+                "eligible": padding_candidate_eligible,
+                "text_evidence": "two_pixel_padding_candidate_ir",
+                "report": "ocr-padding/candidate/ocr-quality-evaluation.json",
             },
             "source_to_actual_docx": {
                 "state": source_result.state.value,

@@ -151,8 +151,9 @@ and exit codes, see the [OCR runtime guide](docs/ocr-runtime.md) and the
   Windows and Linux.
 - [Real-runtime failure baseline](docs/real-runtime-baseline.md) records the
   reviewed Japanese source, a same-runtime no-upscale/300-DPI OCR comparison,
-  deterministic table topology, actual LibreOffice pages, and the current
-  expected end-to-end failures.
+  a separate zero/2px white crop-padding comparison, deterministic table
+  topology, actual LibreOffice pages, and the current expected end-to-end
+  failures.
 - [Windows demo and release guide](docs/demo-release.md) documents the
   downloadable package and its reproducible archive contract.
 - [Golden fixture manifest](tests/fixtures/e2e/manifest.json) records fixture
@@ -165,12 +166,14 @@ real-runtime Japanese baseline records control and 300 DPI candidate OCR
 immediately after Tesseract, before DOCX generation. Although the 300 DPI trial
 improves aggregate OCR metrics in the current Ubuntu lane, it loses a logical
 block recovered by the no-upscale control and is therefore rejected. The
-downstream `bundle/` and DOCX remain control-derived; both observations and the
-comparison evidence are retained for diagnosis. The end-to-end layer currently
-remains `fail`. The selected IR's validated topology is now rendered as five
-editable native Word tables; this improves the separate IR-to-DOCX layer
-without claiming any OCR improvement. A numeric pass is never sufficient by
-itself: essential text, structure, output validity, source
+independent two-source-pixel white-padding trial keeps the same 96-DPI runtime,
+source crop bboxes, language order, and OCR options. It clears the fixed +1pp
+and no-loss adoption gates, so that padded candidate becomes the downstream
+OCR input while the 300-DPI candidate remains diagnostic only. Both controls,
+candidates, and comparisons are retained. The end-to-end layer currently
+remains `fail`. The selected IR's validated topology is rendered as five
+editable native Word tables. A numeric pass is never sufficient by itself:
+essential text, structure, output validity, source
 independence, actual page evidence, and human readability are separate gates.
 
 ## Development

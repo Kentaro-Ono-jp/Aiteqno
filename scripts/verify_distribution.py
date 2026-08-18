@@ -33,6 +33,7 @@ REQUIRED_WHEEL_FILES = {
     "aiteqno/application/extract.py",
     "aiteqno/application/evaluate.py",
     "aiteqno/application/ocr_experiment.py",
+    "aiteqno/application/ocr_padding.py",
     "aiteqno/application/ocr_quality.py",
     "aiteqno/application/ocr_resolution.py",
     "aiteqno/application/preview.py",

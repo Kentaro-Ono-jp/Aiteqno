@@ -37,12 +37,26 @@ from aiteqno.ports.structure import ImageInput
 TESSERACT_PROVIDER = "tesseract"
 MIN_TESSERACT_MAJOR_VERSION = 5
 DEFAULT_TESSERACT_TARGET_DPI: int | None = None
+DEFAULT_TESSERACT_REGION_PADDING_PX = 2
 DEFAULT_MAX_TESSERACT_WORKING_PIXELS = 40_000_000
 TESSERACT_RASTER_TRANSFORM_VERSION = "tesseract-raster-transform-v1"
+TESSERACT_CROP_PADDING_VERSION = "tesseract-crop-padding-v1"
 TESSERACT_INVERSE_MAPPING_POLICY = (
     "clip-working-bbox; source-left-top=floor(edge*source/working); "
     "source-right-bottom=ceil(edge*source/working); clamp-source-crop; "
     "add-source-offset"
+)
+TESSERACT_CROP_PADDING_MAPPING_POLICY = (
+    "clip-ocr-bbox; subtract-artificial-border; clamp-pre-padding-raster; "
+    "apply-raster-transform-inverse; add-source-offset"
+)
+TESSERACT_CROP_PADDING_OPERATION_ORDER = (
+    "crop-source-region",
+    "apply-raster-resolution-transform",
+    "add-artificial-white-border",
+    "invoke-tesseract",
+    "subtract-artificial-border-from-result",
+    "restore-original-source-pixel-coordinates",
 )
 _RUNTIME_LOCK = threading.RLock()
 _TSV_COLUMNS = ("text", "conf", "left", "top", "width", "height")
@@ -131,6 +145,97 @@ class TesseractRasterTransformEvidence:
         }
 
 
+@dataclass(frozen=True, slots=True, kw_only=True)
+class TesseractCropPaddingTargetEvidence:
+    """Actual padding applied to one OCR target without changing its source bbox."""
+
+    region_ref: str | None
+    source_bbox: PixelBoundingBox
+    source_width: int
+    source_height: int
+    pre_padding_width: int
+    pre_padding_height: int
+    working_width: int
+    working_height: int
+    padding_pixels: int
+    applied: bool
+    working_raster_sha256: str
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a deterministic JSON-compatible representation."""
+
+        return {
+            "region_ref": self.region_ref,
+            "source_bbox": {
+                "x": self.source_bbox.x,
+                "y": self.source_bbox.y,
+                "width": self.source_bbox.width,
+                "height": self.source_bbox.height,
+            },
+            "source_dimensions": {
+                "width": self.source_width,
+                "height": self.source_height,
+            },
+            "pre_padding_dimensions": {
+                "width": self.pre_padding_width,
+                "height": self.pre_padding_height,
+            },
+            "working_dimensions": {
+                "width": self.working_width,
+                "height": self.working_height,
+            },
+            "padding_pixels": self.padding_pixels,
+            "applied": self.applied,
+            "working_raster_sha256": self.working_raster_sha256,
+        }
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class TesseractCropPaddingEvidence:
+    """Immutable evidence for artificial borders in one recognize invocation."""
+
+    schema_version: str
+    padding_version: str
+    enabled: bool
+    configured_padding_pixels: int
+    source_effective_dpi: float
+    effective_ocr_dpi: int
+    target_dpi: int | None
+    scope: str
+    pixel_mode: str
+    border_color: tuple[int, int, int]
+    operation_order: tuple[str, ...]
+    inverse_mapping_policy: str
+    max_working_pixels: int
+    imaging_library: str
+    imaging_library_version: str
+    crops: tuple[TesseractCropPaddingTargetEvidence, ...]
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a deterministic JSON-compatible representation."""
+
+        return {
+            "schema_version": self.schema_version,
+            "padding_version": self.padding_version,
+            "enabled": self.enabled,
+            "configured_padding_pixels": self.configured_padding_pixels,
+            "source_effective_dpi": self.source_effective_dpi,
+            "effective_ocr_dpi": self.effective_ocr_dpi,
+            "target_dpi": self.target_dpi,
+            "scope": self.scope,
+            "pixel_mode": self.pixel_mode,
+            "border_color": list(self.border_color),
+            "operation_order": list(self.operation_order),
+            "inverse_mapping_policy": self.inverse_mapping_policy,
+            "max_working_pixels": self.max_working_pixels,
+            "imaging_library": {
+                "name": self.imaging_library,
+                "version": self.imaging_library_version,
+            },
+            "crops": [crop.to_dict() for crop in self.crops],
+        }
+
+
 class TesseractOcrBackend:
     """Recognize source-pixel tokens through a configurable local Tesseract 5.x."""
 
@@ -141,9 +246,11 @@ class TesseractOcrBackend:
         tessdata_prefix: str | PathLike[str] | None = None,
         required_languages: Sequence[str] = DEFAULT_OCR_LANGUAGES,
         target_dpi: int | None = DEFAULT_TESSERACT_TARGET_DPI,
+        region_padding_px: int = DEFAULT_TESSERACT_REGION_PADDING_PX,
         max_working_pixels: int = DEFAULT_MAX_TESSERACT_WORKING_PIXELS,
         transform_observer: Callable[[TesseractRasterTransformEvidence], None]
         | None = None,
+        padding_observer: Callable[[TesseractCropPaddingEvidence], None] | None = None,
     ) -> None:
         self._executable_path = (
             os.fspath(executable_path) if executable_path is not None else "tesseract"
@@ -163,6 +270,16 @@ class TesseractOcrBackend:
         ):
             raise ValueError("target_dpi must be a positive integer or None")
         if (
+            isinstance(region_padding_px, bool)
+            or not isinstance(region_padding_px, int)
+            or region_padding_px < 0
+        ):
+            raise ValueError("region_padding_px must be a non-negative integer")
+        if region_padding_px and target_dpi is not None:
+            raise ValueError(
+                "region_padding_px and target_dpi cannot be enabled together"
+            )
+        if (
             isinstance(max_working_pixels, bool)
             or not isinstance(max_working_pixels, int)
             or max_working_pixels <= 0
@@ -170,9 +287,13 @@ class TesseractOcrBackend:
             raise ValueError("max_working_pixels must be a positive integer")
         if transform_observer is not None and not callable(transform_observer):
             raise TypeError("transform_observer must be callable or None")
+        if padding_observer is not None and not callable(padding_observer):
+            raise TypeError("padding_observer must be callable or None")
         self._target_dpi = target_dpi
+        self._region_padding_px = region_padding_px
         self._max_working_pixels = max_working_pixels
         self._transform_observer = transform_observer
+        self._padding_observer = padding_observer
 
     def healthcheck(self) -> OcrCapabilities:
         """Verify executable, major version, and configured language data."""
@@ -227,10 +348,12 @@ class TesseractOcrBackend:
             image,
             tessdata_configured=self._tessdata_prefix is not None,
             target_dpi=self._target_dpi,
+            region_padding_px=self._region_padding_px,
             max_working_pixels=self._max_working_pixels,
         )
         tokens: list[OcrToken] = []
         transform_crops: list[TesseractCropTransformEvidence] = []
+        padding_crops: list[TesseractCropPaddingTargetEvidence] = []
         try:
             resolved_executable = capabilities.executable
             with self._configured_runtime(resolved_executable):
@@ -240,6 +363,7 @@ class TesseractOcrBackend:
                         target,
                     )
                     working_image = source_crop
+                    ocr_image = source_crop
                     try:
                         working_image, transform = _working_image(
                             source_crop,
@@ -251,10 +375,21 @@ class TesseractOcrBackend:
                             max_working_pixels=self._max_working_pixels,
                         )
                         transform_crops.append(transform)
+                        ocr_image, padding = _region_padded_image(
+                            working_image,
+                            offset_x=offset_x,
+                            offset_y=offset_y,
+                            region_ref=region_ref,
+                            source_width=source_crop.width,
+                            source_height=source_crop.height,
+                            region_padding_px=self._region_padding_px,
+                            max_working_pixels=self._max_working_pixels,
+                        )
+                        padding_crops.append(padding)
                         config = self._config(options, effective_ocr_dpi)
                         try:
                             response = pytesseract.image_to_data(
-                                working_image,
+                                ocr_image,
                                 lang=language_spec,
                                 config=config,
                                 output_type=pytesseract.Output.DICT,
@@ -302,6 +437,8 @@ class TesseractOcrBackend:
                                 source_crop_height=source_crop.height,
                                 working_width=working_image.width,
                                 working_height=working_image.height,
+                                ocr_working_width=ocr_image.width,
+                                ocr_working_height=ocr_image.height,
                                 offset_x=offset_x,
                                 offset_y=offset_y,
                                 region_ref=region_ref,
@@ -313,9 +450,12 @@ class TesseractOcrBackend:
                                 transform=transform,
                                 effective_ocr_dpi=effective_ocr_dpi,
                                 target_dpi=self._target_dpi,
+                                padding=padding,
                             )
                         )
                     finally:
+                        if ocr_image is not working_image:
+                            ocr_image.close()
                         if working_image is not source_crop:
                             working_image.close()
                         if target is not None:
@@ -339,6 +479,26 @@ class TesseractOcrBackend:
         )
         if self._transform_observer is not None:
             self._transform_observer(evidence)
+        padding_evidence = TesseractCropPaddingEvidence(
+            schema_version="1.0",
+            padding_version=TESSERACT_CROP_PADDING_VERSION,
+            enabled=self._region_padding_px > 0,
+            configured_padding_pixels=self._region_padding_px,
+            source_effective_dpi=source_effective_dpi,
+            effective_ocr_dpi=effective_ocr_dpi,
+            target_dpi=self._target_dpi,
+            scope="region-crops-only",
+            pixel_mode="RGB",
+            border_color=(255, 255, 255),
+            operation_order=TESSERACT_CROP_PADDING_OPERATION_ORDER,
+            inverse_mapping_policy=TESSERACT_CROP_PADDING_MAPPING_POLICY,
+            max_working_pixels=self._max_working_pixels,
+            imaging_library="Pillow",
+            imaging_library_version=PILLOW_VERSION,
+            crops=tuple(padding_crops),
+        )
+        if self._padding_observer is not None:
+            self._padding_observer(padding_evidence)
         return tuple(tokens)
 
     def _probe(self, required_languages: Sequence[str]) -> OcrCapabilities:
@@ -565,6 +725,80 @@ def _working_image(
     return working, evidence
 
 
+def _region_padded_image(
+    pre_padding: Image.Image,
+    *,
+    offset_x: int,
+    offset_y: int,
+    region_ref: str | None,
+    source_width: int,
+    source_height: int,
+    region_padding_px: int,
+    max_working_pixels: int,
+) -> tuple[Image.Image, TesseractCropPaddingTargetEvidence]:
+    applied_padding = region_padding_px if region_ref is not None else 0
+    working_width = pre_padding.width + 2 * applied_padding
+    working_height = pre_padding.height + 2 * applied_padding
+    working_pixels = working_width * working_height
+    if working_pixels > max_working_pixels:
+        raise OcrBackendError(
+            "ocr_working_raster_limit",
+            "Tesseract padded working raster exceeds the per-crop pixel limit: "
+            f"{working_width}x{working_height}={working_pixels} > "
+            f"{max_working_pixels}",
+            provider=TESSERACT_PROVIDER,
+        )
+
+    working = pre_padding
+    if applied_padding:
+        try:
+            working = Image.new(
+                "RGB",
+                (working_width, working_height),
+                color=(255, 255, 255),
+            )
+            working.paste(pre_padding, (applied_padding, applied_padding))
+        except (MemoryError, OSError) as exc:
+            if working is not pre_padding:
+                working.close()
+            raise OcrBackendError(
+                "ocr_working_raster_failure",
+                f"Tesseract padded working raster could not be created: {exc}",
+                provider=TESSERACT_PROVIDER,
+            ) from exc
+
+    try:
+        working_raster_sha256 = _working_raster_sha256(working)
+    except (MemoryError, OSError, ValueError) as exc:
+        if working is not pre_padding:
+            working.close()
+        raise OcrBackendError(
+            "ocr_working_raster_failure",
+            f"Tesseract padded working raster could not be hashed: {exc}",
+            provider=TESSERACT_PROVIDER,
+        ) from exc
+
+    evidence = TesseractCropPaddingTargetEvidence(
+        region_ref=region_ref,
+        source_bbox=PixelBoundingBox(
+            x=offset_x,
+            y=offset_y,
+            width=source_width,
+            height=source_height,
+        ),
+        source_width=source_width,
+        source_height=source_height,
+        pre_padding_width=pre_padding.width,
+        pre_padding_height=pre_padding.height,
+        working_width=working_width,
+        working_height=working_height,
+        padding_pixels=applied_padding,
+        applied=bool(applied_padding),
+        working_raster_sha256=working_raster_sha256,
+    )
+    return working, evidence
+
+
 def _scaled_dimension(source_dimension: int, scale: float) -> int:
     return max(1, int(math.floor(source_dimension * scale + 0.5)))
 
@@ -588,6 +822,8 @@ def _tokens_from_response(
     source_crop_height: int,
     working_width: int,
     working_height: int,
+    ocr_working_width: int,
+    ocr_working_height: int,
     offset_x: int,
     offset_y: int,
     region_ref: str | None,
@@ -599,6 +835,7 @@ def _tokens_from_response(
     transform: TesseractCropTransformEvidence,
     effective_ocr_dpi: int,
     target_dpi: int | None,
+    padding: TesseractCropPaddingTargetEvidence,
 ) -> list[OcrToken]:
     rows = _response_rows(response)
     tokens: list[OcrToken] = []
@@ -611,13 +848,21 @@ def _tokens_from_response(
             continue
         working_bbox = _normalized_bbox(
             row,
-            crop_width=working_width,
-            crop_height=working_height,
+            crop_width=ocr_working_width,
+            crop_height=ocr_working_height,
         )
         if working_bbox is None:
             continue
-        local_bbox = _source_bbox_from_working(
+        pre_padding_bbox = _bbox_without_region_padding(
             working_bbox,
+            padding_pixels=padding.padding_pixels,
+            pre_padding_width=working_width,
+            pre_padding_height=working_height,
+        )
+        if pre_padding_bbox is None:
+            continue
+        local_bbox = _source_bbox_from_working(
+            pre_padding_bbox,
             source_width=source_crop_width,
             source_height=source_crop_height,
             working_width=working_width,
@@ -647,7 +892,11 @@ def _tokens_from_response(
                 f"working={transform.working_width}x{transform.working_height}; "
                 f"scale={transform.actual_scale_x:g}x{transform.actual_scale_y:g}; "
                 f"resized={str(transform.resized).lower()}; "
-                f"resampling={'LANCZOS' if transform.resized else 'none'}"
+                f"resampling={'LANCZOS' if transform.resized else 'none'}; "
+                f"padding={TESSERACT_CROP_PADDING_VERSION}; "
+                f"region_padding_px={padding.padding_pixels}; "
+                f"ocr_input={padding.working_width}x{padding.working_height}; "
+                f"padding_color=rgb(255,255,255)"
             ),
         )
         tokens.append(
@@ -664,6 +913,33 @@ def _tokens_from_response(
             )
         )
     return tokens
+
+
+def _bbox_without_region_padding(
+    working_bbox: PixelBoundingBox,
+    *,
+    padding_pixels: int,
+    pre_padding_width: int,
+    pre_padding_height: int,
+) -> PixelBoundingBox | None:
+    left = min(pre_padding_width, max(0, working_bbox.x - padding_pixels))
+    top = min(pre_padding_height, max(0, working_bbox.y - padding_pixels))
+    right = min(
+        pre_padding_width,
+        max(0, working_bbox.x + working_bbox.width - padding_pixels),
+    )
+    bottom = min(
+        pre_padding_height,
+        max(0, working_bbox.y + working_bbox.height - padding_pixels),
+    )
+    if right <= left or bottom <= top:
+        return None
+    return PixelBoundingBox(
+        x=left,
+        y=top,
+        width=right - left,
+        height=bottom - top,
+    )
 
 
 def _source_bbox_from_working(
@@ -822,6 +1098,7 @@ def _parameters_digest(
     *,
     tessdata_configured: bool,
     target_dpi: int | None,
+    region_padding_px: int,
     max_working_pixels: int,
 ) -> str:
     payload = {
@@ -848,6 +1125,20 @@ def _parameters_digest(
                 "version": PILLOW_VERSION,
             },
             "inverse_mapping_policy": TESSERACT_INVERSE_MAPPING_POLICY,
+        },
+        "crop_padding": {
+            "version": TESSERACT_CROP_PADDING_VERSION,
+            "enabled": region_padding_px > 0,
+            "region_padding_px": region_padding_px,
+            "scope": "region-crops-only",
+            "pixel_mode": "RGB",
+            "border_color": [255, 255, 255],
+            "operation_order": list(TESSERACT_CROP_PADDING_OPERATION_ORDER),
+            "inverse_mapping_policy": TESSERACT_CROP_PADDING_MAPPING_POLICY,
+            "imaging_library": {
+                "name": "Pillow",
+                "version": PILLOW_VERSION,
+            },
         },
     }
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("ascii")

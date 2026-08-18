@@ -11,14 +11,20 @@ rendering stage. Issue #47 adds a same-process OCR input-resolution A/B check:
 the original-resolution control and the 300 DPI working-raster candidate are
 measured with the same source, reference, regions, Tesseract runtime, and
 trained data before downstream selection. The current candidate is rejected,
-so DOCX work continues from the unchanged control IR.
+so it remains diagnostic only. Issue #53 independently compares the same
+no-upscale control against an exact two-source-pixel artificial white border on
+each OCR region crop. That candidate satisfies the fixed no-loss adoption gate
+and becomes the selected IR for downstream DOCX work.
 
 ```text
 reviewed MIT source PNG + deterministic structure extraction
   -> control: real Tesseract without OCR-raster upscaling
   -> candidate: real Tesseract with 300 DPI OCR-only working rasters
   -> OCR reports + transform evidence + same-runtime A/B decision
-  -> atomically published selected bundle (control today)
+  -> padding control: 96 DPI region crops without artificial border
+  -> padding candidate: the same crops with a 2px white border
+  -> OCR reports + padding evidence + same-runtime A/B decision
+  -> atomically published selected bundle (2px padding today)
   -> current DOCX renderer
   -> actual LibreOffice PDF
   -> Poppler page PNGs
@@ -26,7 +32,8 @@ reviewed MIT source PNG + deterministic structure extraction
   -> source-quality FAIL (expected today)
 ```
 
-Only the raster supplied inside the Tesseract adapter changes. The decoded
+Only the raster supplied inside the Tesseract adapter changes in either
+experiment. The decoded
 source, structure extraction, source coordinates, Document IR schema, and DOCX
 reconstruction remain unchanged. Every returned token bbox is mapped back to
 the original source pixels. A future improvement must move the same measurement
@@ -60,9 +67,12 @@ quality layers, `ocr-quality-control-evaluation.json` and the existing
 `ocr-quality-evaluation.json` score the no-upscale control and 300 DPI candidate
 respectively. `ocr-input-transform.json` records the transform actually used by
 the backend, and `ocr-resolution-comparison.json` decides whether the candidate
-is eligible as a supported improvement. The runner does not infer working
-dimensions, scales, or effective DPI, and it never turns eligibility into an
-automatic production adoption.
+is eligible as a supported improvement. Separately, `ocr-padding/control/` and
+`ocr-padding/candidate/` retain independent no-padding and 2px-padding
+observations, `ocr-padding/crop-padding-evidence.json` records the backend-owned
+border contract, and `ocr-padding/comparison.json` decides the Issue #53
+candidate. The runner does not infer dimensions, padding, scales, or effective
+DPI.
 
 1. `ocr-quality-evaluation.json` compares the reviewed source text directly
    with OCR text in the candidate IR. It is written immediately after real
@@ -71,7 +81,8 @@ automatic production adoption.
    failure cannot erase or contaminate the completed OCR observation.
 2. `source-quality-evaluation.json` compares reviewed source truth with the
    selected IR and text OCRed from the actual rendered DOCX pages. The selected
-   IR is the no-upscale control for Issue #47. Matching is independent of
+   IR is the supported 2px crop-padding candidate; the rejected 300-DPI
+   candidate never enters this layer. Matching is independent of
    candidate element IDs and OCR token segmentation.
 3. `ir-to-docx-restoration-evaluation.json` is the existing evaluator. It asks
    only how much of the selected IR survived DOCX generation. It cannot measure
@@ -86,6 +97,8 @@ For artifact compatibility, `baseline-summary.json` retains the historical
 keys, "candidate IR" means the IR selected for the source/restoration baseline,
 not necessarily the 300 DPI experiment. Their `selected_input` field is
 authoritative; `candidate_300_dpi_experiment` reports the experiment separately.
+`ocr_crop_padding_comparison` and `candidate_two_pixel_padding_experiment`
+report the independent padding decision and observation.
 
 The combined state fails if any scored layer fails. An unavailable human check
 remains `pending`; an explicit human rejection is `failed`. A known machine
@@ -129,6 +142,24 @@ lane must surface any decision change for review.
 The later visible-page OCR remains on its original no-upscale path. The 300 DPI
 experiment therefore affects only its separately retained candidate IR; it does
 not silently change the source-to-actual-DOCX measurement in the same issue.
+
+The crop-padding experiment changes one different variable. Both sides use the
+same approximately 96-DPI source raster, `jpn,eng`, PSM 6, OEM 3, Tesseract
+binary, and trained data. The control sends each exact source region crop; the
+candidate surrounds it with two white RGB pixels without expanding the source
+bbox. Candidate working dimensions are exactly `source width + 4` by `source
+height + 4`. Returned TSV coordinates have the artificial border subtracted
+before source-coordinate restoration. Full-page and later visible-page OCR are
+not padded.
+
+The candidate must improve full-text accuracy by at least 1.0 percentage point,
+must not reduce block coverage or anchor recall, must retain every recovered
+control block and anchor, and must not increase essential misses. Every common
+runtime, reference, geometry, provenance, non-text IR, asset, and topology check
+must also pass. `supported` selects the 2px observation; `regressed` and
+`inconclusive` retain control; `invalid` stops before canonical bundle
+publication. The current same-runtime observations classify it as `supported`
+while the overall source-to-DOCX baseline remains an expected `fail`.
 
 ## Source-quality contract
 
@@ -185,6 +216,15 @@ real-runtime-baseline/
 |-- ocr-quality-evaluation.json
 |-- ocr-input-transform.json
 |-- ocr-resolution-comparison.json
+|-- ocr-padding/
+|   |-- crop-padding-evidence.json
+|   |-- comparison.json
+|   |-- control/
+|   |   |-- ocr-quality-evaluation.json
+|   |   `-- bundle/document.ir.json
+|   `-- candidate/
+|       |-- ocr-quality-evaluation.json
+|       `-- bundle/document.ir.json
 |-- source-quality-evaluation.json
 |-- ir-to-docx-restoration-evaluation.json
 |-- extraction-diagnostics.json
@@ -206,25 +246,26 @@ real-runtime-baseline/
     `-- page-001.png ...
 ```
 
-The four OCR A/B artifacts are written create-only before DOCX or preview
-generation. A later rendering, LibreOffice, or Poppler failure therefore leaves
-the completed comparison available beside `operational-error.json`.
-`control-bundle/` and `candidate-bundle/` remain the immutable observations.
-After a valid comparison, deterministic table topology is inferred only from
-the selected no-upscale control's existing point-coordinate primitives. The
-control observation remains immutable; the enriched control is written through
-a same-directory staging path and atomically published as `bundle/`. Its
+Both OCR A/B sets are written create-only before DOCX or preview generation. A
+later rendering, LibreOffice, or Poppler failure therefore leaves the completed
+comparisons available beside `operational-error.json`. `control-bundle/` and
+`candidate-bundle/` remain the immutable resolution observations; the two
+`ocr-padding/*/bundle/` directories remain the padding observations. After
+valid comparisons, deterministic table topology is inferred only from the
+padding decision's selected IR. The observations remain immutable; the enriched
+selection is written through a same-directory staging path and atomically
+published as `bundle/`. Its
 `document.ir.json`, assets, reconstructed DOCX, and preview therefore describe
 one side consistently. The topology step does not change any OCR text, element,
-source metadata, or asset. `supported`, `regressed`, and `inconclusive` all
-select control in this runner; `supported` records eligibility for a separate
-adoption change. `invalid` stops before topology/publication because the
-comparison evidence cannot be trusted.
+source metadata, or asset. The 300-DPI experiment always leaves production on
+its control. The reviewed padding change adopts only `supported`; `regressed`
+and `inconclusive` select padding control. Any `invalid` comparison stops before
+topology/publication because its evidence cannot be trusted.
 
 The DOCX renderer consumes the validated extension only after the selected
-control bundle is published. Each of the five topology tables becomes one
+bundle is published. Each of the five topology tables becomes one
 identifiable, editable native Word table. Cell text is kept as source-tagged
-editable runs, so the read-back observer retains all 285 OCR text elements while
+editable runs, so the read-back observer retains every selected OCR text element while
 Word and LibreOffice can lay out tokens naturally inside 45 physical cells.
 Supporting table primitives remain unchanged in the IR and are accounted for
 once in `native_table_consumed_element_ids`; duplicate border evidence is not
@@ -240,21 +281,22 @@ the retained PDF/PNG and the one-page gate remain the visual authority.
 git revision, options, executable versions, `jpn`/`eng` trained-data hashes,
 Ubuntu package versions, locale/timezone, and fontconfig mappings. Exact OCR
 scores may move when those runtimes move; CI does not pin those scores. It
-verifies the fixed integrity contract, the current truthful `regressed`
-decision, the fixed 5-table/45-cell/210-text topology, native-table consumption,
-and an IR-to-DOCX score of at least 70 while the combined control-derived
-source-to-DOCX decision remains the expected `fail` because OCR is unchanged.
+verifies the fixed integrity contract, the truthful `regressed` 300-DPI
+decision, the `supported` 2px-padding decision, fixed five-table/45-cell
+structure, native-table consumption, and an IR-to-DOCX score of at least 70
+while the combined selected-source decision remains the expected `fail`.
 
 ## CI lanes and intentional updates
 
 The normal Windows/Linux Python matrix runs deterministic tests without
 machine-global document runtimes. A dedicated Ubuntu 24.04/Python 3.14 job
 installs real Tesseract, LibreOffice, Poppler, Noto CJK, and Liberation fonts.
-Its test succeeds only when both OCR observations complete, their comparison is
-valid and `regressed` for the documented lost block, control is selected, the
+Its test succeeds only when all three OCR observations complete, the 300-DPI
+comparison remains `regressed` for the documented lost block, the 2px-padding
+comparison is `supported` with no lost recovery, the padded IR is selected, the
 remaining process completes, and the combined quality decision is the expected
-`fail`. Aggregate score gains are asserted only directionally; exact scores are
-not pinned. Evidence is uploaded on every run, including operational failures.
+`fail`. Aggregate gains are asserted only directionally; exact scores are not
+pinned. Evidence is uploaded on every run, including operational failures.
 
 When the baseline eventually becomes `pass`, do not merely change
 `expected_current_state`. Inspect every actual page, complete the human checks,

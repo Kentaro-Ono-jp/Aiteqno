@@ -40,9 +40,9 @@ Tesseract backend.
 Consequently, this golden route is a deterministic IR-to-DOCX regression test,
 not a claim about real OCR or source-image restoration quality. The dedicated
 [real-runtime failure baseline](real-runtime-baseline.md) records a same-runtime
-no-upscale/300-DPI OCR comparison before DOCX generation, then independently
-covers actual LibreOffice pages, visible-text OCR, and source-grounded
-evaluation.
+no-upscale/300-DPI OCR comparison plus an independent zero/2px white
+crop-padding comparison before DOCX generation, then independently covers
+actual LibreOffice pages, visible-text OCR, and source-grounded evaluation.
 
 ## Quality result
 
@@ -78,10 +78,11 @@ $env:AITEQNO_LIBREOFFICE_EXECUTABLE = "C:\Program Files\LibreOffice\program\soff
 CI runs the full deterministic suite on `ubuntu-latest` and `windows-latest`
 with Python 3.11 and 3.14 without machine-global document runtimes. A dedicated
 Ubuntu 24.04 job installs Tesseract, LibreOffice, Poppler, and Japanese fonts,
-runs both OCR inputs consecutively, records the same-run comparison, keeps the
-no-upscale control selected for downstream DOCX work, then uploads all retained
-evidence. The lane currently asserts the truthful `regressed` 300 DPI decision;
-a changed decision requires review instead of silently adopting the candidate.
+runs the three OCR observations consecutively, records both same-run
+comparisons, rejects the `regressed` 300-DPI candidate, selects the `supported`
+2px-padding candidate for downstream DOCX work, then uploads all retained
+evidence. A changed decision requires review instead of silently weakening a
+gate.
 
 ## Updating the golden contract
 
