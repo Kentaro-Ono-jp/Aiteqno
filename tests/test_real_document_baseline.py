@@ -108,6 +108,14 @@ def _mock_smoke_run():
     return Mock(source_sha256="c" * 64, observed_text="AITEQNO 2026 患者番号")
 
 
+def _observation_bundle_kind(bundle_directory: Path) -> str:
+    if bundle_directory.name in {"control-bundle", "candidate-bundle"}:
+        return bundle_directory.name
+    if bundle_directory.name != "bundle":
+        raise AssertionError(f"unexpected observation bundle: {bundle_directory}")
+    return f"{bundle_directory.parent.parent.name}/{bundle_directory.parent.name}"
+
+
 class RealDocumentBaselineContractTest(unittest.TestCase):
     def test_original_mit_source_and_reference_are_reviewed_and_hash_pinned(self):
         manifest = json.loads(
@@ -730,17 +738,17 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
 
             def completed_extraction(_source_data, bundle_directory, **_kwargs):
                 bundle_directory.mkdir(parents=True)
-                relative = bundle_directory.relative_to(output).as_posix()
-                if relative == "control-bundle":
+                kind = _observation_bundle_kind(bundle_directory)
+                if kind == "control-bundle":
                     label = "control-bundle"
                     document = control_ir
-                elif relative == "candidate-bundle":
+                elif kind == "candidate-bundle":
                     label = "resolution-candidate-bundle"
                     document = candidate_ir
-                elif relative == "ocr-padding/candidate/bundle":
+                elif kind == "ocr-padding/candidate":
                     label = "padding-candidate-bundle"
                     document = padding_ir
-                elif relative == "ocr-language/control/bundle":
+                elif kind == "ocr-language/control":
                     label = "language-control-bundle"
                     document = language_control_ir
                 else:
@@ -1018,17 +1026,17 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
 
             def completed_extraction(_source_data, bundle_directory, **_kwargs):
                 bundle_directory.mkdir(parents=True)
-                relative = bundle_directory.relative_to(output).as_posix()
-                if relative == "control-bundle":
+                kind = _observation_bundle_kind(bundle_directory)
+                if kind == "control-bundle":
                     label = "control-bundle"
                     document = control_ir
-                elif relative == "candidate-bundle":
+                elif kind == "candidate-bundle":
                     label = "resolution-candidate-bundle"
                     document = candidate_ir
-                elif relative == "ocr-padding/candidate/bundle":
+                elif kind == "ocr-padding/candidate":
                     label = "padding-candidate-bundle"
                     document = candidate_ir
-                elif relative == "ocr-language/control/bundle":
+                elif kind == "ocr-language/control":
                     label = "language-control-bundle"
                     document = language_control_ir
                 else:
