@@ -65,6 +65,17 @@ from .ocr import (
     OcrRegion,
     OcrToken,
 )
+from .ocr_experiment import (
+    OCR_EXPERIMENT_ALLOWED_RUNTIME_DIFFERENCES,
+    OCR_EXPERIMENT_RUNTIME_FIELDS,
+    OcrExperimentCheck,
+    OcrExperimentComparisonResult,
+    OcrExperimentContract,
+    OcrExperimentDecision,
+    OcrExperimentMetricDelta,
+    OcrExperimentRecoveryDelta,
+    OcrExperimentRun,
+)
 from .ocr_quality import (
     LowConfidenceTokenDiagnostic,
     OcrAnchorEvaluation,
@@ -147,6 +158,15 @@ __all__ = [
     "OcrBackend",
     "OcrBackendError",
     "OcrCapabilities",
+    "OCR_EXPERIMENT_ALLOWED_RUNTIME_DIFFERENCES",
+    "OCR_EXPERIMENT_RUNTIME_FIELDS",
+    "OcrExperimentCheck",
+    "OcrExperimentComparisonResult",
+    "OcrExperimentContract",
+    "OcrExperimentDecision",
+    "OcrExperimentMetricDelta",
+    "OcrExperimentRecoveryDelta",
+    "OcrExperimentRun",
     "OcrAnchorEvaluation",
     "OcrOptions",
     "OcrBlockEvaluation",

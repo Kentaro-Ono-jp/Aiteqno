@@ -414,6 +414,32 @@ class OcrResolutionComparisonTests(unittest.TestCase):
         self.assertFalse(report["adoption_policy"]["token_count_is_scoring_input"])
         self.assertEqual(result.to_json(), result.to_json())
 
+    def test_compatibility_wrapper_preserves_resolution_artifact_scope(self) -> None:
+        result = compare_ocr_resolution(self.control, self.candidate())
+        report = result.to_dict()
+
+        self.assertEqual(
+            report["scope"],
+            {
+                "experiment": "tesseract_ocr_input_resolution",
+                "control": "source_resolution",
+                "candidate": "300_dpi_working_raster",
+                "ends_before": [
+                    "docx",
+                    "preview",
+                    "libreoffice",
+                    "poppler",
+                    "rendered_page_ocr",
+                ],
+            },
+        )
+        self.assertEqual(
+            report["checks"]["runtime_equivalence"]["details"]["allowed_differences"],
+            ["runtime.configuration.effective_ocr_dpi", "ocr_input_transform"],
+        )
+        self.assertIn("transform_sha256", report["runs"]["control"])
+        self.assertNotIn("evidence_sha256", report["runs"]["control"])
+
     def test_inconclusive_when_text_gain_is_below_one_point(self) -> None:
         result = compare_ocr_resolution(
             self.control,
