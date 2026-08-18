@@ -76,6 +76,11 @@ from .ocr_experiment import (
     OcrExperimentRecoveryDelta,
     OcrExperimentRun,
 )
+from .ocr_language import (
+    OcrLanguageProfileComparisonResult,
+    OcrLanguageSmokeRun,
+    OcrProtectedLiteralRecovery,
+)
 from .ocr_quality import (
     LowConfidenceTokenDiagnostic,
     OcrAnchorEvaluation,
@@ -167,6 +172,9 @@ __all__ = [
     "OcrExperimentMetricDelta",
     "OcrExperimentRecoveryDelta",
     "OcrExperimentRun",
+    "OcrLanguageProfileComparisonResult",
+    "OcrLanguageSmokeRun",
+    "OcrProtectedLiteralRecovery",
     "OcrAnchorEvaluation",
     "OcrOptions",
     "OcrBlockEvaluation",

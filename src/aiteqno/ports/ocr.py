@@ -11,7 +11,7 @@ from aiteqno.domain import PixelBoundingBox, Provenance, ProvenanceStage
 from aiteqno.ports.structure import ImageInput
 
 
-DEFAULT_OCR_LANGUAGES = ("jpn", "eng")
+DEFAULT_OCR_LANGUAGES = ("jpn",)
 _LANGUAGE_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_/-]*$")
 
 

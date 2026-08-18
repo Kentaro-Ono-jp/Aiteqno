@@ -8,6 +8,7 @@ import math
 import os
 import re
 import shutil
+import subprocess
 import threading
 import unicodedata
 from collections.abc import Callable, Mapping, Sequence
@@ -41,6 +42,7 @@ DEFAULT_TESSERACT_REGION_PADDING_PX = 2
 DEFAULT_MAX_TESSERACT_WORKING_PIXELS = 40_000_000
 TESSERACT_RASTER_TRANSFORM_VERSION = "tesseract-raster-transform-v1"
 TESSERACT_CROP_PADDING_VERSION = "tesseract-crop-padding-v1"
+TESSERACT_INVOCATION_EVIDENCE_VERSION = "tesseract-invocation-evidence-v1"
 TESSERACT_INVERSE_MAPPING_POLICY = (
     "clip-working-bbox; source-left-top=floor(edge*source/working); "
     "source-right-bottom=ceil(edge*source/working); clamp-source-crop; "
@@ -236,6 +238,93 @@ class TesseractCropPaddingEvidence:
         }
 
 
+@dataclass(frozen=True, slots=True, kw_only=True)
+class TesseractTrainedDataFileEvidence:
+    """One traineddata file actually resolved and hashed by the backend."""
+
+    language: str
+    path: str
+    size_bytes: int
+    sha256: str
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a deterministic JSON-compatible representation."""
+
+        return {
+            "language": self.language,
+            "path": self.path,
+            "size_bytes": self.size_bytes,
+            "sha256": self.sha256,
+        }
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class TesseractInvocationEvidence:
+    """Backend-owned evidence for one successful recognize invocation."""
+
+    schema_version: str
+    invocation_version: str
+    provider: str
+    provider_version: str
+    executable: str
+    languages: tuple[str, ...]
+    traineddata: tuple[TesseractTrainedDataFileEvidence, ...]
+    page_segmentation_mode: int
+    engine_mode: int
+    timeout_seconds: float
+    min_confidence: float
+    preserve_interword_spaces: bool
+    source_dpi_x: float
+    source_dpi_y: float
+    effective_ocr_dpi: int
+    target_dpi: int | None
+    region_padding_px: int
+    max_working_pixels: int
+    tessdata_configured: bool
+    tesseract_config: str
+    parameters_digest: str
+    raster_transform: TesseractRasterTransformEvidence
+    crop_padding: TesseractCropPaddingEvidence
+
+    def to_dict(self) -> dict[str, object]:
+        """Return all measured configuration and raster evidence."""
+
+        padding = self.crop_padding.to_dict()
+        return {
+            "schema_version": self.schema_version,
+            "invocation_version": self.invocation_version,
+            "provider": self.provider,
+            "provider_version": self.provider_version,
+            "executable": self.executable,
+            "configuration": {
+                "languages": list(self.languages),
+                "page_segmentation_mode": self.page_segmentation_mode,
+                "engine_mode": self.engine_mode,
+                "timeout_seconds": self.timeout_seconds,
+                "min_confidence": self.min_confidence,
+                "preserve_interword_spaces": self.preserve_interword_spaces,
+                "source_metadata_dpi": {
+                    "x": self.source_dpi_x,
+                    "y": self.source_dpi_y,
+                },
+                "effective_ocr_dpi": self.effective_ocr_dpi,
+                "target_dpi": self.target_dpi,
+                "region_padding_px": self.region_padding_px,
+                "max_working_pixels": self.max_working_pixels,
+                "tessdata_configured": self.tessdata_configured,
+                "tesseract_config": self.tesseract_config,
+            },
+            "traineddata": [item.to_dict() for item in self.traineddata],
+            "parameters_digest": self.parameters_digest,
+            "raster_transform": self.raster_transform.to_dict(),
+            "crop_padding": padding,
+            # The generic experiment gate consumes source regions from this
+            # stable top-level alias while the complete padding record remains
+            # independently auditable above.
+            "crops": padding["crops"],
+        }
+
+
 class TesseractOcrBackend:
     """Recognize source-pixel tokens through a configurable local Tesseract 5.x."""
 
@@ -251,6 +340,8 @@ class TesseractOcrBackend:
         transform_observer: Callable[[TesseractRasterTransformEvidence], None]
         | None = None,
         padding_observer: Callable[[TesseractCropPaddingEvidence], None] | None = None,
+        invocation_observer: Callable[[TesseractInvocationEvidence], None]
+        | None = None,
     ) -> None:
         self._executable_path = (
             os.fspath(executable_path) if executable_path is not None else "tesseract"
@@ -289,11 +380,14 @@ class TesseractOcrBackend:
             raise TypeError("transform_observer must be callable or None")
         if padding_observer is not None and not callable(padding_observer):
             raise TypeError("padding_observer must be callable or None")
+        if invocation_observer is not None and not callable(invocation_observer):
+            raise TypeError("invocation_observer must be callable or None")
         self._target_dpi = target_dpi
         self._region_padding_px = region_padding_px
         self._max_working_pixels = max_working_pixels
         self._transform_observer = transform_observer
         self._padding_observer = padding_observer
+        self._invocation_observer = invocation_observer
 
     def healthcheck(self) -> OcrCapabilities:
         """Verify executable, major version, and configured language data."""
@@ -354,9 +448,16 @@ class TesseractOcrBackend:
         tokens: list[OcrToken] = []
         transform_crops: list[TesseractCropTransformEvidence] = []
         padding_crops: list[TesseractCropPaddingTargetEvidence] = []
+        traineddata: tuple[TesseractTrainedDataFileEvidence, ...] = ()
         try:
             resolved_executable = capabilities.executable
             with self._configured_runtime(resolved_executable):
+                if self._invocation_observer is not None:
+                    traineddata = _traineddata_evidence(
+                        resolved_executable,
+                        normalized_languages,
+                        configured_prefix=self._tessdata_prefix,
+                    )
                 for target in targets:
                     source_crop, offset_x, offset_y, region_ref = _target_image(
                         page_image,
@@ -499,6 +600,34 @@ class TesseractOcrBackend:
         )
         if self._padding_observer is not None:
             self._padding_observer(padding_evidence)
+        if self._invocation_observer is not None:
+            self._invocation_observer(
+                TesseractInvocationEvidence(
+                    schema_version="1.0",
+                    invocation_version=TESSERACT_INVOCATION_EVIDENCE_VERSION,
+                    provider=capabilities.provider,
+                    provider_version=capabilities.provider_version,
+                    executable=capabilities.executable,
+                    languages=normalized_languages,
+                    traineddata=traineddata,
+                    page_segmentation_mode=options.page_segmentation_mode,
+                    engine_mode=options.engine_mode,
+                    timeout_seconds=options.timeout_seconds,
+                    min_confidence=options.min_confidence,
+                    preserve_interword_spaces=options.preserve_interword_spaces,
+                    source_dpi_x=image.source.dpi_x,
+                    source_dpi_y=image.source.dpi_y,
+                    effective_ocr_dpi=effective_ocr_dpi,
+                    target_dpi=self._target_dpi,
+                    region_padding_px=self._region_padding_px,
+                    max_working_pixels=self._max_working_pixels,
+                    tessdata_configured=self._tessdata_prefix is not None,
+                    tesseract_config=self._config(options, effective_ocr_dpi),
+                    parameters_digest=parameters_digest,
+                    raster_transform=evidence,
+                    crop_padding=padding_evidence,
+                )
+            )
         return tuple(tokens)
 
     def _probe(self, required_languages: Sequence[str]) -> OcrCapabilities:
@@ -1088,6 +1217,125 @@ def _parse_version(value: object) -> tuple[str, int]:
         )
     version = match.group("version")
     return version, int(version.split(".", 1)[0])
+
+
+def _traineddata_evidence(
+    executable: str,
+    languages: tuple[str, ...],
+    *,
+    configured_prefix: str | None,
+) -> tuple[TesseractTrainedDataFileEvidence, ...]:
+    directory = _resolve_tessdata_directory(
+        executable,
+        languages,
+        configured_prefix=configured_prefix,
+    )
+    records: list[TesseractTrainedDataFileEvidence] = []
+    for language in languages:
+        path = (directory / f"{language}.traineddata").resolve()
+        if not path.is_file():
+            raise OcrBackendError(
+                "ocr_traineddata_evidence_unavailable",
+                f"Tesseract traineddata could not be hashed for {language!r}: {path}",
+                provider=TESSERACT_PROVIDER,
+            )
+        try:
+            digest = hashlib.sha256()
+            with path.open("rb") as stream:
+                for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                    digest.update(chunk)
+            size_bytes = path.stat().st_size
+        except OSError as exc:
+            raise OcrBackendError(
+                "ocr_traineddata_evidence_unavailable",
+                f"Tesseract traineddata could not be hashed for {language!r}: {exc}",
+                provider=TESSERACT_PROVIDER,
+            ) from exc
+        if size_bytes < 1:
+            raise OcrBackendError(
+                "ocr_traineddata_evidence_unavailable",
+                f"Tesseract traineddata is empty for {language!r}: {path}",
+                provider=TESSERACT_PROVIDER,
+            )
+        records.append(
+            TesseractTrainedDataFileEvidence(
+                language=language,
+                path=str(path),
+                size_bytes=size_bytes,
+                sha256=digest.hexdigest(),
+            )
+        )
+    return tuple(records)
+
+
+def _resolve_tessdata_directory(
+    executable: str,
+    languages: tuple[str, ...],
+    *,
+    configured_prefix: str | None,
+) -> Path:
+    candidates: list[Path] = []
+    if configured_prefix is not None:
+        configured = Path(configured_prefix).expanduser()
+        candidates.extend((configured, configured / "tessdata"))
+    else:
+        environment_prefix = os.environ.get("TESSDATA_PREFIX")
+        if environment_prefix:
+            environment = Path(environment_prefix).expanduser()
+            candidates.extend((environment, environment / "tessdata"))
+
+    discovered = _listed_tessdata_directory(executable)
+    if discovered is not None:
+        candidates.append(discovered)
+    executable_directory = Path(executable).resolve().parent
+    candidates.extend(
+        (
+            executable_directory / "tessdata",
+            executable_directory.parent / "share" / "tessdata",
+            Path("/usr/share/tesseract-ocr/5/tessdata"),
+            Path("/usr/share/tessdata"),
+        )
+    )
+    visited: set[Path] = set()
+    for candidate in candidates:
+        try:
+            resolved = candidate.resolve()
+        except OSError:
+            continue
+        if resolved in visited:
+            continue
+        visited.add(resolved)
+        if all((resolved / f"{language}.traineddata").is_file() for language in languages):
+            return resolved
+    raise OcrBackendError(
+        "ocr_traineddata_evidence_unavailable",
+        "Tesseract reported the requested languages but their actual traineddata "
+        "directory could not be resolved for hashing",
+        provider=TESSERACT_PROVIDER,
+    )
+
+
+def _listed_tessdata_directory(executable: str) -> Path | None:
+    try:
+        completed = subprocess.run(
+            [executable, "--list-langs"],
+            check=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=30,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    output = "\n".join((completed.stdout, completed.stderr))
+    match = re.search(
+        r"List of available languages in [\"'](?P<path>.+?)[\"']",
+        output,
+    )
+    if match is None:
+        return None
+    return Path(match.group("path")).expanduser()
 
 
 def _parameters_digest(

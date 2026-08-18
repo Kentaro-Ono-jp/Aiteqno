@@ -14,7 +14,11 @@ trained data before downstream selection. The current candidate is rejected,
 so it remains diagnostic only. Issue #53 independently compares the same
 no-upscale control against an exact two-source-pixel artificial white border on
 each OCR region crop. That candidate satisfies the fixed no-loss adoption gate
-and becomes the selected IR for downstream DOCX work.
+and becomes the next control. Issue #57 then holds that 2px path fixed and
+changes only the ordered Tesseract language profile from `jpn,eng` to `jpn`.
+The Japanese-only candidate satisfies the quality, no-loss, protected-literal,
+trained-data, topology, and multilingual-smoke gates and becomes the selected
+profile for downstream DOCX work and the production default.
 
 ```text
 reviewed MIT source PNG + deterministic structure extraction
@@ -24,7 +28,11 @@ reviewed MIT source PNG + deterministic structure extraction
   -> padding control: 96 DPI region crops without artificial border
   -> padding candidate: the same crops with a 2px white border
   -> OCR reports + padding evidence + same-runtime A/B decision
-  -> atomically published selected bundle (2px padding today)
+  -> language control: 2px padding + ordered jpn,eng
+  -> language candidate: the same input/runtime + ordered jpn only
+  -> backend invocation hashes + protected literals + multilingual smoke
+  -> OCR reports + same-runtime language decision
+  -> atomically published selected bundle (2px padding + jpn today)
   -> current DOCX renderer
   -> actual LibreOffice PDF
   -> Poppler page PNGs
@@ -32,12 +40,14 @@ reviewed MIT source PNG + deterministic structure extraction
   -> source-quality FAIL (expected today)
 ```
 
-Only the raster supplied inside the Tesseract adapter changes in either
-experiment. The decoded
-source, structure extraction, source coordinates, Document IR schema, and DOCX
-reconstruction remain unchanged. Every returned token bbox is mapped back to
-the original source pixels. A future improvement must move the same measurement
-without weakening the reference or silently accepting a changed runtime.
+Only the raster supplied inside the Tesseract adapter changes in the resolution
+and padding experiments. The language experiment changes only ordered
+`languages`, the matching trained-data set, and their derived parameters digest.
+The decoded source, structure extraction, source coordinates, Document IR
+schema, and DOCX reconstruction remain unchanged. Every returned token bbox is
+mapped back to the original source pixels. A future improvement must move the
+same measurement without weakening the reference or silently accepting a
+changed runtime.
 
 ## Licensed fixture and review
 
@@ -71,8 +81,13 @@ is eligible as a supported improvement. Separately, `ocr-padding/control/` and
 `ocr-padding/candidate/` retain independent no-padding and 2px-padding
 observations, `ocr-padding/crop-padding-evidence.json` records the backend-owned
 border contract, and `ocr-padding/comparison.json` decides the Issue #53
-candidate. The runner does not infer dimensions, padding, scales, or effective
-DPI.
+candidate. Finally, `ocr-language/control/` and `ocr-language/candidate/` retain
+fresh 2px observations for ordered `jpn,eng` and `jpn`. Their runtime evidence is
+emitted by the backend and hashes the trained-data files actually used.
+`ocr-language/comparison.json` gates the profile, protected-literal diagnostics,
+normalized table topology, and the unchanged multilingual smoke fixture. The
+runner does not infer dimensions, padding, scales, effective DPI, languages, or
+trained-data identity.
 
 1. `ocr-quality-evaluation.json` compares the reviewed source text directly
    with OCR text in the candidate IR. It is written immediately after real
@@ -81,9 +96,9 @@ DPI.
    failure cannot erase or contaminate the completed OCR observation.
 2. `source-quality-evaluation.json` compares reviewed source truth with the
    selected IR and text OCRed from the actual rendered DOCX pages. The selected
-   IR is the supported 2px crop-padding candidate; the rejected 300-DPI
-   candidate never enters this layer. Matching is independent of
-   candidate element IDs and OCR token segmentation.
+   IR is the supported 2px + `jpn` language candidate; the rejected 300-DPI
+   candidate and the earlier `jpn,eng` language control never enter this layer.
+   Matching is independent of candidate element IDs and OCR token segmentation.
 3. `ir-to-docx-restoration-evaluation.json` is the existing evaluator. It asks
    only how much of the selected IR survived DOCX generation. It cannot measure
    OCR accuracy because its expected content comes from that same selected IR.
@@ -99,6 +114,9 @@ not necessarily the 300 DPI experiment. Their `selected_input` field is
 authoritative; `candidate_300_dpi_experiment` reports the experiment separately.
 `ocr_crop_padding_comparison` and `candidate_two_pixel_padding_experiment`
 report the independent padding decision and observation.
+`ocr_language_profile_comparison` and `candidate_jpn_only_language_experiment`
+report the profile decision and observation. `selected_profile` is authoritative
+for the downstream layers.
 
 The combined state fails if any scored layer fails. An unavailable human check
 remains `pending`; an explicit human rejection is `failed`. A known machine
@@ -160,6 +178,34 @@ must also pass. `supported` selects the 2px observation; `regressed` and
 `inconclusive` retain control; `invalid` stops before canonical bundle
 publication. The current same-runtime observations classify it as `supported`
 while the overall source-to-DOCX baseline remains an expected `fail`.
+
+The language-profile experiment changes one final variable on top of that
+adopted padding control. Both sides use the same approximately 96-DPI source,
+exact 2px white padding, PSM 6, OEM 3, Tesseract executable/version, source
+regions, and Japanese trained-data bytes. Control uses ordered `jpn,eng` and
+candidate uses ordered `jpn`. Candidate runtime evidence must contain no English
+trained-data record, and the common `jpn.traineddata` size and SHA-256 must match
+exactly. Parameters digests must differ only because the ordered language tuple
+differs.
+
+In the Windows/Tesseract 5.5.3 reconnaissance run, kept outside tracked files,
+the fixed candidate moved text accuracy from `68.939394` to `76.893939`, block
+coverage from `56.250000` to `70.833333`, and held anchor recall at `66.666667`.
+It lost no control-recovered block, anchor, or protected literal; the remaining
+essential blocks were `title`, `phone-label`, and `content-structure`. These
+exact values select and explain the hypothesis but are not cross-runtime pins.
+The dedicated Ubuntu 24.04 same-process artifact is the adoption authority.
+
+`supported` requires at least +1.0 text point, nondecreasing block/anchor
+metrics, no lost recovered block/anchor/protected literal, no increase in
+essential misses, identical source/reference/threshold/geometry/provenance and
+normalized non-text IR/assets/table topology, plus the fixed mixed-language
+fixture retaining `AITEQNO`, `2026`, and Japanese text under `jpn` alone.
+`regressed` or `inconclusive` retains `jpn,eng`; `invalid` stops canonical
+publication. The current result is `supported`, so `jpn` is the selected bundle
+and portable production default. Explicit ordered language selection remains
+available, and actual-DOCX diagnostic OCR remains independently fixed at
+`jpn,eng`.
 
 ## Source-quality contract
 
@@ -225,6 +271,20 @@ real-runtime-baseline/
 |   `-- candidate/
 |       |-- ocr-quality-evaluation.json
 |       `-- bundle/document.ir.json
+|-- ocr-language/
+|   |-- comparison.json
+|   |-- protected-literal-diagnostics.json
+|   |-- multilingual-smoke.json
+|   |-- multilingual-smoke-evidence.json
+|   |-- environment-evidence.json
+|   |-- control/
+|   |   |-- runtime-config-evidence.json
+|   |   |-- ocr-quality-evaluation.json
+|   |   `-- bundle/document.ir.json
+|   `-- candidate/
+|       |-- runtime-config-evidence.json
+|       |-- ocr-quality-evaluation.json
+|       `-- bundle/document.ir.json
 |-- source-quality-evaluation.json
 |-- ir-to-docx-restoration-evaluation.json
 |-- extraction-diagnostics.json
@@ -246,21 +306,24 @@ real-runtime-baseline/
     `-- page-001.png ...
 ```
 
-Both OCR A/B sets are written create-only before DOCX or preview generation. A
+All OCR A/B observations are written create-only before DOCX or preview generation. A
 later rendering, LibreOffice, or Poppler failure therefore leaves the completed
 comparisons available beside `operational-error.json`. `control-bundle/` and
 `candidate-bundle/` remain the immutable resolution observations; the two
-`ocr-padding/*/bundle/` directories remain the padding observations. After
+`ocr-padding/*/bundle/` directories remain the padding observations, and the two
+`ocr-language/*/bundle/` directories remain the language observations. After
 valid comparisons, deterministic table topology is inferred only from the
-padding decision's selected IR. The observations remain immutable; the enriched
-selection is written through a same-directory staging path and atomically
+language decision's selected IR. The observations remain immutable; the
+enriched selection is written through a same-directory staging path and atomically
 published as `bundle/`. Its
 `document.ir.json`, assets, reconstructed DOCX, and preview therefore describe
 one side consistently. The topology step does not change any OCR text, element,
 source metadata, or asset. The 300-DPI experiment always leaves production on
 its control. The reviewed padding change adopts only `supported`; `regressed`
-and `inconclusive` select padding control. Any `invalid` comparison stops before
-topology/publication because its evidence cannot be trusted.
+and `inconclusive` select padding control. The reviewed language change likewise
+adopts only `supported`; otherwise it selects the 2px `jpn,eng` control. Any
+`invalid` comparison stops before topology/publication because its evidence
+cannot be trusted.
 
 The DOCX renderer consumes the validated extension only after the selected
 bundle is published. Each of the five topology tables becomes one
@@ -282,21 +345,25 @@ git revision, options, executable versions, `jpn`/`eng` trained-data hashes,
 Ubuntu package versions, locale/timezone, and fontconfig mappings. Exact OCR
 scores may move when those runtimes move; CI does not pin those scores. It
 verifies the fixed integrity contract, the truthful `regressed` 300-DPI
-decision, the `supported` 2px-padding decision, fixed five-table/45-cell
-structure, native-table consumption, and an IR-to-DOCX score of at least 70
-while the combined selected-source decision remains the expected `fail`.
+decision, the `supported` 2px-padding and `jpn`-only decisions, backend-owned
+trained-data identity, protected literals, multilingual smoke, fixed
+five-table/45-cell structure, native-table consumption, and an IR-to-DOCX score
+of at least 70 while the combined selected-source decision remains the expected
+`fail`.
 
 ## CI lanes and intentional updates
 
 The normal Windows/Linux Python matrix runs deterministic tests without
 machine-global document runtimes. A dedicated Ubuntu 24.04/Python 3.14 job
 installs real Tesseract, LibreOffice, Poppler, Noto CJK, and Liberation fonts.
-Its test succeeds only when all three OCR observations complete, the 300-DPI
-comparison remains `regressed` for the documented lost block, the 2px-padding
-comparison is `supported` with no lost recovery, the padded IR is selected, the
-remaining process completes, and the combined quality decision is the expected
-`fail`. Aggregate gains are asserted only directionally; exact scores are not
-pinned. Evidence is uploaded on every run, including operational failures.
+Its test succeeds only when all five scored OCR observations and the smoke run
+complete, the 300-DPI comparison remains `regressed` for the documented lost
+block, the 2px-padding comparison is `supported` with no lost recovery, the
+`jpn`-only comparison is `supported` with no protected or multilingual loss,
+the 2px + `jpn` IR is selected, the remaining process completes, and the
+combined quality decision is the expected `fail`. Aggregate gains are asserted
+only directionally; exact scores are not pinned. Evidence is uploaded on every
+run, including operational failures.
 
 When the baseline eventually becomes `pass`, do not merely change
 `expected_current_state`. Inspect every actual page, complete the human checks,

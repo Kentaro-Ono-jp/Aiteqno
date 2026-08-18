@@ -24,6 +24,7 @@ from aiteqno.ports.structure import ImageInput
 
 FAKE_OCR_PROVIDER = "aiteqno.fake-ocr"
 FAKE_OCR_PROVIDER_VERSION = "1.0"
+_FAKE_OCR_AVAILABLE_LANGUAGES = ("jpn", "eng")
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -57,7 +58,7 @@ class FakeOcrBackend:
         self,
         observations: Sequence[FakeOcrObservation],
         *,
-        available_languages: Sequence[str] = DEFAULT_OCR_LANGUAGES,
+        available_languages: Sequence[str] = _FAKE_OCR_AVAILABLE_LANGUAGES,
     ) -> None:
         if isinstance(observations, (str, bytes, bytearray)):
             raise TypeError("observations must be a sequence")
@@ -66,6 +67,12 @@ class FakeOcrBackend:
             raise TypeError("observations must contain FakeOcrObservation values")
         self._observations = collected
         self._available_languages = normalize_ocr_languages(available_languages)
+        supported_defaults = tuple(
+            language
+            for language in DEFAULT_OCR_LANGUAGES
+            if language in self._available_languages
+        )
+        self._default_languages = supported_defaults or self._available_languages
 
     def healthcheck(self) -> OcrCapabilities:
         return OcrCapabilities(
@@ -73,7 +80,7 @@ class FakeOcrBackend:
             provider_version=FAKE_OCR_PROVIDER_VERSION,
             executable="in-process",
             available_languages=self._available_languages,
-            default_languages=self._available_languages,
+            default_languages=self._default_languages,
         )
 
     def recognize(

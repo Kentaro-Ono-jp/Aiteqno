@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import json
 import os
 import tempfile
@@ -20,6 +21,7 @@ from aiteqno.adapters import (
 )
 from aiteqno.domain import PageSource, PixelBoundingBox, ProvenanceStage
 from aiteqno.ports import (
+    DEFAULT_OCR_LANGUAGES,
     ImageInput,
     OcrBackend,
     OcrBackendError,
@@ -75,7 +77,9 @@ class OcrPortAndFakeBackendTest(unittest.TestCase):
         )
         capabilities = backend.healthcheck()
         self.assertEqual(capabilities.provider, FAKE_OCR_PROVIDER)
+        self.assertEqual(DEFAULT_OCR_LANGUAGES, ("jpn",))
         self.assertEqual(capabilities.available_languages, ("jpn", "eng"))
+        self.assertEqual(capabilities.default_languages, ("jpn",))
         for token in first:
             self.assertEqual(token.provider, FAKE_OCR_PROVIDER)
             self.assertEqual(token.model, "static-fixture")
@@ -202,6 +206,60 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
             TesseractOcrBackend(transform_observer="not-callable")
         with self.assertRaises(TypeError):
             TesseractOcrBackend(padding_observer="not-callable")
+        with self.assertRaises(TypeError):
+            TesseractOcrBackend(invocation_observer="not-callable")
+
+    def test_invocation_evidence_hashes_only_the_models_actually_passed(self):
+        response = {
+            "text": ["患者"],
+            "conf": ["95"],
+            "left": [2],
+            "top": [3],
+            "width": [20],
+            "height": [10],
+        }
+        with tempfile.TemporaryDirectory() as temp_dir:
+            tessdata = Path(temp_dir)
+            jpn_data = b"candidate-japanese-traineddata"
+            eng_data = b"control-english-traineddata"
+            (tessdata / "jpn.traineddata").write_bytes(jpn_data)
+            (tessdata / "eng.traineddata").write_bytes(eng_data)
+            invocations = []
+            backend = TesseractOcrBackend(
+                executable_path="test-tesseract",
+                tessdata_prefix=tessdata,
+                required_languages=("jpn",),
+                invocation_observer=invocations.append,
+            )
+
+            with _runtime_patches(response=response):
+                tokens = backend.recognize(
+                    self.image,
+                    regions=(self.region,),
+                    languages=("jpn",),
+                    options=OcrOptions(page_segmentation_mode=6, engine_mode=3),
+                )
+
+        self.assertEqual(len(invocations), 1)
+        evidence = invocations[0]
+        rendered = evidence.to_dict()
+        self.assertEqual(rendered["configuration"]["languages"], ["jpn"])
+        self.assertEqual(
+            [item["language"] for item in rendered["traineddata"]],
+            ["jpn"],
+        )
+        self.assertEqual(rendered["traineddata"][0]["size_bytes"], len(jpn_data))
+        self.assertEqual(
+            rendered["traineddata"][0]["sha256"],
+            hashlib.sha256(jpn_data).hexdigest(),
+        )
+        self.assertNotIn("eng.traineddata", json.dumps(rendered))
+        self.assertEqual(
+            tokens[0].provenance[0].parameters_digest,
+            rendered["parameters_digest"],
+        )
+        self.assertEqual(rendered["configuration"]["region_padding_px"], 2)
+        self.assertEqual(rendered["crops"][0]["padding_pixels"], 2)
 
     def test_healthcheck_diagnoses_missing_executable_version_and_language(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -269,8 +327,8 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
             self.assertEqual(token.parent_region_ref, "text-region-1")
             self.assertEqual(token.provider, TESSERACT_PROVIDER)
             self.assertEqual(token.provider_version, "5.5.3")
-            self.assertEqual(token.model, "tessdata:jpn+eng")
-            self.assertEqual(token.languages, ("jpn", "eng"))
+            self.assertEqual(token.model, "tessdata:jpn")
+            self.assertEqual(token.languages, ("jpn",))
             provenance = token.provenance[0]
             self.assertEqual(provenance.stage, ProvenanceStage.OCR)
             self.assertEqual(provenance.source_refs, ("text-region-1",))
@@ -809,6 +867,46 @@ class TesseractOcrBackendIntegrationTest(unittest.TestCase):
             )
             self.assertEqual(token.provenance[0].source_bbox_px, token.bbox)
 
+    @unittest.skipUnless(
+        os.environ.get("AITEQNO_RUN_TESSERACT_INTEGRATION") == "1",
+        "set AITEQNO_RUN_TESSERACT_INTEGRATION=1 with Tesseract jpn installed",
+    )
+    def test_real_tesseract_jpn_only_retains_mixed_language_smoke_literals(self):
+        expected = json.loads(
+            (FIXTURE_ROOT / "jpn-eng.expected.json").read_text(encoding="utf-8")
+        )
+        png_data = base64.b64decode(
+            (FIXTURE_ROOT / "jpn-eng.png.b64").read_text(encoding="ascii")
+        )
+        image = PillowPngDecoder().decode(png_data)
+        backend = TesseractOcrBackend(
+            executable_path=os.environ.get("AITEQNO_TESSERACT_EXECUTABLE"),
+            tessdata_prefix=os.environ.get("AITEQNO_TESSDATA_PREFIX"),
+            required_languages=("jpn",),
+            target_dpi=None,
+            region_padding_px=2,
+        )
+
+        tokens = backend.recognize(
+            image,
+            languages=("jpn",),
+            options=OcrOptions(page_segmentation_mode=6, engine_mode=3),
+        )
+
+        recognized = "".join(token.text.replace(" ", "") for token in tokens)
+        for fragment in expected["must_contain"]:
+            self.assertIn(fragment, recognized)
+        self.assertTrue(
+            any(
+                fragment in recognized
+                for fragment in expected["must_contain_any_japanese"]
+            ),
+            recognized,
+        )
+        self.assertTrue(tokens)
+        self.assertTrue(all(token.languages == ("jpn",) for token in tokens))
+        self.assertTrue(all(token.model == "tessdata:jpn" for token in tokens))
+
 
 def _blank_image(*, width=200, height=100, dpi=96):
     return ImageInput(
@@ -830,7 +928,7 @@ def _recognize_through_port(backend, image, regions):
     return typed_backend.recognize(
         image,
         regions=regions,
-        languages=("jpn", "eng"),
+        languages=DEFAULT_OCR_LANGUAGES,
         options=OcrOptions(timeout_seconds=1),
     )
 

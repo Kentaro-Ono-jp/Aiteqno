@@ -35,7 +35,7 @@ as a background shortcut.
 | Intermediate format | `document.ir.json` validated by the published JSON Schema, plus content-addressed image assets |
 | Formal reconstruction | `reconstructed.docx` |
 | Comparison artifact | `reconstructed.png` |
-| OCR | Local Tesseract 5.x; Japanese and English are the defaults |
+| OCR | Local Tesseract 5.x; `jpn` is the default and ordered multilingual profiles remain explicit |
 | Quality target | A score around 70 is acceptable only when readability hard gates also pass |
 
 PDF input, DOCX input, multi-page extraction, form semantics, HTTP APIs, and a
@@ -73,7 +73,7 @@ Prerequisites:
 
 - Git
 - Python 3.11 through 3.14
-- Tesseract 5.x with the `jpn` and `eng` language data
+- Tesseract 5.x with `jpn` language data (`eng` is optional for explicit multilingual runs)
 
 Clone the repository and create an isolated environment from PowerShell. These
 commands do not require activation of the virtual environment:
@@ -151,9 +151,9 @@ and exit codes, see the [OCR runtime guide](docs/ocr-runtime.md) and the
   Windows and Linux.
 - [Real-runtime failure baseline](docs/real-runtime-baseline.md) records the
   reviewed Japanese source, a same-runtime no-upscale/300-DPI OCR comparison,
-  a separate zero/2px white crop-padding comparison, deterministic table
-  topology, actual LibreOffice pages, and the current expected end-to-end
-  failures.
+  a separate zero/2px white crop-padding comparison, and a fixed
+  `jpn,eng`/`jpn` language-profile comparison before deterministic table
+  topology, actual LibreOffice pages, and the current expected end-to-end failure.
 - [Windows demo and release guide](docs/demo-release.md) documents the
   downloadable package and its reproducible archive contract.
 - [Golden fixture manifest](tests/fixtures/e2e/manifest.json) records fixture
@@ -169,11 +169,14 @@ block recovered by the no-upscale control and is therefore rejected. The
 independent two-source-pixel white-padding trial keeps the same 96-DPI runtime,
 source crop bboxes, language order, and OCR options. It clears the fixed +1pp
 and no-loss adoption gates, so that padded candidate becomes the downstream
-OCR input while the 300-DPI candidate remains diagnostic only. Both controls,
-candidates, and comparisons are retained. The end-to-end layer currently
-remains `fail`. The selected IR's validated topology is rendered as five
-editable native Word tables. A numeric pass is never sufficient by itself:
-essential text, structure, output validity, source
+OCR input while the 300-DPI candidate remains diagnostic only. On that fixed
+2px input, the Japanese-only profile passes the +1pp, recovered-set, protected
+literal, trained-data, topology, and multilingual-smoke gates. It is therefore
+the production default and downstream profile; ordered `jpn,eng` remains an
+explicit option. All controls, candidates, and comparisons are retained. The
+end-to-end layer currently remains `fail`. The selected IR's validated topology
+is rendered as five editable native Word tables. A numeric pass is never
+sufficient by itself: essential text, structure, output validity, source
 independence, actual page evidence, and human readability are separate gates.
 
 ## Development

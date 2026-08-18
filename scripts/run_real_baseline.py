@@ -5,8 +5,9 @@ shortcut.  It keeps the source-grounded score separate from the existing
 IR-to-DOCX restoration score, checkpoints OCR-only quality before DOCX work,
 compares no-upscale and 300-DPI OCR inputs as retained diagnostics, separately
 compares zero and two-source-pixel white crop padding in the same process, and
-retains the actual LibreOffice PDF/pages from the crop-padding selection.  A
-known end-to-end quality ``fail`` is a successful baseline run when
+then compares the adopted 2px ``jpn,eng`` control with a ``jpn``-only profile.
+It retains the actual LibreOffice PDF/pages from the selected language profile.
+A known end-to-end quality ``fail`` is a successful baseline run when
 ``--expect-state fail`` is supplied.
 """
 
@@ -25,6 +26,7 @@ import subprocess
 import sys
 from collections import Counter
 from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any, Iterable
 
@@ -41,15 +43,20 @@ from aiteqno.adapters import (
     PythonDocxObserver,
     PythonDocxRenderer,
     TesseractCropPaddingEvidence,
+    TesseractInvocationEvidence,
     TesseractOcrBackend,
 )
 from aiteqno.adapters.tesseract import TesseractRasterTransformEvidence
 from aiteqno.application import (
     OcrQualityConfig,
+    OCR_LANGUAGE_CANDIDATE_LANGUAGES,
+    OCR_LANGUAGE_CONTROL_LANGUAGES,
+    OCR_LANGUAGE_SMOKE_SOURCE_SHA256,
     SourceBaselineConfig,
     build_docx_structure_relationships,
     build_evaluation_reference,
     compare_ocr_padding,
+    compare_ocr_language_profile,
     compare_ocr_resolution,
     evaluate_ocr_quality,
     evaluate_restoration,
@@ -63,6 +70,7 @@ from aiteqno.domain import DocumentIR, ElementType
 from aiteqno.ports import (
     EvaluationState,
     OcrExperimentRun,
+    OcrLanguageSmokeRun,
     OcrOptions,
     OcrQualityObservation,
     OcrQualityResult,
@@ -83,7 +91,8 @@ DEFAULT_FIXTURE_DIRECTORY = (
     / "baseline"
     / "synthetic-dense-japanese-form-v1"
 )
-LANGUAGES = ("jpn", "eng")
+LANGUAGES = OCR_LANGUAGE_CONTROL_LANGUAGES
+LANGUAGE_CANDIDATE = OCR_LANGUAGE_CANDIDATE_LANGUAGES
 OCR_OPTIONS = OcrOptions(page_segmentation_mode=6, engine_mode=3)
 OCR_PROVIDER = "tesseract"
 MINIMUM_TESSERACT_MAJOR_VERSION = 5
@@ -91,6 +100,9 @@ SOURCE_DPI = 96
 CANDIDATE_OCR_DPI = 300
 OCR_REGION_PADDING_PX = 2
 REFERENCE_SHA256 = "45d3322ee7eea3d86fe981d93dba5cc9ac83b27ca638259051a62868c8f15a31"
+MULTILINGUAL_SMOKE_PATH = (
+    REPOSITORY_ROOT / "tests" / "fixtures" / "ocr" / "jpn-eng.png.b64"
+)
 
 
 def _sha256(data: bytes) -> str:
@@ -178,6 +190,31 @@ def _select_padding_input(decision: str) -> str:
             "cannot be trusted; review ocr-padding/comparison.json"
         )
     raise RuntimeError(f"unknown OCR padding comparison decision: {decision!r}")
+
+
+def _select_language_profile(decision: str) -> str:
+    """Adopt jpn-only only when every fixed language-profile gate passes."""
+
+    if decision == "supported":
+        return "jpn"
+    if decision in {"inconclusive", "regressed"}:
+        return "jpn-eng"
+    if decision == "invalid":
+        raise RuntimeError(
+            "OCR language-profile comparison is invalid; canonical publication "
+            "cannot be trusted; review ocr-language/comparison.json"
+        )
+    raise RuntimeError(f"unknown OCR language-profile decision: {decision!r}")
+
+
+@dataclass(slots=True)
+class _LanguageRuntime:
+    control_backend: TesseractOcrBackend
+    candidate_backend: TesseractOcrBackend
+    smoke_backend: TesseractOcrBackend
+    control_invocations: list[TesseractInvocationEvidence]
+    candidate_invocations: list[TesseractInvocationEvidence]
+    smoke_invocations: list[TesseractInvocationEvidence]
 
 
 def _fixture_object(value: Any, label: str) -> Mapping[str, Any]:
@@ -448,6 +485,44 @@ def _runtime() -> tuple[
     )
 
 
+def _language_runtime() -> _LanguageRuntime:
+    common = {
+        "executable_path": os.environ.get("AITEQNO_TESSERACT_EXECUTABLE") or None,
+        "tessdata_prefix": os.environ.get("AITEQNO_TESSDATA_PREFIX") or None,
+        "target_dpi": None,
+        "region_padding_px": OCR_REGION_PADDING_PX,
+    }
+    control_invocations: list[TesseractInvocationEvidence] = []
+    candidate_invocations: list[TesseractInvocationEvidence] = []
+    smoke_invocations: list[TesseractInvocationEvidence] = []
+    control_backend = TesseractOcrBackend(
+        **common,
+        required_languages=LANGUAGES,
+        invocation_observer=control_invocations.append,
+    )
+    candidate_backend = TesseractOcrBackend(
+        **common,
+        required_languages=LANGUAGE_CANDIDATE,
+        invocation_observer=candidate_invocations.append,
+    )
+    smoke_backend = TesseractOcrBackend(
+        **common,
+        required_languages=LANGUAGE_CANDIDATE,
+        invocation_observer=smoke_invocations.append,
+    )
+    control_backend.healthcheck()
+    candidate_backend.healthcheck()
+    smoke_backend.healthcheck()
+    return _LanguageRuntime(
+        control_backend=control_backend,
+        candidate_backend=candidate_backend,
+        smoke_backend=smoke_backend,
+        control_invocations=control_invocations,
+        candidate_invocations=candidate_invocations,
+        smoke_invocations=smoke_invocations,
+    )
+
+
 def _one_transform_evidence(
     records: list[TesseractRasterTransformEvidence],
     *,
@@ -481,6 +556,24 @@ def _one_padding_evidence(
         getattr(evidence, "to_dict", None)
     ):
         raise RuntimeError(f"{label} OCR crop-padding evidence has an invalid type")
+    return evidence
+
+
+def _one_invocation_evidence(
+    records: list[TesseractInvocationEvidence],
+    *,
+    label: str,
+) -> TesseractInvocationEvidence:
+    if len(records) != 1:
+        raise RuntimeError(
+            f"{label} Tesseract invocation evidence is incomplete: expected one "
+            f"recognize record, observed {len(records)}"
+        )
+    evidence = records[0]
+    if not hasattr(evidence, "parameters_digest") or not callable(
+        getattr(evidence, "to_dict", None)
+    ):
+        raise RuntimeError(f"{label} Tesseract invocation evidence has an invalid type")
     return evidence
 
 
@@ -584,6 +677,63 @@ def _visible_snapshot_ocr(
     return "\n\n".join(all_text), page_evidence
 
 
+def _run_language_smoke(
+    *,
+    decoder: PillowPngDecoder,
+    runtime: _LanguageRuntime,
+) -> tuple[OcrLanguageSmokeRun, list[dict[str, Any]]]:
+    try:
+        source_data = base64.b64decode(
+            MULTILINGUAL_SMOKE_PATH.read_bytes().strip(),
+            validate=True,
+        )
+    except (OSError, binascii.Error, ValueError) as exc:
+        raise RuntimeError(
+            "multilingual OCR smoke fixture could not be decoded"
+        ) from exc
+    image = decoder.decode(source_data)
+    tokens = sorted(
+        runtime.smoke_backend.recognize(
+            image,
+            languages=LANGUAGE_CANDIDATE,
+            options=OCR_OPTIONS,
+        ),
+        key=lambda item: (
+            item.bbox.y,
+            item.bbox.x,
+            item.bbox.height,
+            item.bbox.width,
+            item.text,
+        ),
+    )
+    invocation = _one_invocation_evidence(
+        runtime.smoke_invocations,
+        label="multilingual smoke",
+    )
+    smoke = OcrLanguageSmokeRun(
+        source_sha256=_sha256(source_data),
+        observed_text="\n".join(item.text for item in tokens),
+        invocation_evidence=invocation.to_dict(),
+    )
+    token_evidence = [
+        {
+            "text": item.text,
+            "bbox": {
+                "x": item.bbox.x,
+                "y": item.bbox.y,
+                "width": item.bbox.width,
+                "height": item.bbox.height,
+            },
+            "confidence": item.confidence,
+            "model": item.model,
+            "languages": list(item.languages),
+            "parameters_digest": item.provenance[0].parameters_digest,
+        }
+        for item in tokens
+    ]
+    return smoke, token_evidence
+
+
 def _command_output(command: list[str]) -> dict[str, Any]:
     try:
         completed = subprocess.run(
@@ -605,7 +755,10 @@ def _command_output(command: list[str]) -> dict[str, Any]:
     }
 
 
-def _tessdata_records(executable: str) -> list[dict[str, Any]]:
+def _tessdata_records(
+    executable: str,
+    languages: tuple[str, ...] = LANGUAGES,
+) -> list[dict[str, Any]]:
     configured = os.environ.get("AITEQNO_TESSDATA_PREFIX")
     candidates = [
         Path(configured).expanduser() if configured else None,
@@ -618,7 +771,7 @@ def _tessdata_records(executable: str) -> list[dict[str, Any]]:
             candidate.resolve()
             for candidate in candidates
             if candidate is not None
-            and all((candidate / f"{lang}.traineddata").is_file() for lang in LANGUAGES)
+            and all((candidate / f"{lang}.traineddata").is_file() for lang in languages)
         ),
         None,
     )
@@ -630,7 +783,7 @@ def _tessdata_records(executable: str) -> list[dict[str, Any]]:
                 "sha256": None,
                 "size": None,
             }
-            for language in LANGUAGES
+            for language in languages
         ]
     return [
         {
@@ -639,7 +792,7 @@ def _tessdata_records(executable: str) -> list[dict[str, Any]]:
             "sha256": _path_sha256(directory / f"{language}.traineddata"),
             "size": (directory / f"{language}.traineddata").stat().st_size,
         }
-        for language in LANGUAGES
+        for language in languages
     ]
 
 
@@ -687,6 +840,34 @@ def _ocr_runtime_evidence(
     )
 
 
+def _runtime_evidence_from_invocation(
+    invocation: TesseractInvocationEvidence,
+) -> OcrRuntimeEvidence:
+    """Project backend-owned language evidence into the quality-report contract."""
+
+    return OcrRuntimeEvidence(
+        provider=invocation.provider,
+        provider_version=invocation.provider_version,
+        executable=invocation.executable,
+        languages=invocation.languages,
+        page_segmentation_mode=invocation.page_segmentation_mode,
+        engine_mode=invocation.engine_mode,
+        effective_ocr_dpi=invocation.effective_ocr_dpi,
+        source_dpi_x=invocation.source_dpi_x,
+        source_dpi_y=invocation.source_dpi_y,
+        traineddata=tuple(
+            OcrTrainedDataEvidence(
+                language=item.language,
+                size_bytes=item.size_bytes,
+                sha256=item.sha256,
+            )
+            for item in invocation.traineddata
+        ),
+        operating_system=platform.platform(),
+        python_version=platform.python_version(),
+    )
+
+
 def _environment_record(
     *,
     fixture_directory: Path,
@@ -695,6 +876,7 @@ def _environment_record(
     reference_path: Path,
     backend: TesseractOcrBackend,
     snapshot: Any | None,
+    languages: tuple[str, ...] = LANGUAGES,
 ) -> dict[str, Any]:
     capabilities = backend.healthcheck()
     pip_freeze = _command_output([sys.executable, "-m", "pip", "freeze", "--all"])
@@ -738,7 +920,7 @@ def _environment_record(
             "reference_sha256": _path_sha256(reference_path),
         },
         "options": {
-            "languages": list(LANGUAGES),
+            "languages": list(languages),
             "page_segmentation_mode": OCR_OPTIONS.page_segmentation_mode,
             "engine_mode": OCR_OPTIONS.engine_mode,
             "source_dpi": manifest["source"]["dpi"],
@@ -760,7 +942,7 @@ def _environment_record(
             "version": capabilities.provider_version,
             "executable": capabilities.executable,
             "available_languages": list(capabilities.available_languages),
-            "traineddata": _tessdata_records(capabilities.executable),
+            "traineddata": _tessdata_records(capabilities.executable, languages),
         },
         "libreoffice": {
             "renderer": None if snapshot is None else snapshot.renderer_name,
@@ -849,6 +1031,7 @@ def _run_in_created_output(
         control_paddings,
         candidate_paddings,
     ) = _runtime()
+    language_runtime = _language_runtime()
     _write_json_new(
         output_directory / "preflight-environment.json",
         _environment_record(
@@ -909,9 +1092,45 @@ def _run_in_created_output(
         languages=LANGUAGES,
         ocr_options=OCR_OPTIONS,
     )
+    language_control_bundle_directory = (
+        output_directory / "ocr-language" / "control" / "bundle"
+    )
+    language_control_extraction = extract_png(
+        source_data,
+        language_control_bundle_directory,
+        decoder=decoder,
+        structure_extractor=OpenCvStructureExtractor(),
+        ocr_backend=language_runtime.control_backend,
+        asset_encoder=PillowPngAssetEncoder(),
+        validator=JsonSchemaDocumentIRValidator(),
+        bundle_writer=FilesystemDocumentBundleWriter(),
+        languages=LANGUAGES,
+        ocr_options=OCR_OPTIONS,
+    )
+    language_candidate_bundle_directory = (
+        output_directory / "ocr-language" / "candidate" / "bundle"
+    )
+    language_candidate_extraction = extract_png(
+        source_data,
+        language_candidate_bundle_directory,
+        decoder=decoder,
+        structure_extractor=OpenCvStructureExtractor(),
+        ocr_backend=language_runtime.candidate_backend,
+        asset_encoder=PillowPngAssetEncoder(),
+        validator=JsonSchemaDocumentIRValidator(),
+        bundle_writer=FilesystemDocumentBundleWriter(),
+        languages=LANGUAGE_CANDIDATE,
+        ocr_options=OCR_OPTIONS,
+    )
+    multilingual_smoke, multilingual_smoke_tokens = _run_language_smoke(
+        decoder=decoder,
+        runtime=language_runtime,
+    )
     resolution_document = resolution_extraction.document
     padding_document = padding_extraction.document
     control_document = control_extraction.document
+    language_control_document = language_control_extraction.document
+    language_candidate_document = language_candidate_extraction.document
     quality = manifest["quality_contract"]
     minima = quality["component_minimums"]
     quality_config = _quality_config(manifest)
@@ -930,6 +1149,14 @@ def _run_in_created_output(
     candidate_padding = _one_padding_evidence(
         candidate_paddings,
         label="candidate",
+    )
+    language_control_invocation = _one_invocation_evidence(
+        language_runtime.control_invocations,
+        label="language control",
+    )
+    language_candidate_invocation = _one_invocation_evidence(
+        language_runtime.candidate_invocations,
+        label="language candidate",
     )
     control_ocr_result = _evaluate_ocr_run(
         source_data=source_data,
@@ -967,6 +1194,20 @@ def _run_in_created_output(
         ),
         config=quality_config,
     )
+    language_control_ocr_result = _evaluate_ocr_run(
+        source_data=source_data,
+        reference=reference,
+        document=language_control_document,
+        runtime=_runtime_evidence_from_invocation(language_control_invocation),
+        config=quality_config,
+    )
+    language_candidate_ocr_result = _evaluate_ocr_run(
+        source_data=source_data,
+        reference=reference,
+        document=language_candidate_document,
+        runtime=_runtime_evidence_from_invocation(language_candidate_invocation),
+        config=quality_config,
+    )
     _write_bytes_new(
         output_directory / "ocr-quality-control-evaluation.json",
         (control_ocr_result.to_json(indent=2) + "\n").encode("utf-8"),
@@ -982,6 +1223,48 @@ def _run_in_created_output(
     _write_bytes_new(
         output_directory / "ocr-padding" / "candidate" / "ocr-quality-evaluation.json",
         (padding_ocr_result.to_json(indent=2) + "\n").encode("utf-8"),
+    )
+    _write_bytes_new(
+        output_directory
+        / "ocr-language"
+        / "control"
+        / "ocr-quality-evaluation.json",
+        (language_control_ocr_result.to_json(indent=2) + "\n").encode("utf-8"),
+    )
+    _write_bytes_new(
+        output_directory
+        / "ocr-language"
+        / "candidate"
+        / "ocr-quality-evaluation.json",
+        (language_candidate_ocr_result.to_json(indent=2) + "\n").encode("utf-8"),
+    )
+    _write_json_new(
+        output_directory
+        / "ocr-language"
+        / "control"
+        / "runtime-config-evidence.json",
+        language_control_invocation.to_dict(),
+    )
+    _write_json_new(
+        output_directory
+        / "ocr-language"
+        / "candidate"
+        / "runtime-config-evidence.json",
+        language_candidate_invocation.to_dict(),
+    )
+    smoke_invocation = _one_invocation_evidence(
+        language_runtime.smoke_invocations,
+        label="multilingual smoke",
+    )
+    _write_json_new(
+        output_directory / "ocr-language" / "multilingual-smoke-evidence.json",
+        {
+            "source_sha256": multilingual_smoke.source_sha256,
+            "expected_source_sha256": OCR_LANGUAGE_SMOKE_SOURCE_SHA256,
+            "observed_text": multilingual_smoke.observed_text,
+            "tokens": multilingual_smoke_tokens,
+            "runtime_config": smoke_invocation.to_dict(),
+        },
     )
     control_transform_dict = control_transform.to_dict()
     candidate_transform_dict = candidate_transform.to_dict()
@@ -1035,31 +1318,94 @@ def _run_in_created_output(
         output_directory / "ocr-padding" / "comparison.json",
         (padding_comparison.to_json(indent=2) + "\n").encode("utf-8"),
     )
+    language_comparison = compare_ocr_language_profile(
+        OcrExperimentRun(
+            quality=language_control_ocr_result,
+            document=language_control_document,
+            evidence=language_control_invocation.to_dict(),
+        ),
+        OcrExperimentRun(
+            quality=language_candidate_ocr_result,
+            document=language_candidate_document,
+            evidence=language_candidate_invocation.to_dict(),
+        ),
+        multilingual_smoke=multilingual_smoke,
+    )
+    _write_bytes_new(
+        output_directory / "ocr-language" / "comparison.json",
+        (language_comparison.to_json(indent=2) + "\n").encode("utf-8"),
+    )
+    language_report = language_comparison.to_dict()
+    _write_json_new(
+        output_directory / "ocr-language" / "protected-literal-diagnostics.json",
+        language_report["recovery"]["protected_literals"],
+    )
+    _write_json_new(
+        output_directory / "ocr-language" / "multilingual-smoke.json",
+        language_report["multilingual_smoke"],
+    )
+    _write_json_new(
+        output_directory / "ocr-language" / "environment-evidence.json",
+        {
+            "schema_version": "1.0",
+            "fixture": {
+                "id": manifest["fixture_id"],
+                "source_sha256": _sha256(source_data),
+                "reference_sha256": REFERENCE_SHA256,
+            },
+            "normalization": (
+                "NFKC then remove every Unicode whitespace character"
+            ),
+            "thresholds": {
+                "text_character_accuracy": minima["text_character_accuracy"],
+                "logical_block_coverage": minima["logical_block_coverage"],
+                "essential_anchor_recall": quality["essential_anchor_recall"],
+                "minimum_text_accuracy_delta_percentage_points": 1.0,
+            },
+            "control_runtime_config": (
+                "control/runtime-config-evidence.json"
+            ),
+            "candidate_runtime_config": (
+                "candidate/runtime-config-evidence.json"
+            ),
+            "multilingual_smoke_evidence": (
+                "multilingual-smoke-evidence.json"
+            ),
+            "operating_system": platform.platform(),
+            "python_version": platform.python_version(),
+        },
+    )
     resolution_selected_input = _select_ocr_input(comparison.decision.value)
-    selected_input = _select_padding_input(padding_comparison.decision.value)
+    padding_selected_input = _select_padding_input(padding_comparison.decision.value)
+    selected_profile = _select_language_profile(language_comparison.decision.value)
+    selected_input = "two-pixel-padding"
     candidate_eligible = comparison.decision.value == "supported"
     candidate_adopted = False
     padding_candidate_eligible = padding_comparison.decision.value == "supported"
-    padding_candidate_adopted = selected_input == "two-pixel-padding"
-    if padding_candidate_adopted:
-        selected_extraction = padding_extraction
-        selected_observation_document = padding_document
-        selected_ocr_result = padding_ocr_result
-        selected_observation_bundle = padding_candidate_bundle_directory
-        selected_backend = padding_candidate_backend
-        selected_ocr_report = "ocr-padding/candidate/ocr-quality-evaluation.json"
+    padding_candidate_adopted = padding_selected_input == "two-pixel-padding"
+    language_candidate_eligible = language_comparison.decision.value == "supported"
+    language_candidate_adopted = selected_profile == "jpn"
+    if language_candidate_adopted:
+        selected_extraction = language_candidate_extraction
+        selected_observation_document = language_candidate_document
+        selected_ocr_result = language_candidate_ocr_result
+        selected_observation_bundle = language_candidate_bundle_directory
+        selected_backend = language_runtime.candidate_backend
+        selected_ocr_report = (
+            "ocr-language/candidate/ocr-quality-evaluation.json"
+        )
     else:
-        selected_extraction = control_extraction
-        selected_observation_document = control_document
-        selected_ocr_result = control_ocr_result
-        selected_observation_bundle = control_bundle_directory
-        selected_backend = control_backend
-        selected_ocr_report = "ocr-padding/control/ocr-quality-evaluation.json"
+        selected_extraction = language_control_extraction
+        selected_observation_document = language_control_document
+        selected_ocr_result = language_control_ocr_result
+        selected_observation_bundle = language_control_bundle_directory
+        selected_backend = language_runtime.control_backend
+        selected_ocr_report = "ocr-language/control/ocr-quality-evaluation.json"
     selected_document = infer_table_topology(selected_observation_document)
 
     # The A/B observation bundles remain immutable OCR evidence. Add only the
-    # deterministic topology extension to the selected padding decision, then publish an
-    # atomic create-only downstream bundle so IR, assets, and renders agree.
+    # deterministic topology extension to the selected language decision, then
+    # publish an atomic create-only downstream bundle so IR, assets, and renders agree.
     bundle_directory = output_directory / "bundle"
     _copytree_new_atomic(
         selected_observation_bundle,
@@ -1172,7 +1518,9 @@ def _run_in_created_output(
 
     restoration_reference = build_evaluation_reference(
         selected_document,
-        reference_id=f"{reference.reference_id}-{selected_input}-ir",
+        reference_id=(
+            f"{reference.reference_id}-{selected_input}-{selected_profile}-ir"
+        ),
         reviewed=True,
         relationships=build_docx_structure_relationships(selected_document),
     )
@@ -1217,7 +1565,7 @@ def _run_in_created_output(
             },
             "ocr_crop_padding_comparison": {
                 "decision": padding_comparison.decision.value,
-                "selected_input": selected_input,
+                "selected_input": padding_selected_input,
                 "candidate_eligible": padding_candidate_eligible,
                 "candidate_adopted": padding_candidate_adopted,
                 "reasons": list(padding_comparison.reasons),
@@ -1227,6 +1575,30 @@ def _run_in_created_output(
                 ),
                 "padding_evidence": "ocr-padding/crop-padding-evidence.json",
                 "report": "ocr-padding/comparison.json",
+            },
+            "ocr_language_profile_comparison": {
+                "decision": language_comparison.decision.value,
+                "selected_profile": selected_profile,
+                "candidate_eligible": language_candidate_eligible,
+                "candidate_adopted": language_candidate_adopted,
+                "reasons": list(language_comparison.reasons),
+                "control_report": (
+                    "ocr-language/control/ocr-quality-evaluation.json"
+                ),
+                "candidate_report": (
+                    "ocr-language/candidate/ocr-quality-evaluation.json"
+                ),
+                "control_runtime_config": (
+                    "ocr-language/control/runtime-config-evidence.json"
+                ),
+                "candidate_runtime_config": (
+                    "ocr-language/candidate/runtime-config-evidence.json"
+                ),
+                "protected_literal_diagnostics": (
+                    "ocr-language/protected-literal-diagnostics.json"
+                ),
+                "multilingual_smoke": "ocr-language/multilingual-smoke.json",
+                "report": "ocr-language/comparison.json",
             },
             "source_to_candidate_ir_ocr": {
                 "state": selected_ocr_result.state.value,
@@ -1240,7 +1612,8 @@ def _run_in_created_output(
                     selected_ocr_result.essential_anchor_recall.score
                 ),
                 "selected_input": selected_input,
-                "text_evidence": f"{selected_input}_ir",
+                "selected_profile": selected_profile,
+                "text_evidence": f"{selected_input}_{selected_profile}_ir",
                 "report": selected_ocr_report,
             },
             "candidate_300_dpi_experiment": {
@@ -1269,6 +1642,22 @@ def _run_in_created_output(
                 "text_evidence": "two_pixel_padding_candidate_ir",
                 "report": "ocr-padding/candidate/ocr-quality-evaluation.json",
             },
+            "candidate_jpn_only_language_experiment": {
+                "state": language_candidate_ocr_result.state.value,
+                "text_character_accuracy": (
+                    language_candidate_ocr_result.text_character_accuracy.score
+                ),
+                "logical_block_coverage": (
+                    language_candidate_ocr_result.logical_block_coverage.score
+                ),
+                "essential_anchor_recall": (
+                    language_candidate_ocr_result.essential_anchor_recall.score
+                ),
+                "adopted": language_candidate_adopted,
+                "eligible": language_candidate_eligible,
+                "text_evidence": "two_pixel_padding_jpn_only_candidate_ir",
+                "report": "ocr-language/candidate/ocr-quality-evaluation.json",
+            },
             "source_to_actual_docx": {
                 "state": source_result.state.value,
                 "overall_score": source_result.overall_score,
@@ -1278,6 +1667,7 @@ def _run_in_created_output(
                 "state": restoration_result.state.value,
                 "overall_score": restoration_result.overall_score,
                 "selected_input": selected_input,
+                "selected_profile": selected_profile,
                 "scope": (
                     "selected IR preservation only; not OCR or source-image accuracy"
                 ),
@@ -1297,6 +1687,9 @@ def _run_in_created_output(
         reference_path=fixture_directory / "reference.json",
         backend=selected_backend,
         snapshot=snapshot,
+        languages=(
+            LANGUAGE_CANDIDATE if language_candidate_adopted else LANGUAGES
+        ),
     )
     _write_json_new(output_directory / "environment.json", environment)
 
