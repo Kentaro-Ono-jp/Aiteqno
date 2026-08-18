@@ -15,7 +15,8 @@ aiteqno --help
 ```
 
 Extraction also requires Tesseract 5.x and the language data selected on the
-command line. The default is `jpn` followed by `eng`. See
+command line. The production default is `jpn`; add ordered languages explicitly
+when a document needs a multilingual profile. See
 [OCR runtime setup](ocr-runtime.md) for installation details.
 
 When Tesseract is not on `PATH`, configure it for the current PowerShell

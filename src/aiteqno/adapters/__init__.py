@@ -55,10 +55,13 @@ from .tesseract import (
     TESSERACT_CROP_PADDING_MAPPING_POLICY,
     TESSERACT_CROP_PADDING_OPERATION_ORDER,
     TESSERACT_CROP_PADDING_VERSION,
+    TESSERACT_INVOCATION_EVIDENCE_VERSION,
     TESSERACT_PROVIDER,
     TesseractCropPaddingEvidence,
     TesseractCropPaddingTargetEvidence,
+    TesseractInvocationEvidence,
     TesseractOcrBackend,
+    TesseractTrainedDataFileEvidence,
 )
 
 __all__ = [
@@ -104,7 +107,10 @@ __all__ = [
     "TESSERACT_CROP_PADDING_MAPPING_POLICY",
     "TESSERACT_CROP_PADDING_OPERATION_ORDER",
     "TESSERACT_CROP_PADDING_VERSION",
+    "TESSERACT_INVOCATION_EVIDENCE_VERSION",
     "TesseractCropPaddingEvidence",
     "TesseractCropPaddingTargetEvidence",
+    "TesseractInvocationEvidence",
     "TesseractOcrBackend",
+    "TesseractTrainedDataFileEvidence",
 ]

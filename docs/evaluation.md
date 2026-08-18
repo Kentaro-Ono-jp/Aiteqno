@@ -168,6 +168,17 @@ of `source + 4` on each axis, backend raster hashes, and the fixed inverse
 mapping policy. Full-page OCR, 300-DPI resizing, fixture truth, and thresholds
 cannot enter this comparison.
 
+`compare_ocr_language_profile()` fixes the adopted 2px/no-upscale path and
+allows exactly two runtime differences: ordered `languages` and the matching
+`traineddata` set. Control is `jpn,eng`; candidate is `jpn`. Backend-owned
+invocation evidence must prove the same executable/version/configuration,
+identical `jpn.traineddata` size and SHA-256, no candidate `eng.traineddata`,
+exactly two white pixels around every scored region, source-coordinate and
+provenance integrity, byte-equivalent normalized non-text IR/assets/table
+topology, and a distinct language-derived parameters digest. Candidate content
+must retain all protected Latin/numeric literals and a fixed Japanese/English
+smoke fixture must still contain `AITEQNO`, `2026`, and Japanese text.
+
 The real-runtime runner evaluates this unchanged contract twice in one process:
 first against the production no-upscale control, then against an experimental
 300 DPI OCR-working-raster path. `ocr-resolution-comparison.json` compares the two
@@ -181,4 +192,6 @@ crop-padding comparison applies the same +1pp, aggregate non-regression,
 recovered-set superset, essential-miss, geometry, provenance, and non-text IR
 gates. A `supported` padding result selects the 2px observation for downstream
 DOCX work; `regressed` or `inconclusive` selects control, and `invalid` stops
-before publication.
+before publication. The language comparison then uses that exact 2px candidate
+as both sides' input. Only `supported` selects `jpn`; `regressed` or
+`inconclusive` retains `jpn,eng`, and `invalid` stops canonical publication.

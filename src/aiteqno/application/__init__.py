@@ -50,6 +50,17 @@ from .ocr_quality import (
     ocr_character_accuracy,
 )
 from .ocr_experiment import compare_ocr_experiment
+from .ocr_language import (
+    OCR_LANGUAGE_CANDIDATE_LANGUAGES,
+    OCR_LANGUAGE_CONTROL_LANGUAGES,
+    OCR_LANGUAGE_EVALUATOR_NAME,
+    OCR_LANGUAGE_EVALUATOR_VERSION,
+    OCR_LANGUAGE_PROTECTED_LITERALS,
+    OCR_LANGUAGE_SMOKE_REQUIRED_ANY,
+    OCR_LANGUAGE_SMOKE_REQUIRED_LITERALS,
+    OCR_LANGUAGE_SMOKE_SOURCE_SHA256,
+    compare_ocr_language_profile,
+)
 from .ocr_padding import (
     OCR_PADDING_EVALUATOR_NAME,
     OCR_PADDING_EVALUATOR_VERSION,
@@ -94,6 +105,14 @@ __all__ = [
     "OCR_QUALITY_EVALUATOR_VERSION",
     "OCR_PADDING_EVALUATOR_NAME",
     "OCR_PADDING_EVALUATOR_VERSION",
+    "OCR_LANGUAGE_CANDIDATE_LANGUAGES",
+    "OCR_LANGUAGE_CONTROL_LANGUAGES",
+    "OCR_LANGUAGE_EVALUATOR_NAME",
+    "OCR_LANGUAGE_EVALUATOR_VERSION",
+    "OCR_LANGUAGE_PROTECTED_LITERALS",
+    "OCR_LANGUAGE_SMOKE_REQUIRED_ANY",
+    "OCR_LANGUAGE_SMOKE_REQUIRED_LITERALS",
+    "OCR_LANGUAGE_SMOKE_SOURCE_SHA256",
     "OcrQualityConfig",
     "DEFAULT_MINIMUM_TEXT_ACCURACY_DELTA",
     "OCR_RESOLUTION_EVALUATOR_NAME",
@@ -113,6 +132,7 @@ __all__ = [
     "evaluate_restoration_input",
     "evaluate_ocr_quality",
     "compare_ocr_experiment",
+    "compare_ocr_language_profile",
     "compare_ocr_padding",
     "compare_ocr_resolution",
     "evaluate_source_baseline",

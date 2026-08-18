@@ -24,7 +24,7 @@ from aiteqno.adapters import (
 )
 from aiteqno.adapters.json_schema import document_ir_from_file
 from aiteqno.cli import CliRuntime, ExitCode, main
-from aiteqno.ports import OcrBackendError, OcrOptions
+from aiteqno.ports import DEFAULT_OCR_LANGUAGES, OcrBackendError, OcrOptions
 
 
 FIXTURE_ROOT = Path(__file__).resolve().parent / "fixtures" / "structure"
@@ -42,7 +42,8 @@ def _runtime(ocr_backend=None):
     return CliRuntime(
         decoder=PillowPngDecoder(),
         structure_extractor=OpenCvStructureExtractor(),
-        ocr_backend=ocr_backend or FakeOcrBackend(()),
+        ocr_backend=ocr_backend
+        or FakeOcrBackend((), available_languages=("jpn", "eng")),
         asset_encoder=PillowPngAssetEncoder(),
         validator=JsonSchemaDocumentIRValidator(),
         bundle_writer=FilesystemDocumentBundleWriter(),
@@ -148,6 +149,41 @@ class CliContractTest(unittest.TestCase):
             self.assertIn("output_exists", conflict_stderr)
             self.assertEqual(docx_path.read_bytes(), original_docx)
             self.assertEqual(list(root.rglob(".aiteqno-*-*")), [])
+
+    def test_default_japanese_profile_and_explicit_multilingual_order(self):
+        self.assertEqual(DEFAULT_OCR_LANGUAGES, ("jpn",))
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            input_path = root / "input.png"
+            input_path.write_bytes(_png_data())
+            backend = _RecordingOcrBackend()
+
+            default_code, _, default_stderr = _run(
+                [
+                    "extract",
+                    str(input_path),
+                    "-o",
+                    str(root / "default" / "document.ir.json"),
+                ],
+                runtime=_runtime(backend),
+            )
+            explicit_code, _, explicit_stderr = _run(
+                [
+                    "extract",
+                    str(input_path),
+                    "-o",
+                    str(root / "explicit" / "document.ir.json"),
+                    "--language",
+                    "jpn",
+                    "--language",
+                    "eng",
+                ],
+                runtime=_runtime(backend),
+            )
+
+        self.assertEqual(default_code, ExitCode.SUCCESS, default_stderr)
+        self.assertEqual(explicit_code, ExitCode.SUCCESS, explicit_stderr)
+        self.assertEqual(backend.language_calls, [("jpn",), ("jpn", "eng")])
 
     def test_roundtrip_publishes_fixed_self_contained_directory(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -332,6 +368,22 @@ class _MissingOcrBackend:
             "simulated missing Tesseract executable",
             provider="test",
         )
+
+
+class _RecordingOcrBackend(FakeOcrBackend):
+    def __init__(self):
+        super().__init__((), available_languages=("jpn", "eng"))
+        self.language_calls = []
+
+    def recognize(
+        self,
+        image,
+        regions=(),
+        languages=DEFAULT_OCR_LANGUAGES,
+        options=OcrOptions(),
+    ):
+        self.language_calls.append(tuple(languages))
+        return super().recognize(image, regions, languages, options)
 
 
 if __name__ == "__main__":

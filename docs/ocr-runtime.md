@@ -10,7 +10,7 @@ send document pixels or recognized text to a network service.
 | --- | --- | --- |
 | `pytesseract` | Repository-pinned Python wrapper | `0.3.13` |
 | Tesseract engine | `5.x` or newer | upstream `5.5.3` |
-| Language data | `jpn` and `eng` | both required by the default backend |
+| Language data | `jpn`; optional `eng` | `jpn` is required by the default backend; `eng` is used only when explicitly selected and by comparison fixtures |
 
 `pytesseract` is installed with the Python package. The Tesseract executable
 and trained-data files are external runtime prerequisites and are not bundled
@@ -27,9 +27,9 @@ Authoritative references:
 
 1. Install a current Tesseract 5.x build. The upstream installation guide
    points Windows users to the maintained UB Mannheim installers.
-2. Include both English and Japanese trained data. Confirm that
-   `eng.traineddata` and `jpn.traineddata` exist in the selected `tessdata`
-   directory.
+2. Include Japanese trained data and confirm that `jpn.traineddata` exists in
+   the selected `tessdata` directory. Also install `eng.traineddata` when using
+   an explicit multilingual profile or reproducing the real-runtime A/B runner.
 3. Either put `tesseract.exe` on `PATH`, or pass its full path to the adapter.
 4. If trained data is outside the executable's default location, pass the
    directory through `tessdata_prefix` or set `TESSDATA_PREFIX`.
@@ -42,7 +42,8 @@ tesseract --list-langs
 ```
 
 The version must start with `5.` or newer, and the language list must contain
-both `jpn` and `eng`.
+`jpn`. It must also contain `eng` before an explicit `jpn,eng` run or the
+real-runtime comparison runner.
 
 Explicit configuration avoids machine-specific hard-coding in application
 code:
@@ -53,7 +54,7 @@ from aiteqno.adapters import TesseractOcrBackend
 backend = TesseractOcrBackend(
     executable_path=r"C:\Program Files\Tesseract-OCR\tesseract.exe",
     tessdata_prefix=r"C:\Program Files\Tesseract-OCR\tessdata",
-    required_languages=("jpn", "eng"),
+    required_languages=("jpn",),
 )
 capabilities = backend.healthcheck()
 ```
@@ -105,6 +106,36 @@ padding version, exact white color, operation order, source/pre-padding/working
 dimensions, Pillow version, raster hashes, and inverse-mapping policy. The
 padding setting is also part of each OCR provenance parameter digest.
 
+## OCR language profile
+
+The production default is ordered `jpn` only. Issue #57 measured it against the
+previous ordered `jpn,eng` control after fixing every other input and runtime
+field: exact 2px region padding, no upscale, PSM 6, OEM 3, source regions,
+reference, thresholds, executable/version, and the common Japanese trained-data
+file. The backend invocation observer records the ordered tuple and SHA-256/size
+of only the trained-data files actually passed to Tesseract; the comparison
+runner does not infer them from installation state.
+
+The candidate is selected only when text accuracy improves by at least one
+percentage point, block and anchor metrics do not fall, every control-recovered
+block/anchor and protected `PNG`/`PDF`/`DOCX`/`JSON`/`30`/`90`/`70` literal is
+retained, essential misses do not increase, all geometry/provenance/non-text
+integrity gates pass, and the unchanged mixed-language smoke fixture retains
+`AITEQNO`, `2026`, and Japanese content. These gates classify the candidate as
+`supported`, so the portable backend, extraction service, and CLI now default
+to `jpn`.
+
+Ordered explicit selection remains available:
+
+```powershell
+aiteqno extract input.png -o output\document.ir.json `
+  --language jpn --language eng
+```
+
+The real-runtime runner keeps `jpn,eng` installed for its immutable control and
+for actual-DOCX visible-text diagnosis. A default change therefore does not
+rewrite historical experiment evidence or remove multilingual capability.
+
 ## Ubuntu and GitHub Actions
 
 The repository CI installs the distro-provided Tesseract 5.x runtime and
@@ -145,6 +176,7 @@ The adapter raises `OcrBackendError` with a stable `code`:
 | `ocr_engine_failure` | Tesseract process returned an error | inspect runtime installation and trained data |
 | `ocr_working_raster_limit` | one resized crop would exceed 40,000,000 pixels | reduce the source/crop size before recognition |
 | `ocr_working_raster_failure` | Pillow could not allocate, resize, or hash the OCR working raster | inspect host memory and input dimensions |
+| `ocr_traineddata_evidence_unavailable` | an observed invocation's actual trained-data file could not be resolved or hashed | verify `TESSDATA_PREFIX`, file readability, and the selected installation |
 | `ocr_invalid_response` | TSV output violated the adapter contract | verify the engine/wrapper combination |
 
 Recognized document text is deliberately excluded from diagnostic messages and

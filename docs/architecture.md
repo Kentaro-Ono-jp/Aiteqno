@@ -653,7 +653,7 @@ Decision criteria:
 
 | Criterion | V1 requirement | Tesseract decision |
 | --- | --- | --- |
-| Japanese | Japanese and mixed Latin text | Official `jpn` and `eng` trained data |
+| Japanese | Japanese and mixed Latin text | Official `jpn` data by default; optional ordered language data remains configurable |
 | Windows | Reproducible on supported Windows | Tesseract documents Windows 10/11 support |
 | CI | Local, non-interactive execution | Install engine and language data in runner |
 | Geometry | Text, bbox, confidence | TSV exposed through `image_to_data` |
@@ -661,10 +661,12 @@ Decision criteria:
 | Network | No mandatory cloud call | Entirely local |
 | Replaceability | No engine types in domain | Isolated adapter behind `OcrBackend` |
 
-The default language order is `jpn+eng`. The adapter records engine version,
-trained-data languages, page segmentation mode, and a configuration digest in
-provenance. It MUST provide a configurable executable path and `TESSDATA_PREFIX`
-rather than hard-code a Windows installation directory.
+The default profile is `jpn`. Callers can still pass an ordered profile such as
+`jpn+eng` explicitly. The adapter records engine version, ordered languages,
+page segmentation mode, and a configuration digest in provenance. An optional
+invocation observer additionally records and hashes the trained-data files
+actually used. The adapter MUST provide a configurable executable path and
+`TESSDATA_PREFIX` rather than hard-code a Windows installation directory.
 
 `healthcheck()` MUST diagnose these separately:
 

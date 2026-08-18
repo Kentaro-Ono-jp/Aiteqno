@@ -37,6 +37,7 @@ from aiteqno.application import (
 )
 from aiteqno.domain import DocumentIR, DocumentIRValidationError
 from aiteqno.ports import (
+    DEFAULT_OCR_LANGUAGES,
     DocxRenderError,
     DocxRenderer,
     DocumentBundleWriter,
@@ -285,7 +286,7 @@ def _add_languages(parser: argparse.ArgumentParser) -> None:
         action="append",
         dest="languages",
         metavar="LANGUAGE",
-        help="OCR language identifier; repeat to set order (default: jpn, eng)",
+        help="OCR language identifier; repeat to set order (default: jpn)",
     )
 
 
@@ -309,7 +310,7 @@ def _command_extract(
     output_path = _output_file(arguments.output, ".json", "Document IR JSON")
     assets_path = output_path.parent / ASSET_DIRECTORY_NAME
     _refuse_existing(assets_path, "asset directory")
-    languages = tuple(arguments.languages or ("jpn", "eng"))
+    languages = tuple(arguments.languages or DEFAULT_OCR_LANGUAGES)
 
     container = _temporary_container(output_path.parent, "extract")
     try:
@@ -397,7 +398,7 @@ def _command_roundtrip(
 ) -> None:
     input_path = _input_file(arguments.input, ".png", "PNG")
     output_directory = _output_directory(arguments.output)
-    languages = tuple(arguments.languages or ("jpn", "eng"))
+    languages = tuple(arguments.languages or DEFAULT_OCR_LANGUAGES)
 
     container = _temporary_container(output_directory.parent, "roundtrip")
     try:
