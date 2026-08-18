@@ -50,6 +50,13 @@ from .ocr_quality import (
     ocr_character_accuracy,
 )
 from .ocr_experiment import compare_ocr_experiment
+from .ocr_grouping import (
+    OCR_REGION_GROUPING_ALGORITHM,
+    OCR_REGION_GROUPING_ALGORITHM_VERSION,
+    OcrRegionGroupingPlan,
+    PlannedOcrRegion,
+    plan_ocr_regions,
+)
 from .ocr_language import (
     OCR_LANGUAGE_CANDIDATE_LANGUAGES,
     OCR_LANGUAGE_CONTROL_LANGUAGES,
@@ -71,6 +78,12 @@ from .ocr_resolution import (
     OCR_RESOLUTION_EVALUATOR_NAME,
     OCR_RESOLUTION_EVALUATOR_VERSION,
     compare_ocr_resolution,
+)
+from .ocr_region_grouping import (
+    OCR_REGION_GROUPING_EVALUATOR_NAME,
+    OCR_REGION_GROUPING_EVALUATOR_VERSION,
+    OCR_REGION_GROUPING_TARGET_BLOCKS,
+    compare_ocr_region_grouping,
 )
 from .preview import render_preview
 from .render import render_docx
@@ -132,9 +145,18 @@ __all__ = [
     "evaluate_restoration_input",
     "evaluate_ocr_quality",
     "compare_ocr_experiment",
+    "OCR_REGION_GROUPING_ALGORITHM",
+    "OCR_REGION_GROUPING_ALGORITHM_VERSION",
+    "OCR_REGION_GROUPING_EVALUATOR_NAME",
+    "OCR_REGION_GROUPING_EVALUATOR_VERSION",
+    "OCR_REGION_GROUPING_TARGET_BLOCKS",
+    "OcrRegionGroupingPlan",
+    "PlannedOcrRegion",
+    "plan_ocr_regions",
     "compare_ocr_language_profile",
     "compare_ocr_padding",
     "compare_ocr_resolution",
+    "compare_ocr_region_grouping",
     "evaluate_source_baseline",
     "infer_table_topology",
     "normalize_evaluation_text",

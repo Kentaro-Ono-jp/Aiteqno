@@ -36,6 +36,7 @@ from aiteqno.ports import (
     AssetEncodingError,
     OcrBackendError,
     OcrOptions,
+    OcrRegionGroupingConfig,
     RegionCandidate,
     RegionKind,
 )
@@ -100,7 +101,9 @@ class PngExtractionPipelineTest(unittest.TestCase):
             self.assertTrue(result.bundle.document_path.is_file())
             self.assertTrue((output / "assets").is_dir())
             self.assertEqual(result.diagnostics, ())
-            self.assertEqual(document_ir_from_file(result.bundle.document_path), result.document)
+            self.assertEqual(
+                document_ir_from_file(result.bundle.document_path), result.document
+            )
 
             page = result.document.pages[0]
             texts = tuple(
@@ -115,7 +118,9 @@ class PngExtractionPipelineTest(unittest.TestCase):
                 if isinstance(element, RectangleElement)
             )
             images = tuple(
-                element for element in page.elements if isinstance(element, ImageElement)
+                element
+                for element in page.elements
+                if isinstance(element, ImageElement)
             )
             self.assertAlmostEqual(page.size.width, 240.0, delta=0.02)
             self.assertAlmostEqual(page.size.height, 160.0, delta=0.02)
@@ -131,7 +136,9 @@ class PngExtractionPipelineTest(unittest.TestCase):
                 tuple(element.id for element in texts),
                 tuple(f"p001-text-{index:04d}" for index in range(7)),
             )
-            self.assertEqual(tuple(element.reading_order for element in texts), tuple(range(7)))
+            self.assertEqual(
+                tuple(element.reading_order for element in texts), tuple(range(7))
+            )
 
             for text in texts:
                 self.assertIsNotNone(text.confidence.detection)
@@ -156,9 +163,13 @@ class PngExtractionPipelineTest(unittest.TestCase):
             self.assertLess(asset.pixel_width, self.image.source.pixel_width)
             self.assertLess(asset.pixel_height, self.image.source.pixel_height)
             with Image.open(BytesIO(resolved.data)) as decoded_asset:
-                self.assertEqual(decoded_asset.size, (asset.pixel_width, asset.pixel_height))
+                self.assertEqual(
+                    decoded_asset.size, (asset.pixel_width, asset.pixel_height)
+                )
             serialized = result.bundle.document_path.read_text(encoding="utf-8")
-            self.assertNotIn(base64.b64encode(self.png_data).decode("ascii"), serialized)
+            self.assertNotIn(
+                base64.b64encode(self.png_data).decode("ascii"), serialized
+            )
 
     def test_shuffled_candidates_and_tokens_produce_identical_ids_order_and_bytes(self):
         reversed_structure = replace(
@@ -302,6 +313,59 @@ class PngExtractionPipelineTest(unittest.TestCase):
         self.assertNotIn("pytesseract", source)
         self.assertNotIn("cv2", source)
 
+    def test_geometry_grouping_plan_is_observable_and_used_for_ocr_regions(self):
+        title = self.structure.text_regions[0]
+        left_bbox = PixelBoundingBox(x=41, y=46, width=60, height=15)
+        right_bbox = PixelBoundingBox(x=105, y=46, width=64, height=15)
+        split_title = (
+            replace(
+                title,
+                bbox=left_bbox,
+                provenance=(replace(title.provenance[0], source_bbox_px=left_bbox),),
+            ),
+            replace(
+                title,
+                bbox=right_bbox,
+                provenance=(replace(title.provenance[0], source_bbox_px=right_bbox),),
+            ),
+        )
+        structure = replace(
+            self.structure,
+            text_regions=(*split_title, *self.structure.text_regions[1:]),
+        )
+        observed = []
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = self._extract(
+                Path(temp_dir) / "bundle",
+                structure_extractor=_StaticStructureExtractor(structure),
+                ocr_region_grouping=OcrRegionGroupingConfig(enabled=True),
+                ocr_region_grouping_observer=observed.append,
+            )
+
+        self.assertEqual(len(observed), 1)
+        evidence = observed[0]
+        self.assertTrue(evidence.configuration["enabled"])
+        self.assertEqual(len(evidence.groups), 1)
+        self.assertEqual(
+            evidence.groups[0]["member_refs"],
+            ["p001-text-region-0000", "p001-text-region-0001"],
+        )
+        texts = tuple(
+            value
+            for value in result.document.pages[0].elements
+            if isinstance(value, TextElement)
+        )
+        title_refs = tuple(
+            record.source_refs
+            for value in texts[:2]
+            for record in value.provenance
+            if record.stage is ProvenanceStage.OCR
+        )
+        self.assertEqual(
+            title_refs,
+            (("p001-text-line-group-0000",),) * 2,
+        )
+
     def _extract(
         self,
         output,
@@ -310,6 +374,8 @@ class PngExtractionPipelineTest(unittest.TestCase):
         ocr_backend=None,
         asset_encoder=None,
         validator=None,
+        ocr_region_grouping=OcrRegionGroupingConfig(),
+        ocr_region_grouping_observer=None,
     ):
         return extract_png(
             self.png_data,
@@ -326,6 +392,8 @@ class PngExtractionPipelineTest(unittest.TestCase):
                 timeout_seconds=10,
                 min_confidence=0.1,
             ),
+            ocr_region_grouping=ocr_region_grouping,
+            ocr_region_grouping_observer=ocr_region_grouping_observer,
         )
 
 
@@ -377,7 +445,9 @@ class TesseractPngExtractionIntegrationTest(unittest.TestCase):
                 )
             )
             self.assertEqual(len(result.document.assets), 1)
-            self.assertEqual(document_ir_from_file(result.bundle.document_path), result.document)
+            self.assertEqual(
+                document_ir_from_file(result.bundle.document_path), result.document
+            )
             for element in result.document.pages[0].elements:
                 if isinstance(element, TextElement):
                     self.assertIsNotNone(element.confidence.recognition)

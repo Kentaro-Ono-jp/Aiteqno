@@ -179,6 +179,29 @@ topology, and a distinct language-derived parameters digest. Candidate content
 must retain all protected Latin/numeric literals and a fixed Japanese/English
 smoke fixture must still contain `AITEQNO`, `2026`, and Japanese text.
 
+`compare_ocr_region_grouping()` fixes that adopted 2px + ordered `jpn` profile
+and declares `region_plan` as its sole geometry difference. The candidate plan
+may merge only deterministic same-row adjacent source regions: vertical overlap
+at least `0.45`, horizontal gap no greater than the larger member height, and no
+vertical separator crossing the gap. The report verifies an exact source-region
+partition, member order/bboxes, union bboxes, adjacency measurements, crop/plan
+agreement, configuration and plan digests, and a parameters digest that
+identifies the changed plan. OCR text, confidence, and fixture truth are not
+planner inputs. Every candidate singleton observation must remain identical,
+including the phone-label negative control. In addition to the common +1pp and
+non-regression gates, `title` or `content-structure` must be newly recovered;
+protected literals, normalized table topology, and multilingual smoke remain
+hard evidence.
+
+The formal Ubuntu 24.04 / Tesseract 5.3.4 observation for Issue #59 is
+`inconclusive`: text accuracy changed `76.136364 -> 76.893939`
+(`+0.757575`), block coverage `70.833333 -> 75.000000`, and anchor recall
+`66.666667 -> 75.000000`. The candidate recovered `title` and passed every
+integrity, singleton, protected-literal, and smoke check, but did not reach the
+fixed `+1.0` text gate. The runner therefore selects the fresh singleton
+control. This is the final Tesseract micro-hypothesis; Issue #61 designs the
+next alternate-engine/trained-data comparison without changing this evaluator.
+
 The real-runtime runner evaluates this unchanged contract twice in one process:
 first against the production no-upscale control, then against an experimental
 300 DPI OCR-working-raster path. `ocr-resolution-comparison.json` compares the two
@@ -195,3 +218,5 @@ DOCX work; `regressed` or `inconclusive` selects control, and `invalid` stops
 before publication. The language comparison then uses that exact 2px candidate
 as both sides' input. Only `supported` selects `jpn`; `regressed` or
 `inconclusive` retains `jpn,eng`, and `invalid` stops canonical publication.
+The final grouping checkpoint likewise adopts only `supported`; otherwise it
+retains the fresh singleton `jpn` control, while `invalid` stops publication.

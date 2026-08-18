@@ -440,6 +440,7 @@ class TesseractOcrBackend:
             options,
             capabilities.provider_version,
             image,
+            regions=collected_regions,
             tessdata_configured=self._tessdata_prefix is not None,
             target_dpi=self._target_dpi,
             region_padding_px=self._region_padding_px,
@@ -1305,7 +1306,9 @@ def _resolve_tessdata_directory(
         if resolved in visited:
             continue
         visited.add(resolved)
-        if all((resolved / f"{language}.traineddata").is_file() for language in languages):
+        if all(
+            (resolved / f"{language}.traineddata").is_file() for language in languages
+        ):
             return resolved
     raise OcrBackendError(
         "ocr_traineddata_evidence_unavailable",
@@ -1344,6 +1347,7 @@ def _parameters_digest(
     provider_version: str,
     image: ImageInput,
     *,
+    regions: tuple[OcrRegion, ...],
     tessdata_configured: bool,
     target_dpi: int | None,
     region_padding_px: int,
@@ -1359,6 +1363,18 @@ def _parameters_digest(
         "preserve_interword_spaces": options.preserve_interword_spaces,
         "provider": TESSERACT_PROVIDER,
         "provider_version": provider_version,
+        "regions": [
+            {
+                "region_ref": region.region_ref,
+                "bbox": {
+                    "x": region.bbox.x,
+                    "y": region.bbox.y,
+                    "width": region.bbox.width,
+                    "height": region.bbox.height,
+                },
+            }
+            for region in regions
+        ],
         "tessdata_configured": tessdata_configured,
         "timeout_seconds": options.timeout_seconds,
         "raster_transform": {

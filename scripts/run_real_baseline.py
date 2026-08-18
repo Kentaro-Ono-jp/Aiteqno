@@ -6,7 +6,9 @@ IR-to-DOCX restoration score, checkpoints OCR-only quality before DOCX work,
 compares no-upscale and 300-DPI OCR inputs as retained diagnostics, separately
 compares zero and two-source-pixel white crop padding in the same process, and
 then compares the adopted 2px ``jpn,eng`` control with a ``jpn``-only profile.
-It retains the actual LibreOffice PDF/pages from the selected language profile.
+Finally it compares singleton crops with one fixed geometry-only same-row region
+grouping rule on the adopted 2px ``jpn`` profile.  It retains the actual
+LibreOffice PDF/pages from the selected valid profile and grouping decision.
 A known end-to-end quality ``fail`` is a successful baseline run when
 ``--expect-state fail`` is supplied.
 """
@@ -58,6 +60,7 @@ from aiteqno.application import (
     compare_ocr_padding,
     compare_ocr_language_profile,
     compare_ocr_resolution,
+    compare_ocr_region_grouping,
     evaluate_ocr_quality,
     evaluate_restoration,
     evaluate_source_baseline,
@@ -76,6 +79,8 @@ from aiteqno.ports import (
     OcrQualityResult,
     OcrResolutionRun,
     OcrRuntimeEvidence,
+    OcrRegionGroupingConfig,
+    OcrRegionGroupingEvidence,
     OcrTrainedDataEvidence,
     SnapshotObservation,
     SourceBaselineObservation,
@@ -207,6 +212,21 @@ def _select_language_profile(decision: str) -> str:
     raise RuntimeError(f"unknown OCR language-profile decision: {decision!r}")
 
 
+def _select_region_grouping(decision: str) -> str:
+    """Adopt geometry groups only when every fixed grouping gate passes."""
+
+    if decision == "supported":
+        return "geometry-line-groups"
+    if decision in {"inconclusive", "regressed"}:
+        return "single-regions"
+    if decision == "invalid":
+        raise RuntimeError(
+            "OCR region-grouping comparison is invalid; canonical publication "
+            "cannot be trusted; review ocr-region-grouping/comparison.json"
+        )
+    raise RuntimeError(f"unknown OCR region-grouping decision: {decision!r}")
+
+
 @dataclass(slots=True)
 class _LanguageRuntime:
     control_backend: TesseractOcrBackend
@@ -215,6 +235,16 @@ class _LanguageRuntime:
     control_invocations: list[TesseractInvocationEvidence]
     candidate_invocations: list[TesseractInvocationEvidence]
     smoke_invocations: list[TesseractInvocationEvidence]
+
+
+@dataclass(slots=True)
+class _GroupingRuntime:
+    control_backend: TesseractOcrBackend
+    candidate_backend: TesseractOcrBackend
+    control_invocations: list[TesseractInvocationEvidence]
+    candidate_invocations: list[TesseractInvocationEvidence]
+    control_plans: list[OcrRegionGroupingEvidence]
+    candidate_plans: list[OcrRegionGroupingEvidence]
 
 
 def _fixture_object(value: Any, label: str) -> Mapping[str, Any]:
@@ -523,6 +553,36 @@ def _language_runtime() -> _LanguageRuntime:
     )
 
 
+def _grouping_runtime() -> _GroupingRuntime:
+    common = {
+        "executable_path": os.environ.get("AITEQNO_TESSERACT_EXECUTABLE") or None,
+        "tessdata_prefix": os.environ.get("AITEQNO_TESSDATA_PREFIX") or None,
+        "required_languages": LANGUAGE_CANDIDATE,
+        "target_dpi": None,
+        "region_padding_px": OCR_REGION_PADDING_PX,
+    }
+    control_invocations: list[TesseractInvocationEvidence] = []
+    candidate_invocations: list[TesseractInvocationEvidence] = []
+    control_backend = TesseractOcrBackend(
+        **common,
+        invocation_observer=control_invocations.append,
+    )
+    candidate_backend = TesseractOcrBackend(
+        **common,
+        invocation_observer=candidate_invocations.append,
+    )
+    control_backend.healthcheck()
+    candidate_backend.healthcheck()
+    return _GroupingRuntime(
+        control_backend=control_backend,
+        candidate_backend=candidate_backend,
+        control_invocations=control_invocations,
+        candidate_invocations=candidate_invocations,
+        control_plans=[],
+        candidate_plans=[],
+    )
+
+
 def _one_transform_evidence(
     records: list[TesseractRasterTransformEvidence],
     *,
@@ -574,6 +634,22 @@ def _one_invocation_evidence(
         getattr(evidence, "to_dict", None)
     ):
         raise RuntimeError(f"{label} Tesseract invocation evidence has an invalid type")
+    return evidence
+
+
+def _one_grouping_evidence(
+    records: list[OcrRegionGroupingEvidence],
+    *,
+    label: str,
+) -> OcrRegionGroupingEvidence:
+    if len(records) != 1:
+        raise RuntimeError(
+            f"{label} OCR region-grouping evidence is incomplete: expected one "
+            f"plan, observed {len(records)}"
+        )
+    evidence = records[0]
+    if not callable(getattr(evidence, "to_dict", None)):
+        raise RuntimeError(f"{label} OCR region-grouping evidence has an invalid type")
     return evidence
 
 
@@ -1032,6 +1108,7 @@ def _run_in_created_output(
         candidate_paddings,
     ) = _runtime()
     language_runtime = _language_runtime()
+    grouping_runtime = _grouping_runtime()
     _write_json_new(
         output_directory / "preflight-environment.json",
         _environment_record(
@@ -1056,6 +1133,7 @@ def _run_in_created_output(
         bundle_writer=FilesystemDocumentBundleWriter(),
         languages=LANGUAGES,
         ocr_options=OCR_OPTIONS,
+        ocr_region_grouping=OcrRegionGroupingConfig(enabled=False),
     )
     padding_control_bundle_directory = (
         output_directory / "ocr-padding" / "control" / "bundle"
@@ -1076,6 +1154,7 @@ def _run_in_created_output(
         bundle_writer=FilesystemDocumentBundleWriter(),
         languages=LANGUAGES,
         ocr_options=OCR_OPTIONS,
+        ocr_region_grouping=OcrRegionGroupingConfig(enabled=False),
     )
     padding_candidate_bundle_directory = (
         output_directory / "ocr-padding" / "candidate" / "bundle"
@@ -1091,6 +1170,7 @@ def _run_in_created_output(
         bundle_writer=FilesystemDocumentBundleWriter(),
         languages=LANGUAGES,
         ocr_options=OCR_OPTIONS,
+        ocr_region_grouping=OcrRegionGroupingConfig(enabled=False),
     )
     language_control_bundle_directory = (
         output_directory / "ocr-language" / "control" / "bundle"
@@ -1106,6 +1186,7 @@ def _run_in_created_output(
         bundle_writer=FilesystemDocumentBundleWriter(),
         languages=LANGUAGES,
         ocr_options=OCR_OPTIONS,
+        ocr_region_grouping=OcrRegionGroupingConfig(enabled=False),
     )
     language_candidate_bundle_directory = (
         output_directory / "ocr-language" / "candidate" / "bundle"
@@ -1121,6 +1202,41 @@ def _run_in_created_output(
         bundle_writer=FilesystemDocumentBundleWriter(),
         languages=LANGUAGE_CANDIDATE,
         ocr_options=OCR_OPTIONS,
+        ocr_region_grouping=OcrRegionGroupingConfig(enabled=False),
+    )
+    grouping_control_bundle_directory = (
+        output_directory / "ocr-region-grouping" / "control" / "bundle"
+    )
+    grouping_control_extraction = extract_png(
+        source_data,
+        grouping_control_bundle_directory,
+        decoder=decoder,
+        structure_extractor=OpenCvStructureExtractor(),
+        ocr_backend=grouping_runtime.control_backend,
+        asset_encoder=PillowPngAssetEncoder(),
+        validator=JsonSchemaDocumentIRValidator(),
+        bundle_writer=FilesystemDocumentBundleWriter(),
+        languages=LANGUAGE_CANDIDATE,
+        ocr_options=OCR_OPTIONS,
+        ocr_region_grouping=OcrRegionGroupingConfig(enabled=False),
+        ocr_region_grouping_observer=grouping_runtime.control_plans.append,
+    )
+    grouping_candidate_bundle_directory = (
+        output_directory / "ocr-region-grouping" / "candidate" / "bundle"
+    )
+    grouping_candidate_extraction = extract_png(
+        source_data,
+        grouping_candidate_bundle_directory,
+        decoder=decoder,
+        structure_extractor=OpenCvStructureExtractor(),
+        ocr_backend=grouping_runtime.candidate_backend,
+        asset_encoder=PillowPngAssetEncoder(),
+        validator=JsonSchemaDocumentIRValidator(),
+        bundle_writer=FilesystemDocumentBundleWriter(),
+        languages=LANGUAGE_CANDIDATE,
+        ocr_options=OCR_OPTIONS,
+        ocr_region_grouping=OcrRegionGroupingConfig(enabled=True),
+        ocr_region_grouping_observer=grouping_runtime.candidate_plans.append,
     )
     multilingual_smoke, multilingual_smoke_tokens = _run_language_smoke(
         decoder=decoder,
@@ -1131,6 +1247,8 @@ def _run_in_created_output(
     control_document = control_extraction.document
     language_control_document = language_control_extraction.document
     language_candidate_document = language_candidate_extraction.document
+    grouping_control_document = grouping_control_extraction.document
+    grouping_candidate_document = grouping_candidate_extraction.document
     quality = manifest["quality_contract"]
     minima = quality["component_minimums"]
     quality_config = _quality_config(manifest)
@@ -1157,6 +1275,22 @@ def _run_in_created_output(
     language_candidate_invocation = _one_invocation_evidence(
         language_runtime.candidate_invocations,
         label="language candidate",
+    )
+    grouping_control_invocation = _one_invocation_evidence(
+        grouping_runtime.control_invocations,
+        label="region-grouping control",
+    )
+    grouping_candidate_invocation = _one_invocation_evidence(
+        grouping_runtime.candidate_invocations,
+        label="region-grouping candidate",
+    )
+    grouping_control_plan = _one_grouping_evidence(
+        grouping_runtime.control_plans,
+        label="region-grouping control",
+    )
+    grouping_candidate_plan = _one_grouping_evidence(
+        grouping_runtime.candidate_plans,
+        label="region-grouping candidate",
     )
     control_ocr_result = _evaluate_ocr_run(
         source_data=source_data,
@@ -1208,6 +1342,20 @@ def _run_in_created_output(
         runtime=_runtime_evidence_from_invocation(language_candidate_invocation),
         config=quality_config,
     )
+    grouping_control_ocr_result = _evaluate_ocr_run(
+        source_data=source_data,
+        reference=reference,
+        document=grouping_control_document,
+        runtime=_runtime_evidence_from_invocation(grouping_control_invocation),
+        config=quality_config,
+    )
+    grouping_candidate_ocr_result = _evaluate_ocr_run(
+        source_data=source_data,
+        reference=reference,
+        document=grouping_candidate_document,
+        runtime=_runtime_evidence_from_invocation(grouping_candidate_invocation),
+        config=quality_config,
+    )
     _write_bytes_new(
         output_directory / "ocr-quality-control-evaluation.json",
         (control_ocr_result.to_json(indent=2) + "\n").encode("utf-8"),
@@ -1225,24 +1373,29 @@ def _run_in_created_output(
         (padding_ocr_result.to_json(indent=2) + "\n").encode("utf-8"),
     )
     _write_bytes_new(
-        output_directory
-        / "ocr-language"
-        / "control"
-        / "ocr-quality-evaluation.json",
+        output_directory / "ocr-language" / "control" / "ocr-quality-evaluation.json",
         (language_control_ocr_result.to_json(indent=2) + "\n").encode("utf-8"),
     )
     _write_bytes_new(
-        output_directory
-        / "ocr-language"
-        / "candidate"
-        / "ocr-quality-evaluation.json",
+        output_directory / "ocr-language" / "candidate" / "ocr-quality-evaluation.json",
         (language_candidate_ocr_result.to_json(indent=2) + "\n").encode("utf-8"),
     )
-    _write_json_new(
+    _write_bytes_new(
         output_directory
-        / "ocr-language"
+        / "ocr-region-grouping"
         / "control"
-        / "runtime-config-evidence.json",
+        / "ocr-quality-evaluation.json",
+        (grouping_control_ocr_result.to_json(indent=2) + "\n").encode("utf-8"),
+    )
+    _write_bytes_new(
+        output_directory
+        / "ocr-region-grouping"
+        / "candidate"
+        / "ocr-quality-evaluation.json",
+        (grouping_candidate_ocr_result.to_json(indent=2) + "\n").encode("utf-8"),
+    )
+    _write_json_new(
+        output_directory / "ocr-language" / "control" / "runtime-config-evidence.json",
         language_control_invocation.to_dict(),
     )
     _write_json_new(
@@ -1251,6 +1404,32 @@ def _run_in_created_output(
         / "candidate"
         / "runtime-config-evidence.json",
         language_candidate_invocation.to_dict(),
+    )
+    grouping_control_evidence = grouping_control_invocation.to_dict()
+    grouping_control_evidence["region_grouping"] = grouping_control_plan.to_dict()
+    grouping_candidate_evidence = grouping_candidate_invocation.to_dict()
+    grouping_candidate_evidence["region_grouping"] = grouping_candidate_plan.to_dict()
+    _write_json_new(
+        output_directory
+        / "ocr-region-grouping"
+        / "control"
+        / "runtime-config-evidence.json",
+        grouping_control_evidence,
+    )
+    _write_json_new(
+        output_directory
+        / "ocr-region-grouping"
+        / "candidate"
+        / "runtime-config-evidence.json",
+        grouping_candidate_evidence,
+    )
+    _write_json_new(
+        output_directory / "ocr-region-grouping" / "region-plan-evidence.json",
+        {
+            "schema_version": "1.0",
+            "control": grouping_control_plan.to_dict(),
+            "candidate": grouping_candidate_plan.to_dict(),
+        },
     )
     smoke_invocation = _one_invocation_evidence(
         language_runtime.smoke_invocations,
@@ -1344,6 +1523,32 @@ def _run_in_created_output(
         output_directory / "ocr-language" / "multilingual-smoke.json",
         language_report["multilingual_smoke"],
     )
+    grouping_comparison = compare_ocr_region_grouping(
+        OcrExperimentRun(
+            quality=grouping_control_ocr_result,
+            document=grouping_control_document,
+            evidence=grouping_control_evidence,
+        ),
+        OcrExperimentRun(
+            quality=grouping_candidate_ocr_result,
+            document=grouping_candidate_document,
+            evidence=grouping_candidate_evidence,
+        ),
+        multilingual_smoke=multilingual_smoke,
+    )
+    _write_bytes_new(
+        output_directory / "ocr-region-grouping" / "comparison.json",
+        (grouping_comparison.to_json(indent=2) + "\n").encode("utf-8"),
+    )
+    grouping_report = grouping_comparison.to_dict()
+    _write_json_new(
+        output_directory / "ocr-region-grouping" / "protected-literal-diagnostics.json",
+        grouping_report["recovery"]["protected_literals"],
+    )
+    _write_json_new(
+        output_directory / "ocr-region-grouping" / "singleton-observations.json",
+        grouping_report["singleton_observations"],
+    )
     _write_json_new(
         output_directory / "ocr-language" / "environment-evidence.json",
         {
@@ -1353,23 +1558,53 @@ def _run_in_created_output(
                 "source_sha256": _sha256(source_data),
                 "reference_sha256": REFERENCE_SHA256,
             },
-            "normalization": (
-                "NFKC then remove every Unicode whitespace character"
-            ),
+            "normalization": ("NFKC then remove every Unicode whitespace character"),
             "thresholds": {
                 "text_character_accuracy": minima["text_character_accuracy"],
                 "logical_block_coverage": minima["logical_block_coverage"],
                 "essential_anchor_recall": quality["essential_anchor_recall"],
                 "minimum_text_accuracy_delta_percentage_points": 1.0,
             },
-            "control_runtime_config": (
-                "control/runtime-config-evidence.json"
-            ),
-            "candidate_runtime_config": (
-                "candidate/runtime-config-evidence.json"
-            ),
+            "control_runtime_config": ("control/runtime-config-evidence.json"),
+            "candidate_runtime_config": ("candidate/runtime-config-evidence.json"),
+            "multilingual_smoke_evidence": ("multilingual-smoke-evidence.json"),
+            "operating_system": platform.platform(),
+            "python_version": platform.python_version(),
+        },
+    )
+    _write_json_new(
+        output_directory / "ocr-region-grouping" / "environment-evidence.json",
+        {
+            "schema_version": "1.0",
+            "fixture": {
+                "id": manifest["fixture_id"],
+                "source_sha256": _sha256(source_data),
+                "reference_sha256": REFERENCE_SHA256,
+            },
+            "normalization": "NFKC then remove every Unicode whitespace character",
+            "fixed_profile": {
+                "languages": list(LANGUAGE_CANDIDATE),
+                "target_dpi": None,
+                "region_padding_px": OCR_REGION_PADDING_PX,
+                "page_segmentation_mode": OCR_OPTIONS.page_segmentation_mode,
+                "engine_mode": OCR_OPTIONS.engine_mode,
+            },
+            "thresholds": {
+                "text_character_accuracy": minima["text_character_accuracy"],
+                "logical_block_coverage": minima["logical_block_coverage"],
+                "essential_anchor_recall": quality["essential_anchor_recall"],
+                "minimum_text_accuracy_delta_percentage_points": 1.0,
+                "required_newly_recovered_any": ["title", "content-structure"],
+            },
+            "control_runtime_config": "control/runtime-config-evidence.json",
+            "candidate_runtime_config": "candidate/runtime-config-evidence.json",
+            "region_plan_evidence": "region-plan-evidence.json",
             "multilingual_smoke_evidence": (
-                "multilingual-smoke-evidence.json"
+                "../ocr-language/multilingual-smoke-evidence.json"
+            ),
+            "final_tesseract_micro_hypothesis": True,
+            "next_design_if_quality_contract_remains_unmet": (
+                "alternate_ocr_engine_or_traineddata"
             ),
             "operating_system": platform.platform(),
             "python_version": platform.python_version(),
@@ -1378,6 +1613,7 @@ def _run_in_created_output(
     resolution_selected_input = _select_ocr_input(comparison.decision.value)
     padding_selected_input = _select_padding_input(padding_comparison.decision.value)
     selected_profile = _select_language_profile(language_comparison.decision.value)
+    selected_grouping = _select_region_grouping(grouping_comparison.decision.value)
     selected_input = "two-pixel-padding"
     candidate_eligible = comparison.decision.value == "supported"
     candidate_adopted = False
@@ -1385,15 +1621,29 @@ def _run_in_created_output(
     padding_candidate_adopted = padding_selected_input == "two-pixel-padding"
     language_candidate_eligible = language_comparison.decision.value == "supported"
     language_candidate_adopted = selected_profile == "jpn"
+    grouping_candidate_eligible = grouping_comparison.decision.value == "supported"
+    grouping_candidate_adopted = (
+        language_candidate_adopted and selected_grouping == "geometry-line-groups"
+    )
     if language_candidate_adopted:
-        selected_extraction = language_candidate_extraction
-        selected_observation_document = language_candidate_document
-        selected_ocr_result = language_candidate_ocr_result
-        selected_observation_bundle = language_candidate_bundle_directory
-        selected_backend = language_runtime.candidate_backend
-        selected_ocr_report = (
-            "ocr-language/candidate/ocr-quality-evaluation.json"
-        )
+        if grouping_candidate_adopted:
+            selected_extraction = grouping_candidate_extraction
+            selected_observation_document = grouping_candidate_document
+            selected_ocr_result = grouping_candidate_ocr_result
+            selected_observation_bundle = grouping_candidate_bundle_directory
+            selected_backend = grouping_runtime.candidate_backend
+            selected_ocr_report = (
+                "ocr-region-grouping/candidate/ocr-quality-evaluation.json"
+            )
+        else:
+            selected_extraction = grouping_control_extraction
+            selected_observation_document = grouping_control_document
+            selected_ocr_result = grouping_control_ocr_result
+            selected_observation_bundle = grouping_control_bundle_directory
+            selected_backend = grouping_runtime.control_backend
+            selected_ocr_report = (
+                "ocr-region-grouping/control/ocr-quality-evaluation.json"
+            )
     else:
         selected_extraction = language_control_extraction
         selected_observation_document = language_control_document
@@ -1404,8 +1654,8 @@ def _run_in_created_output(
     selected_document = infer_table_topology(selected_observation_document)
 
     # The A/B observation bundles remain immutable OCR evidence. Add only the
-    # deterministic topology extension to the selected language decision, then
-    # publish an atomic create-only downstream bundle so IR, assets, and renders agree.
+    # deterministic topology extension to the selected profile/grouping decision,
+    # then publish an atomic create-only downstream bundle so all renders agree.
     bundle_directory = output_directory / "bundle"
     _copytree_new_atomic(
         selected_observation_bundle,
@@ -1519,7 +1769,8 @@ def _run_in_created_output(
     restoration_reference = build_evaluation_reference(
         selected_document,
         reference_id=(
-            f"{reference.reference_id}-{selected_input}-{selected_profile}-ir"
+            f"{reference.reference_id}-{selected_input}-{selected_profile}-"
+            f"{selected_grouping}-ir"
         ),
         reviewed=True,
         relationships=build_docx_structure_relationships(selected_document),
@@ -1582,9 +1833,7 @@ def _run_in_created_output(
                 "candidate_eligible": language_candidate_eligible,
                 "candidate_adopted": language_candidate_adopted,
                 "reasons": list(language_comparison.reasons),
-                "control_report": (
-                    "ocr-language/control/ocr-quality-evaluation.json"
-                ),
+                "control_report": ("ocr-language/control/ocr-quality-evaluation.json"),
                 "candidate_report": (
                     "ocr-language/candidate/ocr-quality-evaluation.json"
                 ),
@@ -1600,6 +1849,32 @@ def _run_in_created_output(
                 "multilingual_smoke": "ocr-language/multilingual-smoke.json",
                 "report": "ocr-language/comparison.json",
             },
+            "ocr_region_grouping_comparison": {
+                "decision": grouping_comparison.decision.value,
+                "selected_grouping": selected_grouping,
+                "candidate_eligible": grouping_candidate_eligible,
+                "candidate_adopted": grouping_candidate_adopted,
+                "reasons": list(grouping_comparison.reasons),
+                "control_report": (
+                    "ocr-region-grouping/control/ocr-quality-evaluation.json"
+                ),
+                "candidate_report": (
+                    "ocr-region-grouping/candidate/ocr-quality-evaluation.json"
+                ),
+                "control_runtime_config": (
+                    "ocr-region-grouping/control/runtime-config-evidence.json"
+                ),
+                "candidate_runtime_config": (
+                    "ocr-region-grouping/candidate/runtime-config-evidence.json"
+                ),
+                "region_plan_evidence": (
+                    "ocr-region-grouping/region-plan-evidence.json"
+                ),
+                "singleton_observations": (
+                    "ocr-region-grouping/singleton-observations.json"
+                ),
+                "report": "ocr-region-grouping/comparison.json",
+            },
             "source_to_candidate_ir_ocr": {
                 "state": selected_ocr_result.state.value,
                 "text_character_accuracy": (
@@ -1613,7 +1888,10 @@ def _run_in_created_output(
                 ),
                 "selected_input": selected_input,
                 "selected_profile": selected_profile,
-                "text_evidence": f"{selected_input}_{selected_profile}_ir",
+                "selected_grouping": selected_grouping,
+                "text_evidence": (
+                    f"{selected_input}_{selected_profile}_{selected_grouping}_ir"
+                ),
                 "report": selected_ocr_report,
             },
             "candidate_300_dpi_experiment": {
@@ -1658,6 +1936,24 @@ def _run_in_created_output(
                 "text_evidence": "two_pixel_padding_jpn_only_candidate_ir",
                 "report": "ocr-language/candidate/ocr-quality-evaluation.json",
             },
+            "candidate_geometry_line_grouping_experiment": {
+                "state": grouping_candidate_ocr_result.state.value,
+                "text_character_accuracy": (
+                    grouping_candidate_ocr_result.text_character_accuracy.score
+                ),
+                "logical_block_coverage": (
+                    grouping_candidate_ocr_result.logical_block_coverage.score
+                ),
+                "essential_anchor_recall": (
+                    grouping_candidate_ocr_result.essential_anchor_recall.score
+                ),
+                "adopted": grouping_candidate_adopted,
+                "eligible": grouping_candidate_eligible,
+                "text_evidence": (
+                    "two_pixel_padding_jpn_only_geometry_line_group_candidate_ir"
+                ),
+                "report": ("ocr-region-grouping/candidate/ocr-quality-evaluation.json"),
+            },
             "source_to_actual_docx": {
                 "state": source_result.state.value,
                 "overall_score": source_result.overall_score,
@@ -1668,6 +1964,7 @@ def _run_in_created_output(
                 "overall_score": restoration_result.overall_score,
                 "selected_input": selected_input,
                 "selected_profile": selected_profile,
+                "selected_grouping": selected_grouping,
                 "scope": (
                     "selected IR preservation only; not OCR or source-image accuracy"
                 ),
@@ -1687,9 +1984,7 @@ def _run_in_created_output(
         reference_path=fixture_directory / "reference.json",
         backend=selected_backend,
         snapshot=snapshot,
-        languages=(
-            LANGUAGE_CANDIDATE if language_candidate_adopted else LANGUAGES
-        ),
+        languages=(LANGUAGE_CANDIDATE if language_candidate_adopted else LANGUAGES),
     )
     _write_json_new(output_directory / "environment.json", environment)
 

@@ -33,6 +33,7 @@ def contract(
     *,
     required_checks: tuple[str, ...] = ("fixed_hypothesis",),
     allowed_runtime_differences: tuple[str, ...] = ("effective_ocr_dpi",),
+    allowed_geometry_differences: tuple[str, ...] = (),
 ) -> OcrExperimentContract:
     return OcrExperimentContract(
         experiment_id="test_fixed_hypothesis",
@@ -42,6 +43,7 @@ def contract(
         evaluator_version="1.0.0",
         required_hypothesis_checks=required_checks,
         allowed_runtime_differences=allowed_runtime_differences,
+        allowed_geometry_differences=allowed_geometry_differences,
     )
 
 
@@ -88,6 +90,10 @@ class OcrExperimentComparisonTest(unittest.TestCase):
         self.assertEqual(
             report["adoption_policy"]["required_hypothesis_checks"],
             ["fixed_hypothesis"],
+        )
+        self.assertEqual(
+            report["adoption_policy"]["allowed_geometry_differences"],
+            [],
         )
         self.assertEqual(result.to_json(), result.to_json())
 
@@ -171,6 +177,14 @@ class OcrExperimentComparisonTest(unittest.TestCase):
             contract(allowed_runtime_differences=("imaginary",))
         with self.assertRaisesRegex(ValueError, "unknown fields"):
             contract(allowed_runtime_differences=("provider_version",))
+        with self.assertRaisesRegex(ValueError, "unknown fields"):
+            contract(allowed_geometry_differences=("imaginary",))
+        self.assertEqual(
+            contract(
+                allowed_geometry_differences=("region_plan",)
+            ).allowed_geometry_differences,
+            ("region_plan",),
+        )
         with self.assertRaisesRegex(ValueError, "must not be empty"):
             contract(required_checks=())
 

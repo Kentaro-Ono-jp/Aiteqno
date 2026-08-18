@@ -66,6 +66,7 @@ from .ocr import (
     OcrToken,
 )
 from .ocr_experiment import (
+    OCR_EXPERIMENT_ALLOWED_GEOMETRY_DIFFERENCES,
     OCR_EXPERIMENT_ALLOWED_RUNTIME_DIFFERENCES,
     OCR_EXPERIMENT_RUNTIME_FIELDS,
     OcrExperimentCheck,
@@ -75,6 +76,11 @@ from .ocr_experiment import (
     OcrExperimentMetricDelta,
     OcrExperimentRecoveryDelta,
     OcrExperimentRun,
+)
+from .ocr_grouping import (
+    OcrRegionGroupingComparisonResult,
+    OcrRegionGroupingConfig,
+    OcrRegionGroupingEvidence,
 )
 from .ocr_language import (
     OcrLanguageProfileComparisonResult,
@@ -164,6 +170,7 @@ __all__ = [
     "OcrBackendError",
     "OcrCapabilities",
     "OCR_EXPERIMENT_ALLOWED_RUNTIME_DIFFERENCES",
+    "OCR_EXPERIMENT_ALLOWED_GEOMETRY_DIFFERENCES",
     "OCR_EXPERIMENT_RUNTIME_FIELDS",
     "OcrExperimentCheck",
     "OcrExperimentComparisonResult",
@@ -172,6 +179,9 @@ __all__ = [
     "OcrExperimentMetricDelta",
     "OcrExperimentRecoveryDelta",
     "OcrExperimentRun",
+    "OcrRegionGroupingConfig",
+    "OcrRegionGroupingComparisonResult",
+    "OcrRegionGroupingEvidence",
     "OcrLanguageProfileComparisonResult",
     "OcrLanguageSmokeRun",
     "OcrProtectedLiteralRecovery",

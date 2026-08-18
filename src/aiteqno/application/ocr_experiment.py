@@ -71,7 +71,7 @@ def compare_ocr_experiment(
     context_check = _context_check(control.quality, candidate.quality)
     runtime_check = _runtime_check(control.quality, candidate.quality, contract)
     hard_gate_check = _hard_gate_check(control.quality, candidate.quality)
-    geometry_check = _geometry_check(control, candidate)
+    geometry_check = _geometry_check(control, candidate, contract)
     nontext_check = _nontext_check(control, candidate)
     checks = (
         context_check,
@@ -363,10 +363,21 @@ def _hard_gate_check(
 def _geometry_check(
     control: OcrExperimentRun,
     candidate: OcrExperimentRun,
+    contract: OcrExperimentContract,
 ) -> OcrExperimentCheck:
     failures: list[str] = []
-    allowed_regions, require_region_ref = _evidence_regions(control.evidence)
-    allowed_region_refs = set(allowed_regions)
+    control_allowed_regions, control_require_region_ref = _evidence_regions(
+        control.evidence
+    )
+    if "region_plan" in contract.allowed_geometry_differences:
+        candidate_allowed_regions, candidate_require_region_ref = _evidence_regions(
+            candidate.evidence
+        )
+    else:
+        candidate_allowed_regions = control_allowed_regions
+        candidate_require_region_ref = control_require_region_ref
+    control_allowed_region_refs = set(control_allowed_regions)
+    candidate_allowed_region_refs = set(candidate_allowed_regions)
     _evidence_crops_inside_page("control", control.evidence, control.document, failures)
     _evidence_crops_inside_page(
         "candidate", candidate.evidence, candidate.document, failures
@@ -376,9 +387,9 @@ def _geometry_check(
         control.document,
         runtime_provider=control.quality.runtime.provider,
         runtime_provider_version=control.quality.runtime.provider_version,
-        allowed_region_refs=allowed_region_refs,
-        allowed_regions=allowed_regions,
-        require_region_ref=require_region_ref,
+        allowed_region_refs=control_allowed_region_refs,
+        allowed_regions=control_allowed_regions,
+        require_region_ref=control_require_region_ref,
         failures=failures,
     )
     candidate_region_refs, candidate_parameter_digests = _geometry_issues(
@@ -386,9 +397,9 @@ def _geometry_check(
         candidate.document,
         runtime_provider=candidate.quality.runtime.provider,
         runtime_provider_version=candidate.quality.runtime.provider_version,
-        allowed_region_refs=allowed_region_refs,
-        allowed_regions=allowed_regions,
-        require_region_ref=require_region_ref,
+        allowed_region_refs=candidate_allowed_region_refs,
+        allowed_regions=candidate_allowed_regions,
+        require_region_ref=candidate_require_region_ref,
         failures=failures,
     )
     if control_parameter_digests & candidate_parameter_digests:
@@ -402,7 +413,9 @@ def _geometry_check(
         reasons=reasons,
         details={
             "inverse_coordinate_space": "original_png_source_pixels",
-            "allowed_region_refs": sorted(allowed_region_refs),
+            "allowed_geometry_differences": list(contract.allowed_geometry_differences),
+            "control_allowed_region_refs": sorted(control_allowed_region_refs),
+            "candidate_allowed_region_refs": sorted(candidate_allowed_region_refs),
             "control_region_refs": sorted(control_region_refs),
             "candidate_region_refs": sorted(candidate_region_refs),
             "parent_region_refs_come_from_evidence_crops": True,
