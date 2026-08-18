@@ -34,6 +34,7 @@ OCR_EXPERIMENT_ALLOWED_RUNTIME_DIFFERENCES = (
     "effective_ocr_dpi",
     "traineddata",
 )
+OCR_EXPERIMENT_ALLOWED_GEOMETRY_DIFFERENCES = ("region_plan",)
 
 
 class OcrExperimentDecision(str, Enum):
@@ -108,6 +109,7 @@ class OcrExperimentContract:
     evaluator_version: str
     required_hypothesis_checks: tuple[str, ...]
     allowed_runtime_differences: tuple[str, ...] = ()
+    allowed_geometry_differences: tuple[str, ...] = ()
     supported_reason: str = "all_ocr_experiment_adoption_conditions_pass"
     ends_before: tuple[str, ...] = (
         "docx",
@@ -154,6 +156,25 @@ class OcrExperimentContract:
             )
         object.__setattr__(self, "required_hypothesis_checks", required)
         object.__setattr__(self, "allowed_runtime_differences", allowed)
+        allowed_geometry = _strings(
+            self.allowed_geometry_differences,
+            "allowed_geometry_differences",
+        )
+        unknown_geometry = tuple(
+            value
+            for value in allowed_geometry
+            if value not in OCR_EXPERIMENT_ALLOWED_GEOMETRY_DIFFERENCES
+        )
+        if unknown_geometry:
+            raise ValueError(
+                "allowed_geometry_differences contains unknown fields: "
+                + ", ".join(unknown_geometry)
+            )
+        object.__setattr__(
+            self,
+            "allowed_geometry_differences",
+            allowed_geometry,
+        )
         object.__setattr__(
             self,
             "ends_before",
@@ -374,6 +395,9 @@ class OcrExperimentComparisonResult:
                 "allowed_runtime_differences": list(
                     self.contract.allowed_runtime_differences
                 ),
+                "allowed_geometry_differences": list(
+                    self.contract.allowed_geometry_differences
+                ),
                 "required_hypothesis_checks": list(
                     self.contract.required_hypothesis_checks
                 ),
@@ -426,6 +450,7 @@ class OcrExperimentComparisonResult:
 
 
 __all__ = [
+    "OCR_EXPERIMENT_ALLOWED_GEOMETRY_DIFFERENCES",
     "OCR_EXPERIMENT_ALLOWED_RUNTIME_DIFFERENCES",
     "OCR_EXPERIMENT_RUNTIME_FIELDS",
     "OcrExperimentCheck",

@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from os import PathLike
-from typing import Sequence
+from typing import Callable, Sequence
 
 from aiteqno import __version__
 from aiteqno.domain import (
@@ -52,6 +52,10 @@ from aiteqno.ports.ocr import (
     OcrToken,
     normalize_ocr_languages,
 )
+from aiteqno.ports.ocr_grouping import (
+    OcrRegionGroupingConfig,
+    OcrRegionGroupingEvidence,
+)
 from aiteqno.ports.structure import (
     ImageInput,
     LineCandidate,
@@ -63,6 +67,8 @@ from aiteqno.ports.structure import (
     StructureExtractionResult,
     StructureExtractor,
 )
+
+from .ocr_grouping import plan_ocr_regions
 
 
 EXTRACTION_PROVIDER = "aiteqno.png-extraction"
@@ -160,6 +166,9 @@ def extract_png(
     bundle_writer: DocumentBundleWriter,
     languages: Sequence[str] = DEFAULT_OCR_LANGUAGES,
     ocr_options: OcrOptions = OcrOptions(),
+    ocr_region_grouping: OcrRegionGroupingConfig = OcrRegionGroupingConfig(),
+    ocr_region_grouping_observer: Callable[[OcrRegionGroupingEvidence], None]
+    | None = None,
 ) -> PngExtractionResult:
     """Extract, schema-validate, and atomically publish one PNG document bundle."""
 
@@ -168,6 +177,12 @@ def extract_png(
     normalized_languages = normalize_ocr_languages(languages)
     if not isinstance(ocr_options, OcrOptions):
         raise TypeError("ocr_options must be an OcrOptions")
+    if not isinstance(ocr_region_grouping, OcrRegionGroupingConfig):
+        raise TypeError("ocr_region_grouping must be an OcrRegionGroupingConfig")
+    if ocr_region_grouping_observer is not None and not callable(
+        ocr_region_grouping_observer
+    ):
+        raise TypeError("ocr_region_grouping_observer must be callable or None")
     diagnostics: list[ExtractionDiagnostic] = []
 
     try:
@@ -191,9 +206,19 @@ def extract_png(
     rectangles = _normalize_rectangles(structure.rectangles)
     text_regions = _normalize_regions(structure.text_regions)
     image_regions = _normalize_regions(structure.image_regions)
-    region_entries = tuple(
+    source_region_entries = tuple(
         (f"p001-text-region-{index:04d}", region)
         for index, region in enumerate(text_regions)
+    )
+    region_plan = plan_ocr_regions(
+        source_region_entries,
+        lines,
+        config=ocr_region_grouping,
+    )
+    if ocr_region_grouping_observer is not None:
+        ocr_region_grouping_observer(region_plan.evidence)
+    region_entries = tuple(
+        (value.region_ref, value.region) for value in region_plan.regions
     )
     ocr_regions = tuple(
         OcrRegion(region_ref=region_ref, bbox=region.bbox)
@@ -532,7 +557,9 @@ def _reading_order(tokens: Sequence[_AssociatedToken]) -> tuple[_AssociatedToken
         bbox = item.token.bbox
         matches: list[tuple[float, int, _TokenRow]] = []
         for index, row in enumerate(rows):
-            overlap = max(0, min(bbox.y + bbox.height, row.bottom) - max(bbox.y, row.top))
+            overlap = max(
+                0, min(bbox.y + bbox.height, row.bottom) - max(bbox.y, row.top)
+            )
             denominator = min(bbox.height, row.bottom - row.top)
             ratio = overlap / denominator if denominator else 0.0
             if ratio >= 0.45:

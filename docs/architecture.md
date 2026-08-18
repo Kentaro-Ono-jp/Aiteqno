@@ -606,6 +606,12 @@ Issue #20 fixes the V1 orchestration rules as follows:
 - OCR tokens are associated by their provider-supplied region reference first,
   then by deterministic source-pixel overlap, and text reading order is
   normalized into top-to-bottom rows and left-to-right tokens;
+- before the OCR port, an optional application-owned region planner may replace
+  adjacent same-row text candidates with one source-pixel union crop. Its fixed
+  V1 rule uses only bbox overlap/gap and detected vertical separators; OCR text,
+  confidence, reference truth, and dictionaries are forbidden inputs. Original
+  singleton references/bboxes remain unchanged, while every plan emits complete
+  partition, adjacency, union, algorithm/configuration, and digest evidence;
 - structure detection and OCR recognition confidence remain separate fields,
   while `overall` uses the conservative minimum of the available values;
 - line, rectangle, image, and text paint layers use deterministic `z_index`
@@ -636,6 +642,13 @@ class OcrBackend(Protocol):
 `OcrToken` contains text, pixel bbox, normalized confidence, provider/model
 metadata, and optional parent region ID. Domain and application code must not
 import `pytesseract` or Tesseract-specific types.
+
+Tesseract parameters digests include the ordered region references and source
+bboxes as well as runtime options. Consequently a region-plan experiment is
+identifiable in every OCR provenance record even when executable, language,
+padding, and raster settings are identical. The common experiment contract
+permits candidate crop evidence only when `region_plan` is explicitly declared
+as an allowed geometry difference; all earlier experiments remain strict.
 
 The port also provides a deterministic fake backend for unit tests. External OCR
 is reserved for adapter integration and E2E tests.

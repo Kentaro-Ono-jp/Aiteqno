@@ -468,6 +468,33 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
         self.assertFalse(full_page_evidence.crops[0].applied)
         self.assertEqual(full_page_evidence.crops[0].padding_pixels, 0)
 
+    def test_region_plan_identity_changes_parameters_digest(self):
+        response = {
+            "text": ["same"],
+            "conf": ["99"],
+            "left": [10],
+            "top": [11],
+            "width": [20],
+            "height": [13],
+        }
+        backend = TesseractOcrBackend(
+            executable_path="test-tesseract",
+            target_dpi=None,
+            region_padding_px=2,
+        )
+        renamed = OcrRegion(region_ref="grouped-region", bbox=self.region.bbox)
+
+        with _runtime_patches(response=response):
+            control = backend.recognize(self.image, regions=(self.region,))[0]
+        with _runtime_patches(response=response):
+            candidate = backend.recognize(self.image, regions=(renamed,))[0]
+
+        self.assertEqual(control.bbox, candidate.bbox)
+        self.assertNotEqual(
+            control.provenance[0].parameters_digest,
+            candidate.provenance[0].parameters_digest,
+        )
+
     def test_explicit_300_dpi_transform_scales_page_and_reports_evidence(
         self,
     ):

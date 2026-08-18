@@ -86,8 +86,13 @@ fresh 2px observations for ordered `jpn,eng` and `jpn`. Their runtime evidence i
 emitted by the backend and hashes the trained-data files actually used.
 `ocr-language/comparison.json` gates the profile, protected-literal diagnostics,
 normalized table topology, and the unchanged multilingual smoke fixture. The
-runner does not infer dimensions, padding, scales, effective DPI, languages, or
-trained-data identity.
+final `ocr-region-grouping/control/` and `candidate/` observations keep that
+adopted 2px + `jpn` runtime fixed. Their only declared geometry difference is a
+deterministic same-row crop plan. `region-plan-evidence.json` records every
+source bbox, vertical separator, adjacency decision, union bbox, singleton, and
+configuration/plan digest. The runner does not infer dimensions, padding,
+scales, effective DPI, languages, trained-data identity, or grouping from OCR
+text.
 
 1. `ocr-quality-evaluation.json` compares the reviewed source text directly
    with OCR text in the candidate IR. It is written immediately after real
@@ -96,8 +101,9 @@ trained-data identity.
    failure cannot erase or contaminate the completed OCR observation.
 2. `source-quality-evaluation.json` compares reviewed source truth with the
    selected IR and text OCRed from the actual rendered DOCX pages. The selected
-   IR is the supported 2px + `jpn` language candidate; the rejected 300-DPI
-   candidate and the earlier `jpn,eng` language control never enter this layer.
+   IR is the valid selection after the supported 2px + `jpn` language candidate
+   and region-grouping checkpoint; the rejected 300-DPI candidate and the
+   earlier `jpn,eng` language control never enter this layer.
    Matching is independent of candidate element IDs and OCR token segmentation.
 3. `ir-to-docx-restoration-evaluation.json` is the existing evaluator. It asks
    only how much of the selected IR survived DOCX generation. It cannot measure
@@ -116,7 +122,9 @@ authoritative; `candidate_300_dpi_experiment` reports the experiment separately.
 report the independent padding decision and observation.
 `ocr_language_profile_comparison` and `candidate_jpn_only_language_experiment`
 report the profile decision and observation. `selected_profile` is authoritative
-for the downstream layers.
+for the downstream layers. `ocr_region_grouping_comparison` and
+`candidate_geometry_line_grouping_experiment` report the final crop-plan
+decision; `selected_grouping` is authoritative.
 
 The combined state fails if any scored layer fails. An unavailable human check
 remains `pending`; an explicit human rejection is `failed`. A known machine
@@ -227,6 +235,46 @@ and portable production default. Explicit ordered language selection remains
 available, and actual-DOCX diagnostic OCR remains independently fixed at
 `jpn,eng`.
 
+The region-grouping experiment is the third and final Tesseract micro-hypothesis.
+It changes no OCR runtime field. Control and candidate both use the adopted
+approximately 96-DPI/no-upscale raster, exact 2px white crop padding, ordered
+`jpn`, PSM 6, OEM 3, executable/version, and `jpn.traineddata` bytes. Control
+keeps every detector region as one crop. Candidate sorts the same source bboxes
+deterministically and joins adjacent members only when their vertical overlap is
+at least `0.45`, their horizontal gap is no greater than the larger member
+height, and no detected vertical separator crosses that gap and shared row.
+The union remains in original source pixels. OCR text, OCR confidence, fixture
+truth, expected strings, and dictionaries cannot participate in the plan.
+
+Every source region must occur exactly once in the candidate partition. Group
+evidence retains ordered members, member bboxes, union bbox, gap, maximum gap,
+overlap ratio, blocking separators, algorithm version, configuration digest,
+and plan digest. Regions outside groups keep the original reference and bbox.
+Their normalized OCR observations—including text, source/point bbox,
+recognition confidence, provider/model/languages, and provenance other than the
+declared experiment digest—must be byte-equivalent. This makes the isolated
+`phone-label` a negative control; grouping may not dictionary-correct it.
+
+The fixed candidate is `supported` only with at least +1.0 full-text point,
+nondecreasing block/anchor metrics, no lost recovered block/anchor/protected
+literal, no increase in essential misses, a newly recovered `title` or
+`content-structure` block, unchanged singleton observations, passing mixed-
+language smoke, and all common geometry/non-text/topology gates. `regressed` or
+`inconclusive` retains singleton crops; `invalid` stops publication.
+
+The untracked Windows/Tesseract 5.5.3 reconnaissance observation planned 79
+source regions as 50 crops with 11 groups. It changed text accuracy from
+`76.893939` to `77.651515` (+`0.757576`), block coverage from `70.833333` to
+`75.000000`, and anchor recall from `66.666667` to `75.000000`. `title` changed
+from `文妻吾解析評価ント` (55.555556%) to exact `文書解析評価シート` (100%), while
+the singleton phone observation remained `二話` and every singleton/protected/
+smoke/topology check passed. Because +1.0 was not reached, that runtime correctly
+classified the candidate as `inconclusive`; it is reconnaissance, not the
+cross-runtime adoption authority. If the formal Ubuntu observation also leaves
+the 70/60/100 contract or hard gates unmet, this project stops Tesseract
+microtuning and moves the next OCR design to an alternate engine/trained-data
+track.
+
 ## Source-quality contract
 
 Text is normalized with NFKC and all Unicode whitespace removed. Essential
@@ -305,6 +353,20 @@ real-runtime-baseline/
 |       |-- runtime-config-evidence.json
 |       |-- ocr-quality-evaluation.json
 |       `-- bundle/document.ir.json
+|-- ocr-region-grouping/
+|   |-- comparison.json
+|   |-- region-plan-evidence.json
+|   |-- protected-literal-diagnostics.json
+|   |-- singleton-observations.json
+|   |-- environment-evidence.json
+|   |-- control/
+|   |   |-- runtime-config-evidence.json
+|   |   |-- ocr-quality-evaluation.json
+|   |   `-- bundle/document.ir.json
+|   `-- candidate/
+|       |-- runtime-config-evidence.json
+|       |-- ocr-quality-evaluation.json
+|       `-- bundle/document.ir.json
 |-- source-quality-evaluation.json
 |-- ir-to-docx-restoration-evaluation.json
 |-- extraction-diagnostics.json
@@ -331,9 +393,10 @@ later rendering, LibreOffice, or Poppler failure therefore leaves the completed
 comparisons available beside `operational-error.json`. `control-bundle/` and
 `candidate-bundle/` remain the immutable resolution observations; the two
 `ocr-padding/*/bundle/` directories remain the padding observations, and the two
-`ocr-language/*/bundle/` directories remain the language observations. After
-valid comparisons, deterministic table topology is inferred only from the
-language decision's selected IR. The observations remain immutable; the
+`ocr-language/*/bundle/` directories remain the language observations. The two
+`ocr-region-grouping/*/bundle/` directories remain the fresh fixed-runtime crop
+plan observations. After valid comparisons, deterministic table topology is
+inferred only from the profile/grouping decision's selected IR. The observations remain immutable; the
 enriched selection is written through a same-directory staging path and atomically
 published as `bundle/`. Its
 `document.ir.json`, assets, reconstructed DOCX, and preview therefore describe
@@ -341,7 +404,9 @@ one side consistently. The topology step does not change any OCR text, element,
 source metadata, or asset. The 300-DPI experiment always leaves production on
 its control. The reviewed padding change adopts only `supported`; `regressed`
 and `inconclusive` select padding control. The reviewed language change likewise
-adopts only `supported`; otherwise it selects the 2px `jpn,eng` control. Any
+adopts only `supported`; otherwise it selects the 2px `jpn,eng` control. A
+supported language candidate then reaches the grouping checkpoint, which adopts
+groups only for `supported` and otherwise retains fresh singleton control. Any
 `invalid` comparison stops before topology/publication because its evidence
 cannot be trusted.
 

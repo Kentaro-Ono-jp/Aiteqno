@@ -33,6 +33,7 @@ from scripts.run_real_baseline import (
     _select_language_profile,
     _select_ocr_input,
     _select_padding_input,
+    _select_region_grouping,
     run as run_real_baseline,
 )
 
@@ -77,6 +78,7 @@ def _mock_comparison(*, decision: str, reason: str):
             "protected_literals": {"items": [], "lost": []},
         },
         "multilingual_smoke": {"status": "pass"},
+        "singleton_observations": {"status": "pass"},
     }
     comparison.to_dict.return_value = report
     comparison.to_json.return_value = json.dumps(report, sort_keys=True)
@@ -101,6 +103,27 @@ def _mock_language_runtime():
         control_invocations=[_mock_invocation("language-control")],
         candidate_invocations=[_mock_invocation("language-candidate")],
         smoke_invocations=[_mock_invocation("multilingual-smoke")],
+    )
+
+
+def _mock_grouping_plan(label: str):
+    evidence = Mock()
+    evidence.to_dict.return_value = {
+        "schema_version": "1.0",
+        "label": label,
+        "plan_digest": ("4" if label == "control" else "5") * 64,
+    }
+    return evidence
+
+
+def _mock_grouping_runtime():
+    return Mock(
+        control_backend=Mock(),
+        candidate_backend=Mock(),
+        control_invocations=[_mock_invocation("grouping-control")],
+        candidate_invocations=[_mock_invocation("grouping-candidate")],
+        control_plans=[_mock_grouping_plan("control")],
+        candidate_plans=[_mock_grouping_plan("candidate")],
     )
 
 
@@ -407,10 +430,22 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
         self.assertEqual(_select_language_profile("supported"), "jpn")
         self.assertEqual(_select_language_profile("inconclusive"), "jpn-eng")
         self.assertEqual(_select_language_profile("regressed"), "jpn-eng")
-        with self.assertRaisesRegex(RuntimeError, "language-profile comparison is invalid"):
+        with self.assertRaisesRegex(
+            RuntimeError, "language-profile comparison is invalid"
+        ):
             _select_language_profile("invalid")
         with self.assertRaisesRegex(RuntimeError, "unknown OCR language-profile"):
             _select_language_profile("unexpected")
+        self.assertEqual(
+            _select_region_grouping("supported"),
+            "geometry-line-groups",
+        )
+        self.assertEqual(_select_region_grouping("inconclusive"), "single-regions")
+        self.assertEqual(_select_region_grouping("regressed"), "single-regions")
+        with self.assertRaisesRegex(RuntimeError, "grouping comparison is invalid"):
+            _select_region_grouping("invalid")
+        with self.assertRaisesRegex(RuntimeError, "unknown OCR region-grouping"):
+            _select_region_grouping("unexpected")
 
     def test_selected_bundle_publication_never_exposes_a_partial_bundle(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -457,6 +492,8 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 DocumentIR.from_json(document_payload),
                 DocumentIR.from_json(document_payload),
                 DocumentIR.from_json(document_payload),
+                DocumentIR.from_json(document_payload),
+                DocumentIR.from_json(document_payload),
             )
         )
 
@@ -489,6 +526,8 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
             "padding-candidate",
             "language-control",
             "language-candidate",
+            "grouping-control",
+            "grouping-candidate",
         ):
             result = Mock()
             result.to_json.return_value = json.dumps(
@@ -513,6 +552,10 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
         language_comparison = _mock_comparison(
             decision="supported",
             reason="all_japanese_only_language_profile_adoption_conditions_pass",
+        )
+        grouping_comparison = _mock_comparison(
+            decision="supported",
+            reason="all_geometry_only_region_grouping_adoption_conditions_pass",
         )
         render_docx_mock = Mock()
 
@@ -546,6 +589,10 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 patch(
                     "scripts.run_real_baseline._language_runtime",
                     return_value=_mock_language_runtime(),
+                ),
+                patch(
+                    "scripts.run_real_baseline._grouping_runtime",
+                    return_value=_mock_grouping_runtime(),
                 ),
                 patch(
                     "scripts.run_real_baseline._run_language_smoke",
@@ -588,6 +635,10 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                     return_value=language_comparison,
                 ),
                 patch(
+                    "scripts.run_real_baseline.compare_ocr_region_grouping",
+                    return_value=grouping_comparison,
+                ),
+                patch(
                     "scripts.run_real_baseline.render_docx",
                     render_docx_mock,
                 ),
@@ -612,6 +663,15 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 "ocr-language/comparison.json",
                 "ocr-language/protected-literal-diagnostics.json",
                 "ocr-language/multilingual-smoke.json",
+                "ocr-region-grouping/control/ocr-quality-evaluation.json",
+                "ocr-region-grouping/candidate/ocr-quality-evaluation.json",
+                "ocr-region-grouping/control/runtime-config-evidence.json",
+                "ocr-region-grouping/candidate/runtime-config-evidence.json",
+                "ocr-region-grouping/region-plan-evidence.json",
+                "ocr-region-grouping/comparison.json",
+                "ocr-region-grouping/protected-literal-diagnostics.json",
+                "ocr-region-grouping/singleton-observations.json",
+                "ocr-region-grouping/environment-evidence.json",
             ):
                 self.assertTrue((output / relative_path).is_file(), relative_path)
             self.assertTrue((output / "control-bundle" / "document.ir.json").is_file())
@@ -669,6 +729,8 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
         candidate_ir = DocumentIR.from_json(document_payload)
         language_control_ir = DocumentIR.from_json(document_payload)
         language_candidate_ir = DocumentIR.from_json(document_payload)
+        grouping_control_ir = DocumentIR.from_json(document_payload)
+        grouping_candidate_ir = DocumentIR.from_json(document_payload)
         padding_ir = DocumentIR.from_json(document_payload)
 
         def runtime(effective_ocr_dpi):
@@ -731,6 +793,10 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
             decision="supported",
             reason="all_japanese_only_language_profile_adoption_conditions_pass",
         )
+        grouping_comparison = _mock_comparison(
+            decision="supported",
+            reason="all_geometry_only_region_grouping_adoption_conditions_pass",
+        )
 
         with tempfile.TemporaryDirectory() as temporary_directory:
             output = Path(temporary_directory) / "downstream-failure"
@@ -751,9 +817,15 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 elif kind == "ocr-language/control":
                     label = "language-control-bundle"
                     document = language_control_ir
-                else:
+                elif kind == "ocr-language/candidate":
                     label = "language-candidate-bundle"
                     document = language_candidate_ir
+                elif kind == "ocr-region-grouping/control":
+                    label = "grouping-control-bundle"
+                    document = grouping_control_ir
+                else:
+                    label = "grouping-candidate-bundle"
+                    document = grouping_candidate_ir
                 events.append(f"extract:{label}")
                 (bundle_directory / "selection.txt").write_text(
                     label,
@@ -773,14 +845,18 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 events.append("compare-language")
                 return language_comparison
 
+            def completed_grouping_comparison(*_args, **_kwargs):
+                events.append("compare-grouping")
+                return grouping_comparison
+
             def completed_topology(document):
                 events.append("topology")
-                self.assertIs(document, language_candidate_ir)
+                self.assertIs(document, grouping_candidate_ir)
                 return document
 
             def failed_render(document, path, **_kwargs):
                 events.append("render")
-                self.assertIs(document, language_candidate_ir)
+                self.assertIs(document, grouping_candidate_ir)
                 self.assertTrue(path.parent.samefile(output / "bundle"))
                 self.assertEqual(path.name, "reconstructed.docx")
                 raise RuntimeError("forced downstream render failure")
@@ -809,6 +885,10 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                     return_value=_mock_language_runtime(),
                 ),
                 patch(
+                    "scripts.run_real_baseline._grouping_runtime",
+                    return_value=_mock_grouping_runtime(),
+                ),
+                patch(
                     "scripts.run_real_baseline._run_language_smoke",
                     return_value=(_mock_smoke_run(), []),
                 ),
@@ -822,7 +902,7 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 ),
                 patch(
                     "scripts.run_real_baseline._runtime_evidence_from_invocation",
-                    side_effect=(runtime(96), runtime(96)),
+                    side_effect=(runtime(96), runtime(96), runtime(96), runtime(96)),
                 ),
                 patch(
                     "scripts.run_real_baseline.compare_ocr_resolution",
@@ -835,6 +915,10 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 patch(
                     "scripts.run_real_baseline.compare_ocr_language_profile",
                     side_effect=completed_language_comparison,
+                ),
+                patch(
+                    "scripts.run_real_baseline.compare_ocr_region_grouping",
+                    side_effect=completed_grouping_comparison,
                 ),
                 patch(
                     "scripts.run_real_baseline.infer_table_topology",
@@ -900,10 +984,7 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
             self.assertEqual(language["decision"], "supported")
             self.assertTrue(
                 (
-                    output
-                    / "ocr-language"
-                    / "control"
-                    / "ocr-quality-evaluation.json"
+                    output / "ocr-language" / "control" / "ocr-quality-evaluation.json"
                 ).is_file()
             )
             self.assertTrue(
@@ -916,7 +997,7 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
             )
             self.assertEqual(
                 (output / "bundle" / "selection.txt").read_text(encoding="utf-8"),
-                "language-candidate-bundle",
+                "grouping-candidate-bundle",
             )
             self.assertEqual(
                 events,
@@ -926,9 +1007,12 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                     "extract:padding-candidate-bundle",
                     "extract:language-control-bundle",
                     "extract:language-candidate-bundle",
+                    "extract:grouping-control-bundle",
+                    "extract:grouping-candidate-bundle",
                     "compare-resolution",
                     "compare-padding",
                     "compare-language",
+                    "compare-grouping",
                     "topology",
                     "render",
                 ],
@@ -952,6 +1036,8 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
         candidate_ir = DocumentIR.from_json(document_payload)
         language_control_ir = DocumentIR.from_json(document_payload)
         language_candidate_ir = DocumentIR.from_json(document_payload)
+        grouping_control_ir = DocumentIR.from_json(document_payload)
+        grouping_candidate_ir = DocumentIR.from_json(document_payload)
 
         def runtime(effective_ocr_dpi):
             return OcrRuntimeEvidence(
@@ -1020,6 +1106,10 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
             decision="regressed",
             reason="regression:protected_literal:PNG",
         )
+        grouping_comparison = _mock_comparison(
+            decision="inconclusive",
+            reason="required_grouping_target_not_newly_recovered",
+        )
         with tempfile.TemporaryDirectory() as temporary_directory:
             output = Path(temporary_directory) / "unsupported-comparison"
             events = []
@@ -1039,9 +1129,15 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 elif kind == "ocr-language/control":
                     label = "language-control-bundle"
                     document = language_control_ir
-                else:
+                elif kind == "ocr-language/candidate":
                     label = "language-candidate-bundle"
                     document = language_candidate_ir
+                elif kind == "ocr-region-grouping/control":
+                    label = "grouping-control-bundle"
+                    document = grouping_control_ir
+                else:
+                    label = "grouping-candidate-bundle"
+                    document = grouping_candidate_ir
                 events.append(f"extract:{label}")
                 (bundle_directory / "selection.txt").write_text(
                     label,
@@ -1060,6 +1156,10 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
             def completed_language_comparison(*_args, **_kwargs):
                 events.append("compare-language")
                 return language_comparison
+
+            def completed_grouping_comparison(*_args, **_kwargs):
+                events.append("compare-grouping")
+                return grouping_comparison
 
             def failed_render(document, path, **_kwargs):
                 events.append("render")
@@ -1092,6 +1192,10 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                     return_value=_mock_language_runtime(),
                 ),
                 patch(
+                    "scripts.run_real_baseline._grouping_runtime",
+                    return_value=_mock_grouping_runtime(),
+                ),
+                patch(
                     "scripts.run_real_baseline._run_language_smoke",
                     return_value=(_mock_smoke_run(), []),
                 ),
@@ -1105,7 +1209,7 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 ),
                 patch(
                     "scripts.run_real_baseline._runtime_evidence_from_invocation",
-                    side_effect=(runtime(96), runtime(96)),
+                    side_effect=(runtime(96), runtime(96), runtime(96), runtime(96)),
                 ),
                 patch(
                     "scripts.run_real_baseline.compare_ocr_resolution",
@@ -1118,6 +1222,10 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 patch(
                     "scripts.run_real_baseline.compare_ocr_language_profile",
                     side_effect=completed_language_comparison,
+                ),
+                patch(
+                    "scripts.run_real_baseline.compare_ocr_region_grouping",
+                    side_effect=completed_grouping_comparison,
                 ),
                 patch(
                     "scripts.run_real_baseline.render_docx",
@@ -1153,9 +1261,12 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                     "extract:padding-candidate-bundle",
                     "extract:language-control-bundle",
                     "extract:language-candidate-bundle",
+                    "extract:grouping-control-bundle",
+                    "extract:grouping-candidate-bundle",
                     "compare-resolution",
                     "compare-padding",
                     "compare-language",
+                    "compare-grouping",
                     "render",
                 ],
             )
@@ -1205,6 +1316,20 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         summary = json.loads(
             (output / "baseline-summary.json").read_text(encoding="utf-8")
         )
+        grouping_comparison = json.loads(
+            (output / "ocr-region-grouping" / "comparison.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertIn(
+            grouping_comparison["decision"],
+            {"supported", "inconclusive", "regressed"},
+        )
+        grouping_supported = grouping_comparison["decision"] == "supported"
+        expected_grouping = (
+            "geometry-line-groups" if grouping_supported else "single-regions"
+        )
+        expected_grouping_side = "candidate" if grouping_supported else "control"
         self.assertEqual(summary["final_state"], "fail")
         self.assertEqual(summary["expected_current_state"], "fail")
         self.assertEqual(
@@ -1213,7 +1338,7 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         )
         self.assertEqual(
             summary["layers"]["source_to_candidate_ir_ocr"]["text_evidence"],
-            "two-pixel-padding_jpn_ir",
+            f"two-pixel-padding_jpn_{expected_grouping}_ir",
         )
         self.assertEqual(
             summary["layers"]["source_to_candidate_ir_ocr"]["selected_input"],
@@ -1221,11 +1346,15 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         )
         self.assertEqual(
             summary["layers"]["source_to_candidate_ir_ocr"]["report"],
-            "ocr-language/candidate/ocr-quality-evaluation.json",
+            f"ocr-region-grouping/{expected_grouping_side}/ocr-quality-evaluation.json",
         )
         self.assertEqual(
             summary["layers"]["source_to_candidate_ir_ocr"]["selected_profile"],
             "jpn",
+        )
+        self.assertEqual(
+            summary["layers"]["source_to_candidate_ir_ocr"]["selected_grouping"],
+            expected_grouping,
         )
         self.assertEqual(
             summary["layers"]["source_to_actual_docx"]["state"],
@@ -1473,6 +1602,10 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
             summary["layers"]["candidate_ir_to_docx"]["selected_profile"],
             "jpn",
         )
+        self.assertEqual(
+            summary["layers"]["candidate_ir_to_docx"]["selected_grouping"],
+            expected_grouping,
+        )
         padding_control = json.loads(
             (
                 output / "ocr-padding" / "control" / "ocr-quality-evaluation.json"
@@ -1576,40 +1709,26 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         )
         language_control = json.loads(
             (
-                output
-                / "ocr-language"
-                / "control"
-                / "ocr-quality-evaluation.json"
+                output / "ocr-language" / "control" / "ocr-quality-evaluation.json"
             ).read_text(encoding="utf-8")
         )
         language_candidate = json.loads(
             (
-                output
-                / "ocr-language"
-                / "candidate"
-                / "ocr-quality-evaluation.json"
+                output / "ocr-language" / "candidate" / "ocr-quality-evaluation.json"
             ).read_text(encoding="utf-8")
         )
         language_control_evidence = json.loads(
             (
-                output
-                / "ocr-language"
-                / "control"
-                / "runtime-config-evidence.json"
+                output / "ocr-language" / "control" / "runtime-config-evidence.json"
             ).read_text(encoding="utf-8")
         )
         language_candidate_evidence = json.loads(
             (
-                output
-                / "ocr-language"
-                / "candidate"
-                / "runtime-config-evidence.json"
+                output / "ocr-language" / "candidate" / "runtime-config-evidence.json"
             ).read_text(encoding="utf-8")
         )
         language_comparison = json.loads(
-            (output / "ocr-language" / "comparison.json").read_text(
-                encoding="utf-8"
-            )
+            (output / "ocr-language" / "comparison.json").read_text(encoding="utf-8")
         )
         multilingual_smoke = json.loads(
             (output / "ocr-language" / "multilingual-smoke.json").read_text(
@@ -1633,9 +1752,7 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         )
         self.assertFalse(language_comparison["recovery"]["anchors"]["lost"])
         self.assertFalse(language_comparison["recovery"]["logical_blocks"]["lost"])
-        self.assertFalse(
-            language_comparison["recovery"]["protected_literals"]["lost"]
-        )
+        self.assertFalse(language_comparison["recovery"]["protected_literals"]["lost"])
         self.assertLessEqual(
             language_comparison["recovery"]["essential_blocks"][
                 "unrecovered_count_delta"
@@ -1657,17 +1774,11 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
             ["jpn"],
         )
         self.assertEqual(
-            [
-                item["language"]
-                for item in language_control_evidence["traineddata"]
-            ],
+            [item["language"] for item in language_control_evidence["traineddata"]],
             ["jpn", "eng"],
         )
         self.assertEqual(
-            [
-                item["language"]
-                for item in language_candidate_evidence["traineddata"]
-            ],
+            [item["language"] for item in language_candidate_evidence["traineddata"]],
             ["jpn"],
         )
         self.assertEqual(
@@ -1701,15 +1812,95 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
             "supported",
         )
         self.assertEqual(
-            summary["layers"]["ocr_language_profile_comparison"][
-                "selected_profile"
-            ],
+            summary["layers"]["ocr_language_profile_comparison"]["selected_profile"],
             "jpn",
         )
         self.assertTrue(
-            summary["layers"]["ocr_language_profile_comparison"][
-                "candidate_adopted"
-            ]
+            summary["layers"]["ocr_language_profile_comparison"]["candidate_adopted"]
+        )
+        grouping_control = json.loads(
+            (
+                output
+                / "ocr-region-grouping"
+                / "control"
+                / "ocr-quality-evaluation.json"
+            ).read_text(encoding="utf-8")
+        )
+        grouping_candidate = json.loads(
+            (
+                output
+                / "ocr-region-grouping"
+                / "candidate"
+                / "ocr-quality-evaluation.json"
+            ).read_text(encoding="utf-8")
+        )
+        grouping_plans = json.loads(
+            (output / "ocr-region-grouping" / "region-plan-evidence.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        singleton_observations = json.loads(
+            (output / "ocr-region-grouping" / "singleton-observations.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertTrue(
+            all(
+                check["status"] == "pass"
+                for check in grouping_comparison["checks"].values()
+            )
+        )
+        self.assertEqual(
+            grouping_comparison["adoption_policy"]["allowed_geometry_differences"],
+            ["region_plan"],
+        )
+        self.assertFalse(grouping_comparison["recovery"]["anchors"]["lost"])
+        self.assertFalse(grouping_comparison["recovery"]["logical_blocks"]["lost"])
+        self.assertFalse(grouping_comparison["recovery"]["protected_literals"]["lost"])
+        self.assertIn(
+            "title",
+            grouping_comparison["recovery"]["grouping_targets"]["newly_recovered"],
+        )
+        self.assertEqual(singleton_observations["status"], "pass")
+        self.assertEqual(singleton_observations["changed_region_refs"], [])
+        self.assertEqual(grouping_comparison["multilingual_smoke"]["status"], "pass")
+        self.assertEqual(grouping_plans["control"]["counts"]["source_regions"], 79)
+        self.assertEqual(grouping_plans["control"]["counts"]["planned_regions"], 79)
+        self.assertEqual(grouping_plans["control"]["counts"]["groups"], 0)
+        self.assertEqual(grouping_plans["candidate"]["counts"]["source_regions"], 79)
+        self.assertLess(
+            grouping_plans["candidate"]["counts"]["planned_regions"],
+            grouping_plans["control"]["counts"]["planned_regions"],
+        )
+        self.assertGreater(grouping_plans["candidate"]["counts"]["groups"], 0)
+        control_blocks = {
+            value["reference_id"]: value for value in grouping_control["blocks"]
+        }
+        candidate_blocks = {
+            value["reference_id"]: value for value in grouping_candidate["blocks"]
+        }
+        for field_name in ("observed_text", "character_accuracy", "recovered"):
+            self.assertEqual(
+                control_blocks["phone-label"][field_name],
+                candidate_blocks["phone-label"][field_name],
+            )
+        self.assertFalse(control_blocks["title"]["recovered"])
+        self.assertTrue(candidate_blocks["title"]["recovered"])
+        self.assertEqual(
+            candidate_blocks["title"]["observed_text"],
+            "文書解析評価シート",
+        )
+        self.assertEqual(
+            summary["layers"]["ocr_region_grouping_comparison"]["decision"],
+            grouping_comparison["decision"],
+        )
+        self.assertEqual(
+            summary["layers"]["ocr_region_grouping_comparison"]["selected_grouping"],
+            expected_grouping,
+        )
+        self.assertEqual(
+            summary["layers"]["ocr_region_grouping_comparison"]["candidate_adopted"],
+            grouping_supported,
         )
         self.assertTrue((output / "ocr-quality-control-evaluation.json").is_file())
         self.assertTrue((output / "ocr-quality-evaluation.json").is_file())
@@ -1729,13 +1920,19 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         )
         self.assertTrue(
             (
-                output
-                / "ocr-language"
-                / "candidate"
-                / "bundle"
-                / "document.ir.json"
+                output / "ocr-language" / "candidate" / "bundle" / "document.ir.json"
             ).is_file()
         )
+        for side in ("control", "candidate"):
+            self.assertTrue(
+                (
+                    output
+                    / "ocr-region-grouping"
+                    / side
+                    / "bundle"
+                    / "document.ir.json"
+                ).is_file()
+            )
         control_document = DocumentIR.from_json(
             (output / "control-bundle" / "document.ir.json").read_bytes()
         )
@@ -1749,8 +1946,22 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         )
         language_candidate_document = DocumentIR.from_json(
             (
+                output / "ocr-language" / "candidate" / "bundle" / "document.ir.json"
+            ).read_bytes()
+        )
+        grouping_control_document = DocumentIR.from_json(
+            (
                 output
-                / "ocr-language"
+                / "ocr-region-grouping"
+                / "control"
+                / "bundle"
+                / "document.ir.json"
+            ).read_bytes()
+        )
+        grouping_candidate_document = DocumentIR.from_json(
+            (
+                output
+                / "ocr-region-grouping"
                 / "candidate"
                 / "bundle"
                 / "document.ir.json"
@@ -1826,12 +2037,18 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
 
         padding_data = padding_document.to_dict()
         language_candidate_data = language_candidate_document.to_dict()
+        grouping_control_data = grouping_control_document.to_dict()
+        grouping_candidate_data = grouping_candidate_document.to_dict()
         selected_data = selected_document.to_dict()
         selected_page_extensions = selected_data["pages"][0]["extensions"]
         del selected_page_extensions[TABLE_TOPOLOGY_EXTENSION_KEY]
         if not selected_page_extensions:
             del selected_data["pages"][0]["extensions"]
-        self.assertEqual(selected_data, language_candidate_data)
+        self.assertEqual(language_candidate_data, grouping_control_data)
+        self.assertEqual(
+            selected_data,
+            grouping_candidate_data if grouping_supported else grouping_control_data,
+        )
         self.assertNotEqual(selected_data, padding_data)
         self.assertNotEqual(
             (output / "bundle" / "document.ir.json").read_bytes(),
@@ -1850,11 +2067,7 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         self.assertNotEqual(
             (output / "bundle" / "document.ir.json").read_bytes(),
             (
-                output
-                / "ocr-language"
-                / "candidate"
-                / "bundle"
-                / "document.ir.json"
+                output / "ocr-language" / "candidate" / "bundle" / "document.ir.json"
             ).read_bytes(),
         )
         preview_report = json.loads(
