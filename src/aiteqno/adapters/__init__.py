@@ -50,8 +50,14 @@ from .structure import (
     PillowPngDecoder,
 )
 from .tesseract import (
+    DEFAULT_TESSERACT_REGION_PADDING_PX,
     MIN_TESSERACT_MAJOR_VERSION,
+    TESSERACT_CROP_PADDING_MAPPING_POLICY,
+    TESSERACT_CROP_PADDING_OPERATION_ORDER,
+    TESSERACT_CROP_PADDING_VERSION,
     TESSERACT_PROVIDER,
+    TesseractCropPaddingEvidence,
+    TesseractCropPaddingTargetEvidence,
     TesseractOcrBackend,
 )
 
@@ -70,6 +76,7 @@ __all__ = [
     "DEFAULT_PREVIEW_DPI",
     "DEFAULT_PREVIEW_FONT_FALLBACKS",
     "DEFAULT_SUPPORTED_FONTS",
+    "DEFAULT_TESSERACT_REGION_PADDING_PX",
     "DOCUMENT_IR_FILENAME",
     "FAKE_OCR_PROVIDER",
     "FAKE_OCR_PROVIDER_VERSION",
@@ -94,5 +101,10 @@ __all__ = [
     "STRUCTURE_PROVIDER",
     "STRUCTURE_PROVIDER_VERSION",
     "TESSERACT_PROVIDER",
+    "TESSERACT_CROP_PADDING_MAPPING_POLICY",
+    "TESSERACT_CROP_PADDING_OPERATION_ORDER",
+    "TESSERACT_CROP_PADDING_VERSION",
+    "TesseractCropPaddingEvidence",
+    "TesseractCropPaddingTargetEvidence",
     "TesseractOcrBackend",
 ]

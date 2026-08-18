@@ -159,6 +159,15 @@ common hard checks. Confidence and token counts remain diagnostics. The legacy
 300 DPI transform check before using this common decision engine; its artifact
 schema and Issue #47 decision remain unchanged.
 
+`compare_ocr_padding()` uses the same common engine for the independent Issue
+#53 hypothesis. Its runtime allows no differences: both sides remain at the
+decoded source DPI with `jpn,eng`, PSM 6, and OEM 3. The hypothesis check
+requires zero artificial pixels on control, exactly two white RGB pixels on
+every candidate region edge, unchanged source crop bboxes, working dimensions
+of `source + 4` on each axis, backend raster hashes, and the fixed inverse
+mapping policy. Full-page OCR, 300-DPI resizing, fixture truth, and thresholds
+cannot enter this comparison.
+
 The real-runtime runner evaluates this unchanged contract twice in one process:
 first against the production no-upscale control, then against an experimental
 300 DPI OCR-working-raster path. `ocr-resolution-comparison.json` compares the two
@@ -167,5 +176,9 @@ source-coordinate integrity, and non-text IR identity. It does not change the
 OCR evaluator, its 70/60/100 thresholds, or its normalization. Exact scores are
 runtime observations. The current candidate improves aggregate metrics but
 loses a control-recovered logical block, so its decision is `regressed` and the
-control IR remains selected for DOCX work. Even a future `supported` result is
-eligibility evidence only; adoption requires a separate reviewed change.
+control remains the resolution experiment's selection. The separate 0px/2px
+crop-padding comparison applies the same +1pp, aggregate non-regression,
+recovered-set superset, essential-miss, geometry, provenance, and non-text IR
+gates. A `supported` padding result selects the 2px observation for downstream
+DOCX work; `regressed` or `inconclusive` selects control, and `invalid` stops
+before publication.

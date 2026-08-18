@@ -192,8 +192,16 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
                     TesseractOcrBackend(
                         max_working_pixels=max_working_pixels,
                     )
+        for region_padding_px in (True, -1, 2.0):
+            with self.subTest(region_padding_px=region_padding_px):
+                with self.assertRaises(ValueError):
+                    TesseractOcrBackend(region_padding_px=region_padding_px)
+        with self.assertRaises(ValueError):
+            TesseractOcrBackend(target_dpi=300, region_padding_px=2)
         with self.assertRaises(TypeError):
             TesseractOcrBackend(transform_observer="not-callable")
+        with self.assertRaises(TypeError):
+            TesseractOcrBackend(padding_observer="not-callable")
 
     def test_healthcheck_diagnoses_missing_executable_version_and_language(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -231,6 +239,7 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
         backend = TesseractOcrBackend(
             executable_path="test-tesseract",
             target_dpi=None,
+            region_padding_px=0,
         )
 
         with _runtime_patches(response=response):
@@ -268,6 +277,139 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
             self.assertEqual(provenance.source_bbox_px, token.bbox)
             self.assertNotIn(token.text, provenance.notes)
 
+    def test_two_pixel_white_region_padding_restores_exact_source_coordinates(self):
+        response = {
+            "text": ["full", "inner", "padding-only", "edge"],
+            "conf": ["99"] * 4,
+            "left": [0, 7, 0, 1],
+            "top": [0, 6, 0, 1],
+            "width": [154, 80, 2, 3],
+            "height": [54, 20, 2, 3],
+        }
+        observed = []
+        captured = {}
+
+        def inspect_raster(image, **_kwargs):
+            captured["mode"] = image.mode
+            captured["size"] = image.size
+            captured["corners"] = (
+                image.getpixel((0, 0)),
+                image.getpixel((153, 53)),
+            )
+            captured["inside"] = image.getpixel((2, 2))
+            return response
+
+        backend = TesseractOcrBackend(
+            executable_path="test-tesseract",
+            target_dpi=None,
+            region_padding_px=2,
+            padding_observer=observed.append,
+        )
+        black_image = ImageInput(
+            source=self.image.source,
+            mode=PixelMode.RGB8,
+            pixels=bytes((0, 0, 0))
+            * (self.image.source.pixel_width * self.image.source.pixel_height),
+            source_sha256="b" * 64,
+        )
+
+        with _runtime_patches(response_error=inspect_raster):
+            tokens = backend.recognize(black_image, regions=(self.region,))
+
+        self.assertEqual(captured["mode"], "RGB")
+        self.assertEqual(captured["size"], (154, 54))
+        self.assertEqual(captured["corners"], ((255, 255, 255),) * 2)
+        self.assertEqual(captured["inside"], (0, 0, 0))
+        self.assertEqual(
+            [(token.text, token.bbox) for token in tokens],
+            [
+                (
+                    "full",
+                    PixelBoundingBox(x=20, y=30, width=150, height=50),
+                ),
+                (
+                    "inner",
+                    PixelBoundingBox(x=25, y=34, width=80, height=20),
+                ),
+                ("edge", PixelBoundingBox(x=20, y=30, width=2, height=2)),
+            ],
+        )
+        self.assertNotIn("padding-only", [token.text for token in tokens])
+        for token in tokens:
+            self.assertEqual(token.parent_region_ref, "text-region-1")
+            self.assertEqual(token.bbox, token.provenance[0].source_bbox_px)
+            self.assertIn("region_padding_px=2", token.provenance[0].notes)
+        self.assertEqual(len(observed), 1)
+        evidence = observed[0]
+        self.assertTrue(evidence.enabled)
+        self.assertEqual(evidence.configured_padding_pixels, 2)
+        self.assertEqual(evidence.border_color, (255, 255, 255))
+        self.assertEqual(evidence.scope, "region-crops-only")
+        crop = evidence.crops[0]
+        self.assertEqual(crop.source_bbox, self.region.bbox)
+        self.assertEqual((crop.source_width, crop.source_height), (150, 50))
+        self.assertEqual((crop.pre_padding_width, crop.pre_padding_height), (150, 50))
+        self.assertEqual((crop.working_width, crop.working_height), (154, 54))
+        self.assertEqual(crop.padding_pixels, 2)
+        self.assertTrue(crop.applied)
+        self.assertEqual(len(crop.working_raster_sha256), 64)
+        with self.assertRaises(FrozenInstanceError):
+            evidence.configured_padding_pixels = 0
+
+    def test_region_padding_is_noop_for_full_page_and_changes_region_digest(self):
+        def run(padding=None, *, regions=(), omit_padding=False):
+            configured_padding = 2 if omit_padding else padding
+            applied_padding = configured_padding if regions else 0
+            response = {
+                "text": ["same"],
+                "conf": ["99"],
+                "left": [10 + applied_padding],
+                "top": [11 + applied_padding],
+                "width": [20],
+                "height": [13],
+            }
+            observed = []
+            padding_arguments = (
+                {} if omit_padding else {"region_padding_px": configured_padding}
+            )
+            backend = TesseractOcrBackend(
+                executable_path="test-tesseract",
+                target_dpi=None,
+                padding_observer=observed.append,
+                **padding_arguments,
+            )
+            with _runtime_patches(response=response) as image_to_data:
+                token = backend.recognize(self.image, regions=regions)[0]
+            return token, observed[0], image_to_data.call_args.args[0].size
+
+        control, control_evidence, _ = run(0, regions=(self.region,))
+        candidate, candidate_evidence, _ = run(2, regions=(self.region,))
+        default, default_evidence, _ = run(
+            regions=(self.region,),
+            omit_padding=True,
+        )
+        full_page, full_page_evidence, full_page_size = run(2)
+
+        self.assertEqual(control.bbox, candidate.bbox)
+        self.assertNotEqual(
+            control.provenance[0].parameters_digest,
+            candidate.provenance[0].parameters_digest,
+        )
+        self.assertFalse(control_evidence.enabled)
+        self.assertEqual(control_evidence.crops[0].padding_pixels, 0)
+        self.assertEqual(candidate_evidence.crops[0].padding_pixels, 2)
+        self.assertEqual(default, candidate)
+        self.assertEqual(default_evidence, candidate_evidence)
+        self.assertEqual(full_page_size, (200, 100))
+        self.assertEqual(
+            full_page.bbox,
+            PixelBoundingBox(x=10, y=11, width=20, height=13),
+        )
+        self.assertTrue(full_page_evidence.enabled)
+        self.assertIsNone(full_page_evidence.crops[0].region_ref)
+        self.assertFalse(full_page_evidence.crops[0].applied)
+        self.assertEqual(full_page_evidence.crops[0].padding_pixels, 0)
+
     def test_explicit_300_dpi_transform_scales_page_and_reports_evidence(
         self,
     ):
@@ -283,6 +425,7 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
         backend = TesseractOcrBackend(
             executable_path="test-tesseract",
             target_dpi=300,
+            region_padding_px=0,
             transform_observer=observed.append,
         )
 
@@ -341,6 +484,7 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
         backend = TesseractOcrBackend(
             executable_path="test-tesseract",
             target_dpi=300,
+            region_padding_px=0,
             transform_observer=observed.append,
         )
 
@@ -373,6 +517,7 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
         backend = TesseractOcrBackend(
             executable_path="test-tesseract",
             target_dpi=300,
+            region_padding_px=0,
             transform_observer=observed.append,
         )
 
@@ -400,7 +545,15 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
 
         def run(target_dpi=None, *, omit_target_dpi=False):
             observed = []
-            target_arguments = {} if omit_target_dpi else {"target_dpi": target_dpi}
+            if omit_target_dpi:
+                target_arguments = {}
+            elif target_dpi is None:
+                target_arguments = {"target_dpi": None}
+            else:
+                target_arguments = {
+                    "target_dpi": target_dpi,
+                    "region_padding_px": 0,
+                }
             backend = TesseractOcrBackend(
                 executable_path="test-tesseract",
                 transform_observer=observed.append,
@@ -440,6 +593,7 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
         backend = TesseractOcrBackend(
             executable_path="test-tesseract",
             target_dpi=300,
+            region_padding_px=0,
             max_working_pixels=100,
         )
         captured_crops = []
@@ -471,6 +625,45 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
         backend = TesseractOcrBackend(
             executable_path="test-tesseract",
             target_dpi=300,
+            region_padding_px=0,
+        )
+        captured_crops = []
+        captured_working = []
+
+        from aiteqno.adapters import tesseract as tesseract_adapter
+
+        target_image = tesseract_adapter._target_image
+
+        def capture_target(*args, **kwargs):
+            result = target_image(*args, **kwargs)
+            captured_crops.append(result[0])
+            return result
+
+        def fail_tesseract(image, **_kwargs):
+            captured_working.append(image)
+            raise pytesseract.TesseractError(1, "engine failed")
+
+        with _runtime_patches(response_error=fail_tesseract):
+            with patch(
+                "aiteqno.adapters.tesseract._target_image",
+                side_effect=capture_target,
+            ):
+                with self.assertRaises(OcrBackendError) as context:
+                    backend.recognize(self.image, regions=(self.region,))
+
+        self.assertEqual(context.exception.code, "ocr_engine_failure")
+        self.assertEqual(len(captured_crops), 1)
+        self.assertEqual(len(captured_working), 1)
+        self.assertIsNot(captured_crops[0], captured_working[0])
+        for raster in (*captured_crops, *captured_working):
+            with self.assertRaises(ValueError):
+                raster.load()
+
+    def test_tesseract_failure_closes_source_crop_and_padded_working_image(self):
+        backend = TesseractOcrBackend(
+            executable_path="test-tesseract",
+            target_dpi=None,
+            region_padding_px=2,
         )
         captured_crops = []
         captured_working = []
@@ -508,6 +701,7 @@ class TesseractOcrBackendUnitTest(unittest.TestCase):
         backend = TesseractOcrBackend(
             executable_path="test-tesseract",
             target_dpi=300,
+            region_padding_px=0,
         )
         captured_crops = []
 

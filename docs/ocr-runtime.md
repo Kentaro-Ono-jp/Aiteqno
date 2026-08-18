@@ -86,6 +86,25 @@ current 300 DPI result is `regressed`, so the candidate is evidence only and is
 not a production default. OCR input resolution is adapter-specific and is not
 added to the portable `OcrOptions` contract.
 
+## OCR region crop padding
+
+The production Tesseract adapter adds an artificial two-source-pixel white RGB
+border around each structure-provided OCR region crop immediately before the
+engine call. It does not expand the crop's source bbox, change decoded source
+pixels, affect structure extraction, or pad full-page OCR. Tesseract TSV bboxes
+are first clipped in the padded raster, the two-pixel border is subtracted, and
+the result is clamped to the original crop before its source offset is added.
+Tokens that fall wholly inside the artificial border are discarded. Public
+token bboxes and OCR provenance therefore remain in original PNG pixels.
+
+`region_padding_px=0` is the same-runtime control and
+`region_padding_px=2` is the adopted production candidate. The adapter rejects
+combining crop padding with the separate 300-DPI experiment so one comparison
+never changes two OCR-input variables. Immutable backend evidence records the
+padding version, exact white color, operation order, source/pre-padding/working
+dimensions, Pillow version, raster hashes, and inverse-mapping policy. The
+padding setting is also part of each OCR provenance parameter digest.
+
 ## Ubuntu and GitHub Actions
 
 The repository CI installs the distro-provided Tesseract 5.x runtime and

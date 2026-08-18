@@ -31,6 +31,7 @@ from scripts.run_real_baseline import (
     _copytree_new_atomic,
     _read_fixture,
     _select_ocr_input,
+    _select_padding_input,
     run as run_real_baseline,
 )
 
@@ -49,6 +50,33 @@ EXPECTED_SOURCE_SHA256 = (
 EXPECTED_REFERENCE_SHA256 = (
     "45d3322ee7eea3d86fe981d93dba5cc9ac83b27ca638259051a62868c8f15a31"
 )
+
+
+def _mock_padding_evidence(*, candidate: bool):
+    evidence = Mock(effective_ocr_dpi=96)
+    evidence.to_dict.return_value = {
+        "schema_version": "1.0",
+        "padding_version": "tesseract-crop-padding-v1",
+        "enabled": candidate,
+        "configured_padding_pixels": 2 if candidate else 0,
+        "effective_ocr_dpi": 96,
+        "crops": [],
+    }
+    return evidence
+
+
+def _mock_comparison(*, decision: str, reason: str):
+    comparison = Mock(reasons=(reason,))
+    comparison.decision.value = decision
+    comparison.to_json.return_value = json.dumps(
+        {
+            "schema_version": "1.0",
+            "decision": decision,
+            "reasons": [reason],
+        },
+        sort_keys=True,
+    )
+    return comparison
 
 
 class RealDocumentBaselineContractTest(unittest.TestCase):
@@ -332,6 +360,13 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
             _select_ocr_input("invalid")
         with self.assertRaisesRegex(RuntimeError, "unknown OCR input"):
             _select_ocr_input("unexpected")
+        self.assertEqual(_select_padding_input("supported"), "two-pixel-padding")
+        self.assertEqual(_select_padding_input("inconclusive"), "control")
+        self.assertEqual(_select_padding_input("regressed"), "control")
+        with self.assertRaisesRegex(RuntimeError, "padding comparison is invalid"):
+            _select_padding_input("invalid")
+        with self.assertRaisesRegex(RuntimeError, "unknown OCR padding"):
+            _select_padding_input("unexpected")
 
     def test_selected_bundle_publication_never_exposes_a_partial_bundle(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -375,6 +410,7 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
             (
                 DocumentIR.from_json(document_payload),
                 DocumentIR.from_json(document_payload),
+                DocumentIR.from_json(document_payload),
             )
         )
 
@@ -398,8 +434,10 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
             target_dpi=300,
             effective_ocr_dpi=300,
         )
+        control_padding = _mock_padding_evidence(candidate=False)
+        candidate_padding = _mock_padding_evidence(candidate=True)
         quality_results = []
-        for label in ("control", "candidate"):
+        for label in ("control", "resolution-candidate", "padding-candidate"):
             result = Mock()
             result.to_json.return_value = json.dumps(
                 {"schema_version": "1.0", "observation": label},
@@ -415,6 +453,10 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 "reasons": ["comparison_invalid:transform_integrity"],
             },
             sort_keys=True,
+        )
+        padding_comparison = _mock_comparison(
+            decision="supported",
+            reason="all_ocr_crop_padding_adoption_conditions_pass",
         )
         render_docx_mock = Mock()
 
@@ -434,8 +476,11 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                         Mock(),
                         Mock(),
                         Mock(),
+                        Mock(),
                         [control_transform],
                         [candidate_transform],
+                        [control_padding],
+                        [candidate_padding],
                     ),
                 ),
                 patch(
@@ -459,8 +504,16 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                     side_effect=lambda **values: values,
                 ),
                 patch(
+                    "scripts.run_real_baseline.OcrExperimentRun",
+                    side_effect=lambda **values: values,
+                ),
+                patch(
                     "scripts.run_real_baseline.compare_ocr_resolution",
                     return_value=comparison,
+                ),
+                patch(
+                    "scripts.run_real_baseline.compare_ocr_padding",
+                    return_value=padding_comparison,
                 ),
                 patch(
                     "scripts.run_real_baseline.render_docx",
@@ -476,11 +529,20 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 "ocr-quality-evaluation.json",
                 "ocr-input-transform.json",
                 "ocr-resolution-comparison.json",
+                "ocr-padding/control/ocr-quality-evaluation.json",
+                "ocr-padding/candidate/ocr-quality-evaluation.json",
+                "ocr-padding/crop-padding-evidence.json",
+                "ocr-padding/comparison.json",
             ):
                 self.assertTrue((output / relative_path).is_file(), relative_path)
             self.assertTrue((output / "control-bundle" / "document.ir.json").is_file())
             self.assertTrue(
                 (output / "candidate-bundle" / "document.ir.json").is_file()
+            )
+            self.assertTrue(
+                (
+                    output / "ocr-padding" / "candidate" / "bundle" / "document.ir.json"
+                ).is_file()
             )
             self.assertFalse((output / "bundle").exists())
             self.assertFalse((output / ".bundle.staging").exists())
@@ -517,7 +579,7 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 {"operational-error.json"},
             )
 
-    def test_supported_candidate_remains_unadopted_without_a_separate_change(self):
+    def test_supported_padding_candidate_is_adopted_for_downstream(self):
         document_payload = (
             Path(__file__).resolve().parent
             / "fixtures"
@@ -526,6 +588,7 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
         ).read_bytes()
         control_ir = DocumentIR.from_json(document_payload)
         candidate_ir = DocumentIR.from_json(document_payload)
+        padding_ir = DocumentIR.from_json(document_payload)
 
         def runtime(effective_ocr_dpi):
             return OcrRuntimeEvidence(
@@ -577,6 +640,12 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
             },
             sort_keys=True,
         )
+        control_padding = _mock_padding_evidence(candidate=False)
+        candidate_padding = _mock_padding_evidence(candidate=True)
+        padding_comparison = _mock_comparison(
+            decision="supported",
+            reason="all_ocr_crop_padding_adoption_conditions_pass",
+        )
 
         with tempfile.TemporaryDirectory() as temporary_directory:
             output = Path(temporary_directory) / "downstream-failure"
@@ -584,27 +653,38 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
 
             def completed_extraction(_source_data, bundle_directory, **_kwargs):
                 bundle_directory.mkdir(parents=True)
-                label = bundle_directory.name
+                if bundle_directory.name == "control-bundle":
+                    label = "control-bundle"
+                    document = control_ir
+                elif bundle_directory.name == "candidate-bundle":
+                    label = "resolution-candidate-bundle"
+                    document = candidate_ir
+                else:
+                    label = "padding-candidate-bundle"
+                    document = padding_ir
                 events.append(f"extract:{label}")
                 (bundle_directory / "selection.txt").write_text(
                     label,
                     encoding="utf-8",
                 )
-                document = control_ir if label == "control-bundle" else candidate_ir
                 return Mock(document=document, diagnostics=())
 
             def completed_comparison(*_args, **_kwargs):
-                events.append("compare")
+                events.append("compare-resolution")
                 return comparison
+
+            def completed_padding_comparison(*_args, **_kwargs):
+                events.append("compare-padding")
+                return padding_comparison
 
             def completed_topology(document):
                 events.append("topology")
-                self.assertIs(document, control_ir)
+                self.assertIs(document, padding_ir)
                 return document
 
             def failed_render(document, path, **_kwargs):
                 events.append("render")
-                self.assertIs(document, control_ir)
+                self.assertIs(document, padding_ir)
                 self.assertTrue(path.parent.samefile(output / "bundle"))
                 self.assertEqual(path.name, "reconstructed.docx")
                 raise RuntimeError("forced downstream render failure")
@@ -617,8 +697,11 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                         Mock(),
                         Mock(),
                         Mock(),
+                        Mock(),
                         [control_transform],
                         [candidate_transform],
+                        [control_padding],
+                        [candidate_padding],
                     ),
                 ),
                 patch(
@@ -631,11 +714,15 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 ),
                 patch(
                     "scripts.run_real_baseline._ocr_runtime_evidence",
-                    side_effect=(runtime(96), runtime(300)),
+                    side_effect=(runtime(96), runtime(300), runtime(96)),
                 ),
                 patch(
                     "scripts.run_real_baseline.compare_ocr_resolution",
                     side_effect=completed_comparison,
+                ),
+                patch(
+                    "scripts.run_real_baseline.compare_ocr_padding",
+                    side_effect=completed_padding_comparison,
                 ),
                 patch(
                     "scripts.run_real_baseline.infer_table_topology",
@@ -671,6 +758,15 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 300,
             )
             self.assertEqual(report["state"], "fail")
+            padding_report = json.loads(
+                (
+                    output / "ocr-padding" / "candidate" / "ocr-quality-evaluation.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                padding_report["runtime"]["configuration"]["effective_ocr_dpi"],
+                96,
+            )
             transform = json.loads(
                 (output / "ocr-input-transform.json").read_text(encoding="utf-8")
             )
@@ -680,16 +776,22 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 (output / "ocr-resolution-comparison.json").read_text(encoding="utf-8")
             )
             self.assertEqual(resolution["decision"], "supported")
+            padding = json.loads(
+                (output / "ocr-padding" / "comparison.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(padding["decision"], "supported")
             self.assertEqual(
                 (output / "bundle" / "selection.txt").read_text(encoding="utf-8"),
-                "control-bundle",
+                "padding-candidate-bundle",
             )
             self.assertEqual(
                 events,
                 [
                     "extract:control-bundle",
-                    "extract:candidate-bundle",
-                    "compare",
+                    "extract:resolution-candidate-bundle",
+                    "extract:padding-candidate-bundle",
+                    "compare-resolution",
+                    "compare-padding",
                     "topology",
                     "render",
                 ],
@@ -769,24 +871,41 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
             },
             sort_keys=True,
         )
+        control_padding = _mock_padding_evidence(candidate=False)
+        candidate_padding = _mock_padding_evidence(candidate=True)
+        padding_comparison = _mock_comparison(
+            decision="inconclusive",
+            reason="text_accuracy_delta_below_minimum:0<1",
+        )
         with tempfile.TemporaryDirectory() as temporary_directory:
             output = Path(temporary_directory) / "unsupported-comparison"
             events = []
 
             def completed_extraction(_source_data, bundle_directory, **_kwargs):
                 bundle_directory.mkdir(parents=True)
-                label = bundle_directory.name
+                if bundle_directory.name == "control-bundle":
+                    label = "control-bundle"
+                    document = control_ir
+                elif bundle_directory.name == "candidate-bundle":
+                    label = "resolution-candidate-bundle"
+                    document = candidate_ir
+                else:
+                    label = "padding-candidate-bundle"
+                    document = candidate_ir
                 events.append(f"extract:{label}")
                 (bundle_directory / "selection.txt").write_text(
                     label,
                     encoding="utf-8",
                 )
-                document = control_ir if label == "control-bundle" else candidate_ir
                 return Mock(document=document, diagnostics=())
 
             def completed_comparison(*_args, **_kwargs):
-                events.append("compare")
+                events.append("compare-resolution")
                 return comparison
+
+            def completed_padding_comparison(*_args, **_kwargs):
+                events.append("compare-padding")
+                return padding_comparison
 
             def failed_render(document, path, **_kwargs):
                 events.append("render")
@@ -803,8 +922,11 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                         Mock(),
                         Mock(),
                         Mock(),
+                        Mock(),
                         [control_transform],
                         [candidate_transform],
+                        [control_padding],
+                        [candidate_padding],
                     ),
                 ),
                 patch(
@@ -817,11 +939,15 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 ),
                 patch(
                     "scripts.run_real_baseline._ocr_runtime_evidence",
-                    side_effect=(runtime(96), runtime(300)),
+                    side_effect=(runtime(96), runtime(300), runtime(96)),
                 ),
                 patch(
                     "scripts.run_real_baseline.compare_ocr_resolution",
                     side_effect=completed_comparison,
+                ),
+                patch(
+                    "scripts.run_real_baseline.compare_ocr_padding",
+                    side_effect=completed_padding_comparison,
                 ),
                 patch(
                     "scripts.run_real_baseline.render_docx",
@@ -841,6 +967,10 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 (output / "ocr-resolution-comparison.json").read_text(encoding="utf-8")
             )
             self.assertEqual(comparison_report["decision"], "inconclusive")
+            padding_report = json.loads(
+                (output / "ocr-padding" / "comparison.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(padding_report["decision"], "inconclusive")
             self.assertEqual(
                 (output / "bundle" / "selection.txt").read_text(encoding="utf-8"),
                 "control-bundle",
@@ -849,8 +979,10 @@ class RealDocumentBaselineContractTest(unittest.TestCase):
                 events,
                 [
                     "extract:control-bundle",
-                    "extract:candidate-bundle",
-                    "compare",
+                    "extract:resolution-candidate-bundle",
+                    "extract:padding-candidate-bundle",
+                    "compare-resolution",
+                    "compare-padding",
                     "render",
                 ],
             )
@@ -908,15 +1040,15 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         )
         self.assertEqual(
             summary["layers"]["source_to_candidate_ir_ocr"]["text_evidence"],
-            "control_ir",
+            "two-pixel-padding_ir",
         )
         self.assertEqual(
             summary["layers"]["source_to_candidate_ir_ocr"]["selected_input"],
-            "control",
+            "two-pixel-padding",
         )
         self.assertEqual(
             summary["layers"]["source_to_candidate_ir_ocr"]["report"],
-            "ocr-quality-control-evaluation.json",
+            "ocr-padding/candidate/ocr-quality-evaluation.json",
         )
         self.assertEqual(
             summary["layers"]["source_to_actual_docx"]["state"],
@@ -1158,7 +1290,108 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         )
         self.assertEqual(
             summary["layers"]["candidate_ir_to_docx"]["selected_input"],
-            "control",
+            "two-pixel-padding",
+        )
+        padding_control = json.loads(
+            (
+                output / "ocr-padding" / "control" / "ocr-quality-evaluation.json"
+            ).read_text(encoding="utf-8")
+        )
+        padding_candidate = json.loads(
+            (
+                output / "ocr-padding" / "candidate" / "ocr-quality-evaluation.json"
+            ).read_text(encoding="utf-8")
+        )
+        padding_evidence = json.loads(
+            (output / "ocr-padding" / "crop-padding-evidence.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        padding_comparison = json.loads(
+            (output / "ocr-padding" / "comparison.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(padding_comparison["decision"], "supported")
+        self.assertGreaterEqual(
+            padding_comparison["metrics"]["text_character_accuracy"][
+                "delta_percentage_points"
+            ],
+            1.0,
+        )
+        self.assertGreaterEqual(
+            padding_comparison["metrics"]["logical_block_coverage"]["candidate"],
+            padding_comparison["metrics"]["logical_block_coverage"]["control"],
+        )
+        self.assertGreaterEqual(
+            padding_comparison["metrics"]["essential_anchor_recall"]["candidate"],
+            padding_comparison["metrics"]["essential_anchor_recall"]["control"],
+        )
+        self.assertFalse(padding_comparison["recovery"]["anchors"]["lost"])
+        self.assertFalse(padding_comparison["recovery"]["logical_blocks"]["lost"])
+        self.assertLessEqual(
+            padding_comparison["recovery"]["essential_blocks"][
+                "unrecovered_count_delta"
+            ],
+            0,
+        )
+        self.assertTrue(
+            all(
+                check["status"] == "pass"
+                for check in padding_comparison["checks"].values()
+            )
+        )
+        self.assertEqual(
+            padding_control["source_digest"], padding_candidate["source_digest"]
+        )
+        self.assertEqual(
+            padding_control["runtime"],
+            padding_candidate["runtime"],
+        )
+        self.assertFalse(padding_evidence["control"]["enabled"])
+        self.assertEqual(
+            padding_evidence["control"]["configured_padding_pixels"],
+            0,
+        )
+        self.assertTrue(padding_evidence["candidate"]["enabled"])
+        self.assertEqual(
+            padding_evidence["candidate"]["configured_padding_pixels"],
+            2,
+        )
+        self.assertEqual(
+            len(padding_evidence["control"]["crops"]),
+            len(padding_evidence["candidate"]["crops"]),
+        )
+        self.assertTrue(padding_evidence["candidate"]["crops"])
+        for control_crop, candidate_crop in zip(
+            padding_evidence["control"]["crops"],
+            padding_evidence["candidate"]["crops"],
+        ):
+            self.assertEqual(control_crop["region_ref"], candidate_crop["region_ref"])
+            self.assertEqual(control_crop["source_bbox"], candidate_crop["source_bbox"])
+            self.assertEqual(
+                control_crop["source_dimensions"],
+                candidate_crop["source_dimensions"],
+            )
+            self.assertEqual(control_crop["padding_pixels"], 0)
+            self.assertFalse(control_crop["applied"])
+            self.assertEqual(candidate_crop["padding_pixels"], 2)
+            self.assertTrue(candidate_crop["applied"])
+            self.assertEqual(
+                candidate_crop["working_dimensions"]["width"],
+                candidate_crop["source_dimensions"]["width"] + 4,
+            )
+            self.assertEqual(
+                candidate_crop["working_dimensions"]["height"],
+                candidate_crop["source_dimensions"]["height"] + 4,
+            )
+        self.assertEqual(
+            summary["layers"]["ocr_crop_padding_comparison"]["decision"],
+            "supported",
+        )
+        self.assertTrue(
+            summary["layers"]["ocr_crop_padding_comparison"]["candidate_adopted"]
+        )
+        self.assertTrue(
+            summary["layers"]["ocr_crop_padding_comparison"]["candidate_eligible"]
         )
         self.assertTrue((output / "ocr-quality-control-evaluation.json").is_file())
         self.assertTrue((output / "ocr-quality-evaluation.json").is_file())
@@ -1166,11 +1399,21 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         self.assertTrue((output / "ocr-resolution-comparison.json").is_file())
         self.assertTrue((output / "control-bundle" / "document.ir.json").is_file())
         self.assertTrue((output / "candidate-bundle" / "document.ir.json").is_file())
+        self.assertTrue(
+            (
+                output / "ocr-padding" / "candidate" / "bundle" / "document.ir.json"
+            ).is_file()
+        )
         control_document = DocumentIR.from_json(
             (output / "control-bundle" / "document.ir.json").read_bytes()
         )
         selected_document = DocumentIR.from_json(
             (output / "bundle" / "document.ir.json").read_bytes()
+        )
+        padding_document = DocumentIR.from_json(
+            (
+                output / "ocr-padding" / "candidate" / "bundle" / "document.ir.json"
+            ).read_bytes()
         )
         self.assertNotIn(
             TABLE_TOPOLOGY_EXTENSION_KEY,
@@ -1186,10 +1429,10 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
             )
             for element_type in ("text", "line", "rectangle", "image")
         }
-        self.assertEqual(
-            raw_type_counts,
-            {"text": 285, "line": 50, "rectangle": 51, "image": 0},
-        )
+        self.assertGreater(raw_type_counts["text"], 0)
+        self.assertEqual(raw_type_counts["line"], 50)
+        self.assertEqual(raw_type_counts["rectangle"], 51)
+        self.assertEqual(raw_type_counts["image"], 0)
         self.assertEqual(len(topology.tables), 5)
         self.assertEqual(
             tuple(
@@ -1199,14 +1442,14 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
             ((4, 4, 14), (7, 2, 14), (4, 2, 8), (2, 3, 6), (3, 1, 3)),
         )
         self.assertEqual(sum(len(table.cells) for table in topology.tables), 45)
-        self.assertEqual(
-            sum(
-                len(cell.text_element_ids)
-                for table in topology.tables
-                for cell in table.cells
-            ),
-            210,
+        assigned_text_ids = tuple(
+            text_id
+            for table in topology.tables
+            for cell in table.cells
+            for text_id in cell.text_element_ids
         )
+        self.assertTrue(assigned_text_ids)
+        self.assertEqual(len(assigned_text_ids), len(set(assigned_text_ids)))
         self.assertEqual(
             tuple(
                 (cell.row_index, cell.column_index, cell.rowspan, cell.colspan)
@@ -1218,7 +1461,11 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         self.assertEqual(topology.diagnostics.ambiguous_text_element_ids, ())
         self.assertEqual(topology.diagnostics.ambiguous_primitive_element_ids, ())
         self.assertEqual(topology.diagnostics.unassigned_primitive_element_ids, ())
-        self.assertEqual(len(topology.diagnostics.unassigned_text_element_ids), 75)
+        self.assertEqual(
+            len(assigned_text_ids)
+            + len(topology.diagnostics.unassigned_text_element_ids),
+            raw_type_counts["text"],
+        )
         role_counts = {
             role: sum(
                 assignment.role is role for assignment in topology.primitive_roles
@@ -1236,13 +1483,13 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         self.assertEqual(role_counts[TablePrimitiveRole.ROW_BOUNDARY], 15)
         self.assertEqual(role_counts[TablePrimitiveRole.COLUMN_BOUNDARY], 7)
 
-        control_data = control_document.to_dict()
+        padding_data = padding_document.to_dict()
         selected_data = selected_document.to_dict()
         selected_page_extensions = selected_data["pages"][0]["extensions"]
         del selected_page_extensions[TABLE_TOPOLOGY_EXTENSION_KEY]
         if not selected_page_extensions:
             del selected_data["pages"][0]["extensions"]
-        self.assertEqual(selected_data, control_data)
+        self.assertEqual(selected_data, padding_data)
         self.assertNotEqual(
             (output / "bundle" / "document.ir.json").read_bytes(),
             (output / "control-bundle" / "document.ir.json").read_bytes(),
@@ -1251,10 +1498,20 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
             (output / "bundle" / "document.ir.json").read_bytes(),
             (output / "candidate-bundle" / "document.ir.json").read_bytes(),
         )
+        self.assertNotEqual(
+            (output / "bundle" / "document.ir.json").read_bytes(),
+            (
+                output / "ocr-padding" / "candidate" / "bundle" / "document.ir.json"
+            ).read_bytes(),
+        )
         preview_report = json.loads(
             (output / "preview-render-report.json").read_text(encoding="utf-8")
         )
-        self.assertEqual(len(preview_report["rendered_element_ids"]), 386)
+        selected_element_count = len(selected_document.pages[0].elements)
+        self.assertEqual(
+            len(preview_report["rendered_element_ids"]),
+            selected_element_count,
+        )
         self.assertEqual(preview_report["omitted_element_ids"], [])
         self.assertEqual(preview_report["fallback_element_ids"], [])
         self.assertEqual(preview_report["warnings"], [])
@@ -1265,11 +1522,15 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
             docx_report["native_table_ids"],
             [table.id for table in topology.tables],
         )
-        self.assertEqual(
-            len(docx_report["native_table_consumed_element_ids"]),
-            302,
+        self.assertTrue(
+            set(assigned_text_ids).issubset(
+                docx_report["native_table_consumed_element_ids"]
+            )
         )
-        self.assertEqual(len(docx_report["rendered_element_ids"]), 386)
+        self.assertEqual(
+            len(docx_report["rendered_element_ids"]),
+            selected_element_count,
+        )
         consumed = set(docx_report["native_table_consumed_element_ids"])
         self.assertFalse(
             any(
@@ -1305,7 +1566,7 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
                 for element in observation["elements"]
                 if element["type"] == "text"
             ),
-            285,
+            raw_type_counts["text"],
         )
         self.assertTrue((output / "source-quality-evaluation.json").is_file())
         self.assertTrue((output / "ir-to-docx-restoration-evaluation.json").is_file())

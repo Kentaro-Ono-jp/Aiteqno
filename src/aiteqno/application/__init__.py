@@ -50,6 +50,11 @@ from .ocr_quality import (
     ocr_character_accuracy,
 )
 from .ocr_experiment import compare_ocr_experiment
+from .ocr_padding import (
+    OCR_PADDING_EVALUATOR_NAME,
+    OCR_PADDING_EVALUATOR_VERSION,
+    compare_ocr_padding,
+)
 from .ocr_resolution import (
     DEFAULT_MINIMUM_TEXT_ACCURACY_DELTA,
     OCR_RESOLUTION_EVALUATOR_NAME,
@@ -87,6 +92,8 @@ __all__ = [
     "MIN_TEXT_ELEMENT_SIMILARITY",
     "OCR_QUALITY_EVALUATOR_NAME",
     "OCR_QUALITY_EVALUATOR_VERSION",
+    "OCR_PADDING_EVALUATOR_NAME",
+    "OCR_PADDING_EVALUATOR_VERSION",
     "OcrQualityConfig",
     "DEFAULT_MINIMUM_TEXT_ACCURACY_DELTA",
     "OCR_RESOLUTION_EVALUATOR_NAME",
@@ -106,6 +113,7 @@ __all__ = [
     "evaluate_restoration_input",
     "evaluate_ocr_quality",
     "compare_ocr_experiment",
+    "compare_ocr_padding",
     "compare_ocr_resolution",
     "evaluate_source_baseline",
     "infer_table_topology",
