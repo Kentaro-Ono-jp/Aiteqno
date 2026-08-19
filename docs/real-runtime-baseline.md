@@ -494,9 +494,63 @@ repair-free LibreOffice rendering.
 
 The combined score remains below the approximate 70% project target. The
 largest renderer-side residual is still visible text, and all 374 text runs
-still report `Noto Sans CJK JP` to `Arial` substitution. The next bounded step
-is therefore same-runtime Japanese font stabilization; OCR settings and the
-selected IR remain fixed.
+still report `Noto Sans CJK JP` to `Arial` substitution. Issue #64 addresses
+that bounded font-policy residual below; OCR settings and the selected IR stay
+fixed.
+
+### Issue #64 Japanese DOCX font result
+
+The formal Ubuntu 24.04 observation for Issue #64 is
+[CI run 32267181737](https://github.com/Kentaro-Ono-jp/Aiteqno/actions/runs/32267181737),
+artifact
+`real-runtime-baseline-41514059668fafcb9272f13bd6d5b532bacefbd9`.
+It compares the static default-font policy change with the fixed Issue #62 main
+baseline at `ddda668`:
+
+| Source-to-actual-DOCX measure | Issue #62 | Issue #64 | Delta |
+|---|---:|---:|---:|
+| Overall score | 45.22 | 45.90 | +0.68 |
+| Rendered-visible text accuracy | 21.212121 | 22.727273 | +1.515152 |
+| Logical-block coverage | 70.833333 | 70.833333 | 0 |
+| Structure similarity | 46.969697 | 46.969697 | 0 |
+| Geometry similarity | 80.754604 | 80.754604 | 0 |
+| IR-to-DOCX restoration overall | 78.73 | 78.73 | 0 |
+| IR-to-DOCX text similarity | 100.0 | 100.0 | 0 |
+| Full-page visible OCR tokens | 202 | 226 | +24 |
+| Renderer font substitutions | 374 | 0 | -374 |
+
+All 374 source-tagged runs now resolve `Noto Sans CJK JP` without renderer
+fallback and write the same family to the `ascii`, `hAnsi`, `eastAsia`, and
+`cs` `w:rFonts` channels. The formal integration also inspects the rendered
+PDF: it contains `NotoSansCJKjp-Regular` and no `LiberationSans`. The remaining
+`DejaVuSerif` glyphs are four generated heading-separator spaces, not Japanese
+source-run fallback. Applying Noto to those generated separators was measured
+separately and reduced visible-text accuracy, so separator policy remains
+unchanged.
+
+The previously recovered exact essential anchor `住所` remains covered. No new
+essential anchor or logical block was recovered: `title`, `phone-label`, and
+`content-structure` remain missing. Font-family-only probes did not improve
+that gate; the only probes that recovered another anchor changed font size or
+paragraph flow, both explicitly outside Issue #64 and the fixed Issue #62
+boundary. With the product owner's explicit approval, this one acceptance item
+is recorded as a bounded-scope exception rather than hidden or satisfied by a
+geometry change.
+
+The selected IR SHA-256 remains
+`5e0e90a43490362916e56e88cd5a46ce30fc19acd77b78db813e3456ce09c32e`.
+The artifact retains one page, five native tables, 45 cells, 390 consumed
+native-table element IDs, all 374 source text elements, and IR-to-DOCX text
+similarity 100. It has zero renderer omissions or errors, zero external
+relationships, a readable OPC package, successful python-docx reopen, and
+repair-free LibreOffice rendering. Human review of the actual snapshot found
+no fatal text overlap or clipping and confirmed that the native tables remain
+editable.
+
+The combined score remains below the approximate 70% project target. With the
+font-policy defect closed, the remaining bounded DOCX work is native Word table
+layout and structure; OCR, the evaluator, the selected IR, and the Issue #62
+text-flow rules remain fixed.
 
 Supporting table primitives remain unchanged in the IR and are accounted for
 once in `native_table_consumed_element_ids`; duplicate border evidence is not
@@ -511,8 +565,12 @@ the retained PDF/PNG and the one-page gate remain the visual authority.
 `environment.json` records the OS, Python, Aiteqno, installed Python packages,
 git revision, options, executable versions, `jpn`/`eng` trained-data hashes,
 Ubuntu package versions, locale/timezone, and fontconfig mappings. Exact OCR
-scores may move when those runtimes move; CI does not pin those scores. It
-verifies the fixed integrity contract, the truthful `regressed` 300-DPI
+scores may move when those runtimes move. CI does not require exact equality,
+but it enforces the reviewed Issue #64 directional floors: source-to-actual
+overall and visible-text accuracy must stay strictly above the Issue #62
+baseline, logical-block, structure, and geometry scores may not fall, and
+IR-to-DOCX restoration may not regress. It also verifies the fixed integrity
+contract, the truthful `regressed` 300-DPI
 decision, the `supported` 2px-padding and `jpn`-only decisions, backend-owned
 trained-data identity, protected literals, multilingual smoke, fixed
 five-table/45-cell structure, native-table consumption, and an IR-to-DOCX score
