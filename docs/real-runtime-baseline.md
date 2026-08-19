@@ -295,15 +295,14 @@ multilingual-smoke check. `phone-label` remained the unchanged singleton `二話
 `content-structure` remained unrecovered and its character accuracy changed
 from `33.333333` to `26.315789`.
 
-Because the fixed full-text gain is below `+1.0`, the exact decision is
-`inconclusive`. The grouped candidate is neither eligible nor adopted;
-`selected_grouping` remains `single-regions`, so the canonical bundle and
-downstream DOCX continue from the 2px + ordered `jpn` control. The production
-control still misses essential blocks `title`, `phone-label`, and
-`content-structure`, and exact anchors `文書解析評価シート`, `電話`, `対象形式`, and
-`環境情報を保存する`. The third Tesseract micro-hypothesis is therefore closed.
-Issue #61 moves the next design to an alternate OCR engine or trained-data
-track without adding further PSM/DPI/padding/grouping tuning.
+The comparison's fixed machine decision remains `inconclusive`, so
+`selected_grouping` remains `single-regions` and the canonical downstream DOCX
+continues from the 2px + ordered `jpn` control. At project level, however, the
+text, block, and anchor improvements with zero lost recovery are the desired
+successful result and complete the approximately-70% OCR goal. The remaining
+misses are retained as diagnostics, not as authority for another OCR chase.
+Issue #61 closed that proposed fourth pursuit as not planned; Issue #62 starts
+the DOCX text-flow work from the fixed selected IR.
 
 ## Source-quality contract
 
@@ -445,6 +444,60 @@ bundle is published. Each of the five topology tables becomes one
 identifiable, editable native Word table. Cell text is kept as source-tagged
 editable runs, so the read-back observer retains every selected OCR text element while
 Word and LibreOffice can lay out tokens naturally inside 45 physical cells.
+Topology cells and outside text bands share one geometry-first line plan. It
+orders same-line fragments by source `x`, uses deterministic tie-breakers,
+stabilizes fragment font sizes within the measured line span, omits artificial
+ASCII spaces between CJK fragments, retains single Latin/number word
+separators, and represents large visual gaps with native tab stops. Every
+source fragment remains its own tagged editable run; text is not corrected from
+fixture truth or merged into an untraceable replacement run.
+For short one-fragment cell labels only, a fixed geometry-only readability
+floor may raise the run to at most 10.5pt when the glyph box is at least 8.5pt
+high and the content occupies no more than two advance units. Cell height and
+remaining width still cap the result; OCR confidence and text truth are not
+inputs.
+
+### Issue #62 DOCX text-flow result
+
+The formal Ubuntu 24.04 observation for Issue #62 is
+[CI run 32261042508](https://github.com/Kentaro-Ono-jp/Aiteqno/actions/runs/32261042508),
+artifact
+`real-runtime-baseline-4ddf46fdd6f434e69be8fffe2e519566d8368810`.
+It compares the renderer change with the fixed main baseline at `0b53ebb`:
+
+| Source-to-actual-DOCX measure | Main baseline | Issue #62 | Delta |
+|---|---:|---:|---:|
+| Overall score | 39.85 | 45.22 | +5.37 |
+| Rendered-visible text accuracy | 9.280303 | 21.212121 | +11.931818 |
+| Logical-block coverage | 70.833333 | 70.833333 | 0 |
+| Structure similarity | 46.969697 | 46.969697 | 0 |
+| Geometry similarity | 80.754604 | 80.754604 | 0 |
+| IR-to-DOCX restoration overall | 78.73 | 78.73 | 0 |
+| IR-to-DOCX text similarity | 100.0 | 100.0 | 0 |
+| Full-page visible OCR tokens | 114 | 202 | +88 |
+
+The actual snapshot newly recovers the exact essential anchor `住所`. The short
+label remains a source-tagged editable run and wraps onto two visible lines
+inside its tall native cell; neither glyph is clipped. Human review found the
+headings and table text substantially more readable than the baseline, with no
+fatal overlap or clipping.
+
+The source SHA-256 remains
+`df0b724d8fcc1b5d5e0483a60401c2cb3882675f71d1e37ecdbcff9e687ffc25`, and
+the selected IR SHA-256 remains
+`5e0e90a43490362916e56e88cd5a46ce30fc19acd77b78db813e3456ce09c32e`.
+The artifact retains one page, five native tables, 45 cells, 390 consumed
+native-table element IDs, all 374 source text elements, and IR-to-DOCX text
+similarity 100. It has zero renderer omissions or errors, zero external
+relationships, a readable OPC package, successful python-docx reopen, and
+repair-free LibreOffice rendering.
+
+The combined score remains below the approximate 70% project target. The
+largest renderer-side residual is still visible text, and all 374 text runs
+still report `Noto Sans CJK JP` to `Arial` substitution. The next bounded step
+is therefore same-runtime Japanese font stabilization; OCR settings and the
+selected IR remain fixed.
+
 Supporting table primitives remain unchanged in the IR and are accounted for
 once in `native_table_consumed_element_ids`; duplicate border evidence is not
 drawn again. Pages without topology continue through the legacy renderer.

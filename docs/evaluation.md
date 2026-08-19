@@ -199,8 +199,12 @@ The formal Ubuntu 24.04 / Tesseract 5.3.4 observation for Issue #59 is
 `66.666667 -> 75.000000`. The candidate recovered `title` and passed every
 integrity, singleton, protected-literal, and smoke check, but did not reach the
 fixed `+1.0` text gate. The runner therefore selects the fresh singleton
-control. This is the final Tesseract micro-hypothesis; Issue #61 designs the
-next alternate-engine/trained-data comparison without changing this evaluator.
+control. The machine decision remains historical evidence, while the project
+judges the three simultaneous improvements and zero lost recovery as a
+successful completion of the approximately-70% OCR goal. Issue #61 therefore
+closed the proposed additional OCR pursuit as not planned. The evaluator and
+artifact remain unchanged; the next quality work measures and improves the
+actual DOCX rendered from that fixed selected IR.
 
 The real-runtime runner evaluates this unchanged contract twice in one process:
 first against the production no-upscale control, then against an experimental

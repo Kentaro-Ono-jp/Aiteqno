@@ -1,3 +1,4 @@
+import copy
 import tempfile
 import unittest
 from dataclasses import replace
@@ -269,6 +270,112 @@ def _topology_document(
     return replace(canonical, pages=(page,), assets=())
 
 
+def _fragmented_topology_document() -> DocumentIR:
+    payload = _topology_document().to_dict()
+    page = payload["pages"][0]
+    elements = page["elements"]
+    topology = page["extensions"][TABLE_TOPOLOGY_EXTENSION_KEY]
+
+    def replace_text(
+        source_id: str,
+        fragments: tuple[tuple[str, str, float, float, float, float], ...],
+    ) -> list[str]:
+        source_index = next(
+            index for index, element in enumerate(elements) if element["id"] == source_id
+        )
+        source = elements[source_index]
+        replacements = []
+        for element_id, text, x, y, width, height in fragments:
+            replacement = copy.deepcopy(source)
+            replacement.update(
+                {
+                    "id": element_id,
+                    "text": text,
+                    "bbox": {
+                        "x": x,
+                        "y": y,
+                        "width": width,
+                        "height": height,
+                    },
+                }
+            )
+            replacements.append(replacement)
+        elements[source_index : source_index + 1] = replacements
+        return [element["id"] for element in replacements]
+
+    outside_ids = replace_text(
+        "p001-text-0000",
+        (
+            ("p001-text-0000", "文", 20, 10, 8, 10),
+            ("p001-text-0900", "書", 27, 10, 8, 10),
+            ("p001-text-0901", "解析", 36, 10, 20, 10),
+            ("p001-text-0902", "2026", 150, 10, 20, 10),
+            ("p001-text-0903", "1.", 20, 25, 8, 10),
+            ("p001-text-0904", "概要", 35, 25, 18, 10),
+        ),
+    )
+    first_cell_ids = replace_text(
+        "p001-text-0001",
+        (
+            ("p001-text-0001", "依頼", 25, 54, 18, 10),
+            ("p001-text-0910", "する", 42, 54, 14, 10),
+            ("p001-text-0911", "処理", 59, 54, 18, 10),
+        ),
+    )
+    second_cell_ids = replace_text(
+        "p001-text-0002",
+        (
+            ("p001-text-0002", "Alpha", 105, 54, 22, 10),
+            ("p001-text-0920", "Beta", 132, 54, 20, 10),
+        ),
+    )
+    third_cell_ids = replace_text(
+        "p001-text-0003",
+        (
+            ("p001-text-0003", "PNG", 25, 94, 15, 10),
+            ("p001-text-0930", "・", 42, 94, 5, 10),
+            ("p001-text-0931", "PDF", 48, 94, 15, 10),
+            ("p001-text-0932", "(", 65, 94, 3, 10),
+            ("p001-text-0933", "26", 69, 94, 10, 10),
+            ("p001-text-0934", ")", 80, 94, 3, 10),
+        ),
+    )
+    fourth_cell_ids = replace_text(
+        "p001-text-0004",
+        (("p001-text-0004", "項目", 105, 94, 18, 10),),
+    )
+
+    fragment_font_sizes = {
+        "p001-text-0000": 6,
+        "p001-text-0900": 12,
+        "p001-text-0901": 8,
+        "p001-text-0902": 10,
+        "p001-text-0001": 7,
+        "p001-text-0910": 12,
+        "p001-text-0911": 8,
+        "p001-text-0004": 6,
+    }
+    for element in elements:
+        if element["id"] in fragment_font_sizes:
+            element["style"]["font_size_pt"] = fragment_font_sizes[element["id"]]
+
+    cells = topology["tables"][0]["cells"]
+    cells[0]["text_element_ids"] = first_cell_ids
+    cells[1]["text_element_ids"] = second_cell_ids
+    cells[2]["text_element_ids"] = third_cell_ids
+    cells[3]["text_element_ids"] = fourth_cell_ids
+    diagnostics = topology["diagnostics"]
+    diagnostics["unassigned_text_element_ids"] = [
+        *outside_ids,
+        diagnostics["unassigned_text_element_ids"][-1],
+    ]
+
+    text_elements = [element for element in elements if element["type"] == "text"]
+    for reading_order, element in enumerate(text_elements):
+        element["reading_order"] = reading_order
+    return DocumentIR.from_dict(payload)
+
+
 class NativeWordTableRendererTest(unittest.TestCase):
     def test_native_table_preserves_grid_geometry_text_and_report_accounting(self):
         document = _topology_document()
@@ -330,6 +437,168 @@ class NativeWordTableRendererTest(unittest.TestCase):
                 for relationship in observation.relationships
             ),
             4,
+        )
+
+    def test_fragmented_text_uses_script_aware_spacing_and_layout_tabs(self):
+        document = _fragmented_topology_document()
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            output = Path(temporary_directory) / "fragmented.docx"
+            result = render_docx(
+                document,
+                output,
+                renderer=PythonDocxRenderer(),
+                policy=RenderPolicy.STRICT,
+            )
+            reopened = open_docx(output)
+            observation = PythonDocxObserver().observe(output)
+
+        def source_tags(node) -> set[str]:
+            return {
+                tag.get(qn("w:val"))
+                for tag in node.xpath(".//w:sdtPr/w:tag")
+            }
+
+        def text_content(node) -> str:
+            return "".join(text.text or "" for text in node.xpath(".//w:t"))
+
+        outside = next(
+            paragraph
+            for paragraph in reopened._element.body.xpath("./w:p")
+            if "aiteqno-source:p001-text-0000" in source_tags(paragraph)
+        )
+        self.assertEqual(text_content(outside), "文書解析2026")
+        self.assertEqual(len(outside.xpath("./w:r/w:tab")), 1)
+        outside_font_sizes = {
+            size.get(qn("w:val"))
+            for size in outside.xpath(".//w:sdtContent/w:r/w:rPr/w:sz")
+        }
+        self.assertEqual(len(outside_font_sizes), 1)
+
+        numbered = next(
+            paragraph
+            for paragraph in reopened._element.body.xpath("./w:p")
+            if "aiteqno-source:p001-text-0903" in source_tags(paragraph)
+        )
+        self.assertEqual(text_content(numbered), "1. 概要")
+
+        table = reopened.tables[0]
+        self.assertEqual(text_content(table.cell(0, 0)._tc), "依頼する処理")
+        self.assertEqual(text_content(table.cell(0, 1)._tc), "Alpha Beta")
+        self.assertEqual(text_content(table.cell(1, 0)._tc), "PNG・PDF(26)")
+        self.assertEqual(text_content(table.cell(1, 1)._tc), "項目")
+        self.assertFalse(table.cell(0, 0)._tc.xpath('.//w:t[text()=" "]'))
+        self.assertFalse(table.cell(1, 0)._tc.xpath('.//w:t[text()=" "]'))
+        cell_font_sizes = {
+            size.get(qn("w:val"))
+            for size in table.cell(0, 0)._tc.xpath(
+                ".//w:sdtContent/w:r/w:rPr/w:sz"
+            )
+        }
+        self.assertEqual(len(cell_font_sizes), 1)
+        short_label_font_sizes = {
+            size.get(qn("w:val"))
+            for size in table.cell(1, 1)._tc.xpath(
+                ".//w:sdtContent/w:r/w:rPr/w:sz"
+            )
+        }
+        self.assertEqual(short_label_font_sizes, {"21"})
+
+        expected_source_ids = {
+            "p001-text-0000",
+            "p001-text-0900",
+            "p001-text-0901",
+            "p001-text-0902",
+            "p001-text-0903",
+            "p001-text-0904",
+            "p001-text-0001",
+            "p001-text-0910",
+            "p001-text-0911",
+            "p001-text-0002",
+            "p001-text-0920",
+            "p001-text-0003",
+            "p001-text-0930",
+            "p001-text-0931",
+            "p001-text-0932",
+            "p001-text-0933",
+            "p001-text-0934",
+            "p001-text-0004",
+        }
+        observed_source_ids = [
+            element.source_element_id
+            for element in observation.elements
+            if element.source_element_id in expected_source_ids
+        ]
+        self.assertEqual(set(observed_source_ids), expected_source_ids)
+        self.assertEqual(len(observed_source_ids), len(expected_source_ids))
+        self.assertEqual(result.report.fallback_element_ids, ())
+        self.assertEqual(result.report.omitted_element_ids, ())
+
+    def test_fragmented_text_plan_is_deterministic_for_shuffled_planner_input(self):
+        document = _fragmented_topology_document()
+        text_elements = tuple(
+            element
+            for element in document.pages[0].elements
+            if isinstance(element, TextElement)
+        )
+        ordered_plan = PythonDocxRenderer._plan_text_lines(text_elements)
+        shuffled_plan = PythonDocxRenderer._plan_text_lines(
+            tuple(reversed(text_elements))
+        )
+        self.assertEqual(
+            tuple(tuple(element.id for element in line.elements) for line in ordered_plan),
+            tuple(
+                tuple(element.id for element in line.elements) for line in shuffled_plan
+            ),
+        )
+
+        topology = read_page_table_topology(document.pages[0])
+        assert topology is not None
+        outside_ids = set(topology.diagnostics.unassigned_text_element_ids)
+        outside_elements = tuple(
+            element for element in text_elements if element.id in outside_ids
+        )
+        outside_plan = PythonDocxRenderer._plan_text_lines(
+            tuple(reversed(outside_elements))
+        )
+        self.assertEqual(
+            tuple(tuple(element.id for element in line.elements) for line in outside_plan),
+            (
+                (
+                    "p001-text-0000",
+                    "p001-text-0900",
+                    "p001-text-0901",
+                    "p001-text-0902",
+                ),
+                ("p001-text-0903", "p001-text-0904"),
+                ("p001-text-0005",),
+            ),
+        )
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            outputs = (root / "first.docx", root / "second.docx")
+            results = []
+            for output in outputs:
+                results.append(
+                    render_docx(
+                        document,
+                        output,
+                        renderer=PythonDocxRenderer(),
+                        policy=RenderPolicy.STRICT,
+                    )
+                )
+            with ZipFile(outputs[0]) as first, ZipFile(outputs[1]) as second:
+                first_xml = first.read("word/document.xml")
+                second_xml = second.read("word/document.xml")
+
+        self.assertEqual(first_xml, second_xml)
+        self.assertEqual(
+            results[0].report.rendered_element_ids,
+            results[1].report.rendered_element_ids,
+        )
+        self.assertEqual(
+            results[0].report.native_table_consumed_element_ids,
+            results[1].report.native_table_consumed_element_ids,
         )
 
     def test_horizontal_and_vertical_merges_are_native_and_observable(self):
