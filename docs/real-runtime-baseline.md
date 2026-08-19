@@ -456,6 +456,48 @@ floor may raise the run to at most 10.5pt when the glyph box is at least 8.5pt
 high and the content occupies no more than two advance units. Cell height and
 remaining width still cap the result; OCR confidence and text truth are not
 inputs.
+
+### Issue #62 DOCX text-flow result
+
+The formal Ubuntu 24.04 observation for Issue #62 is
+[CI run 32261042508](https://github.com/Kentaro-Ono-jp/Aiteqno/actions/runs/32261042508),
+artifact
+`real-runtime-baseline-4ddf46fdd6f434e69be8fffe2e519566d8368810`.
+It compares the renderer change with the fixed main baseline at `0b53ebb`:
+
+| Source-to-actual-DOCX measure | Main baseline | Issue #62 | Delta |
+|---|---:|---:|---:|
+| Overall score | 39.85 | 45.22 | +5.37 |
+| Rendered-visible text accuracy | 9.280303 | 21.212121 | +11.931818 |
+| Logical-block coverage | 70.833333 | 70.833333 | 0 |
+| Structure similarity | 46.969697 | 46.969697 | 0 |
+| Geometry similarity | 80.754604 | 80.754604 | 0 |
+| IR-to-DOCX restoration overall | 78.73 | 78.73 | 0 |
+| IR-to-DOCX text similarity | 100.0 | 100.0 | 0 |
+| Full-page visible OCR tokens | 114 | 202 | +88 |
+
+The actual snapshot newly recovers the exact essential anchor `住所`. The short
+label remains a source-tagged editable run and wraps onto two visible lines
+inside its tall native cell; neither glyph is clipped. Human review found the
+headings and table text substantially more readable than the baseline, with no
+fatal overlap or clipping.
+
+The source SHA-256 remains
+`df0b724d8fcc1b5d5e0483a60401c2cb3882675f71d1e37ecdbcff9e687ffc25`, and
+the selected IR SHA-256 remains
+`5e0e90a43490362916e56e88cd5a46ce30fc19acd77b78db813e3456ce09c32e`.
+The artifact retains one page, five native tables, 45 cells, 390 consumed
+native-table element IDs, all 374 source text elements, and IR-to-DOCX text
+similarity 100. It has zero renderer omissions or errors, zero external
+relationships, a readable OPC package, successful python-docx reopen, and
+repair-free LibreOffice rendering.
+
+The combined score remains below the approximate 70% project target. The
+largest renderer-side residual is still visible text, and all 374 text runs
+still report `Noto Sans CJK JP` to `Arial` substitution. The next bounded step
+is therefore same-runtime Japanese font stabilization; OCR settings and the
+selected IR remain fixed.
+
 Supporting table primitives remain unchanged in the IR and are accounted for
 once in `native_table_consumed_element_ids`; duplicate border evidence is not
 drawn again. Pages without topology continue through the legacy renderer.
