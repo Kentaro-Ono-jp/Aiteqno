@@ -70,7 +70,7 @@
         ]
       },
       "expected": {
-        "document_ir_semantic_sha256": "ef2e46eab7b30a8ca2744ac8a7f9f27dfd7303e83ef7f2263b28b15b3c4bc482",
+        "document_ir_semantic_sha256": "8fcd5a4fccaa4546cdbb6e1130e51097830e24af9fda30133c0d41468a587e60",
         "asset_rgb24_sha256": "fe52e270ca7b5ab66214fcb6a1a2e9108a2141f78be91504e19b8128eb2e0daf",
         "element_counts": {
           "text": 7,
@@ -88,7 +88,7 @@
           "2026-08-16"
         ],
         "restoration_threshold": 70.0,
-        "restoration_score": 78.79
+        "restoration_score": 71.5
       },
       "reference": {
         "reference_id": "representative-patient-form-v1",
@@ -107,14 +107,9 @@
           "NAME JOHN DOE",
           "DATE 2026-08-16"
         ],
-        "docx_topology": {
-          "body": "body",
-          "table": "docx-table-0000",
-          "cell": "docx-table-0000-cell-r000-c000",
-          "paragraph_count": 8,
-          "rectangle_element": "p001-rectangle-0000",
-          "image_element": "p001-image-0000",
-          "line_element": "p001-line-0000"
+        "table_topology": {
+          "table_count": 1,
+          "physical_cell_count": 4
         }
       }
     }

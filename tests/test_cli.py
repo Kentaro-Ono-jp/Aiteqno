@@ -24,11 +24,19 @@ from aiteqno.adapters import (
 )
 from aiteqno.adapters.json_schema import document_ir_from_file
 from aiteqno.cli import CliRuntime, ExitCode, main
+from aiteqno.domain import read_page_table_topology
 from aiteqno.ports import DEFAULT_OCR_LANGUAGES, OcrBackendError, OcrOptions
 
 
 FIXTURE_ROOT = Path(__file__).resolve().parent / "fixtures" / "structure"
 IR_FIXTURE_ROOT = Path(__file__).resolve().parent / "fixtures" / "document_ir"
+DENSE_SOURCE_FIXTURE = (
+    Path(__file__).resolve().parent
+    / "fixtures"
+    / "baseline"
+    / "synthetic-dense-japanese-form-v1"
+    / "source.png.b64"
+)
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -36,6 +44,10 @@ def _png_data():
     return base64.b64decode(
         (FIXTURE_ROOT / "structured-page.png.b64").read_text(encoding="ascii")
     )
+
+
+def _dense_png_data():
+    return base64.b64decode(DENSE_SOURCE_FIXTURE.read_bytes().strip(), validate=True)
 
 
 def _runtime(ocr_backend=None):
@@ -121,7 +133,12 @@ class CliContractTest(unittest.TestCase):
             self.assertIn(f"document_ir={ir_path.resolve()}", extract_stdout)
             self.assertNotIn("warning", extract_stdout)
             self.assertIn("aiteqno: warning", extract_stderr)
-            document_ir_from_file(ir_path)
+            extracted_document = document_ir_from_file(ir_path)
+            topology = read_page_table_topology(extracted_document.pages[0])
+            self.assertIsNotNone(topology)
+            assert topology is not None
+            self.assertEqual(len(topology.tables), 1)
+            self.assertEqual(sum(len(table.cells) for table in topology.tables), 4)
 
             input_path.unlink()
             docx_path = bundle_root / "復元結果.docx"
@@ -230,6 +247,45 @@ class CliContractTest(unittest.TestCase):
             self.assertEqual(conflict_code, ExitCode.OUTPUT_CONFLICT)
             self.assertIn("output_exists", conflict_stderr)
             self.assertEqual(marker.read_text(encoding="utf-8"), "preserve")
+
+    def test_roundtrip_publishes_dense_form_as_five_native_tables(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            input_path = root / "dense-form.png"
+            input_path.write_bytes(_dense_png_data())
+            output = root / "roundtrip"
+
+            exit_code, _, stderr = _run(
+                [
+                    "roundtrip",
+                    str(input_path),
+                    "-o",
+                    str(output),
+                    "--language",
+                    "eng",
+                    "--dpi",
+                    "96",
+                ]
+            )
+
+            self.assertEqual(exit_code, ExitCode.SUCCESS, stderr)
+            document = document_ir_from_file(output / "document.ir.json")
+            topology = read_page_table_topology(document.pages[0])
+            self.assertIsNotNone(topology)
+            assert topology is not None
+            self.assertEqual(len(topology.tables), 5)
+            self.assertEqual(sum(len(table.cells) for table in topology.tables), 45)
+
+            word_document = open_docx(output / "reconstructed.docx")
+            self.assertEqual(len(word_document.tables), 5)
+            self.assertEqual(
+                sum(
+                    len(row._tr.tc_lst)
+                    for table in word_document.tables
+                    for row in table.rows
+                ),
+                45,
+            )
 
     def test_failure_classes_have_stable_exit_codes_and_stderr(self):
         with tempfile.TemporaryDirectory() as temp_dir:

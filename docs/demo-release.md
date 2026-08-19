@@ -28,6 +28,11 @@ It never overwrites an existing result directory. The first run needs internet
 access because third-party Python dependencies are resolved from PyPI; Python
 and Tesseract themselves are intentionally not bundled.
 
+DOCX generation does not require Microsoft Word or LibreOffice. The launcher
+uses the public `aiteqno roundtrip` path, which persists deterministic table
+topology in Document IR and renders supported grids as editable native Word
+tables. Office runtimes are used only by separate validation workflows.
+
 Use PowerShell for explicit settings:
 
 ```powershell

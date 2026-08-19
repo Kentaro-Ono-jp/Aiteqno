@@ -60,6 +60,14 @@ Run the full vertical slice into one new directory:
 aiteqno roundtrip ".\input\問診票.png" -o ".\output\問診票-roundtrip"
 ```
 
+`extract` and `roundtrip` deterministically infer supported closed table grids
+after OCR and persist them in the
+`jp.reactorfront.aiteqno.table_topology` page extension. `roundtrip` renders that
+same published IR, so supported grids become editable native Word tables. The
+standalone `render` command does not silently infer new structure: it renders
+the supplied IR exactly, including any topology extension already persisted by
+`extract`.
+
 The round-trip directory is fixed for V1:
 
 ```text

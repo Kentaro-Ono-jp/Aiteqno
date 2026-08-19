@@ -411,6 +411,14 @@ independent of primitive array order. The DOCX renderer consumes supported
 tables directly; renderers must never reclassify or delete their supporting raw
 primitives silently.
 
+The public `extract` and `roundtrip` composition root requests this enrichment
+after PNG/OCR extraction and before schema validation and atomic bundle
+publication. Consequently, the IR written by the CLI is exactly the IR later
+rendered by `roundtrip`. The formal OCR A/B runner leaves each observation
+unenriched and immutable, then applies the same inference only to the selected
+IR. Standalone `render` remains a faithful IR consumer and never infers missing
+topology implicitly.
+
 ### 6.12 Versioning and compatibility
 
 - `0.1.x` patch releases are backward-compatible clarifications or optional

@@ -31,17 +31,16 @@ from aiteqno.adapters import (
 from aiteqno.adapters.json_schema import document_ir_from_file
 from aiteqno.application import (
     EvaluationConfig,
+    build_docx_structure_relationships,
     build_evaluation_reference,
     evaluate_restoration,
     render_docx,
 )
 from aiteqno.cli import CliRuntime, ExitCode, main
-from aiteqno.domain import PixelBoundingBox, TextElement
+from aiteqno.domain import PixelBoundingBox, TextElement, read_page_table_topology
 from aiteqno.ports import (
     EvaluationState,
-    RelationshipKind,
     SnapshotObservation,
-    StructuralRelationship,
 )
 
 
@@ -113,89 +112,6 @@ def _run_cli(arguments, specification):
     return exit_code, stdout.getvalue(), stderr.getvalue()
 
 
-def _golden_relationships(specification):
-    topology = specification["reference"]["docx_topology"]
-    body = topology["body"]
-    table = topology["table"]
-    cell = topology["cell"]
-    paragraphs = tuple(
-        f"docx-paragraph-{index:04d}" for index in range(topology["paragraph_count"])
-    )
-    texts = tuple(
-        f"p001-text-{index:04d}" for index in range(topology["paragraph_count"] - 1)
-    )
-
-    relationships = [
-        StructuralRelationship(
-            kind=RelationshipKind.CONTAINMENT,
-            source=table,
-            target=cell,
-        ),
-        StructuralRelationship(
-            kind=RelationshipKind.CONTAINMENT,
-            source=cell,
-            target=topology["rectangle_element"],
-        ),
-        StructuralRelationship(
-            kind=RelationshipKind.CONTAINMENT,
-            source=paragraphs[0],
-            target=topology["image_element"],
-        ),
-        StructuralRelationship(
-            kind=RelationshipKind.CONTAINMENT,
-            source=cell,
-            target=paragraphs[0],
-        ),
-    ]
-    for index, paragraph in enumerate(paragraphs[1:]):
-        relationships.append(
-            StructuralRelationship(
-                kind=RelationshipKind.CONTAINMENT,
-                source=paragraph,
-                target=texts[index],
-            )
-        )
-        if index == 0:
-            relationships.append(
-                StructuralRelationship(
-                    kind=RelationshipKind.CONTAINMENT,
-                    source=paragraph,
-                    target=topology["line_element"],
-                )
-            )
-        relationships.extend(
-            (
-                StructuralRelationship(
-                    kind=RelationshipKind.CONTAINMENT,
-                    source=cell,
-                    target=paragraph,
-                ),
-                StructuralRelationship(
-                    kind=RelationshipKind.ADJACENCY,
-                    source=paragraphs[index],
-                    target=paragraph,
-                ),
-            )
-        )
-    relationships.append(
-        StructuralRelationship(
-            kind=RelationshipKind.CONTAINMENT,
-            source=body,
-            target=table,
-        )
-    )
-    relationships.extend(
-        StructuralRelationship(
-            kind=RelationshipKind.READING_ORDER,
-            source=source,
-            target=target,
-            essential=True,
-        )
-        for source, target in zip(texts, texts[1:], strict=False)
-    )
-    return tuple(relationships)
-
-
 def _reference(document, specification):
     reference = specification["reference"]
     return build_evaluation_reference(
@@ -204,7 +120,7 @@ def _reference(document, specification):
         reviewed=True,
         essential_element_ids=reference["essential_element_ids"],
         essential_text_anchors=reference["essential_text_anchors"],
-        relationships=_golden_relationships(specification),
+        relationships=build_docx_structure_relationships(document),
     )
 
 
@@ -255,6 +171,15 @@ def _assert_golden_ir(test_case, ir_path, specification):
     test_case.assertEqual(
         [element.text for element in elements if isinstance(element, TextElement)],
         expected["texts"],
+    )
+    topology = read_page_table_topology(document.pages[0])
+    test_case.assertIsNotNone(topology)
+    assert topology is not None
+    topology_reference = specification["reference"]["table_topology"]
+    test_case.assertEqual(len(topology.tables), topology_reference["table_count"])
+    test_case.assertEqual(
+        sum(len(table.cells) for table in topology.tables),
+        topology_reference["physical_cell_count"],
     )
     test_case.assertEqual(len(document.assets), 1)
     test_case.assertEqual(
