@@ -3,7 +3,7 @@
   "document_id": "invalid-coordinate",
   "generator": {
     "name": "aiteqno-fixture",
-    "version": "0.3.0.dev0"
+    "version": "0.4.0.dev0"
   },
   "pages": [
     {
@@ -30,7 +30,7 @@
             {
               "stage": "manual",
               "provider": "aiteqno-fixture",
-              "provider_version": "0.3.0.dev0",
+              "provider_version": "0.4.0.dev0",
               "source_refs": []
             }
           ],

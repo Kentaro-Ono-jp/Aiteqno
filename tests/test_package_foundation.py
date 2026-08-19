@@ -21,7 +21,7 @@ class PackageFoundationTest(unittest.TestCase):
         installed_version = importlib.metadata.version("aiteqno")
 
         self.assertEqual(aiteqno.__version__, installed_version)
-        self.assertEqual(installed_version, "0.3.0.dev0")
+        self.assertEqual(installed_version, "0.4.0.dev0")
 
     def test_architecture_layers_are_importable(self):
         for module_name in EXPECTED_LAYERS:

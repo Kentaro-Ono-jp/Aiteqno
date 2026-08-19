@@ -118,7 +118,7 @@ def build_demo_package(
         "prerequisites": {
             "operating_system": "Windows 10 or 11",
             "python": ">=3.11,<3.15",
-            "tesseract": ">=5 with jpn and eng language data",
+            "tesseract": ">=5 with jpn language data; eng is optional",
             "first_run_internet": True,
         },
         "files": {

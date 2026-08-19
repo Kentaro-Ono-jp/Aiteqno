@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aiteqno"
-version = "0.3.0.dev0"
+version = "0.4.0.dev0"
 description = "Document IR round-trip processing for structured documents"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11,<3.15"
