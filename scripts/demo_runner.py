@@ -127,7 +127,7 @@ def run_demo(
     output_directory: str | Path,
     schema_path: str | Path,
     *,
-    languages: Sequence[str] = ("jpn", "eng"),
+    languages: Sequence[str] = ("jpn",),
     dpi: float = 144.0,
     cli_main: CliMain = aiteqno_main,
     stdout: TextIO | None = None,
@@ -270,7 +270,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="append",
         dest="languages",
         metavar="LANGUAGE",
-        help="repeat to set OCR languages (default: jpn, eng)",
+        help="repeat to set OCR languages (default: jpn)",
     )
     parser.add_argument("--dpi", type=float, default=144.0, metavar="DPI")
     return parser
@@ -282,7 +282,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         arguments.input,
         arguments.output,
         arguments.schema,
-        languages=arguments.languages or ("jpn", "eng"),
+        languages=arguments.languages or ("jpn",),
         dpi=arguments.dpi,
     )
 

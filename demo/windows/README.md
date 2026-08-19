@@ -10,7 +10,7 @@
 - Windows 10 / 11
 - Python 3.11〜3.14（Microsoft Store版ではなく python.org 版を推奨）
 - Tesseract OCR 5.x 以降
-- Tesseract の `jpn` と `eng` 言語データ
+- Tesseract の `jpn` 言語データ（`eng` は明示的な多言語実行時のみ必要）
 - 初回のみ、Python依存パッケージを取得するためのインターネット接続
 
 Python本体とTesseract本体はZIPには含まれません。画像とOCRテキストは
@@ -52,7 +52,8 @@ JSONは、Document IR本体、正式Schema、実行証跡Manifestの3種類で�
 
 ## OCR言語やDPIを変える
 
-PowerShellから直接起動します。
+既定OCR言語は、正式な品質評価で採用した `jpn` 単独です。`eng` などを
+追加する場合はPowerShellから明示して起動します。
 
 ```powershell
 .\run-demo.ps1 "C:\path\to\input.png" `

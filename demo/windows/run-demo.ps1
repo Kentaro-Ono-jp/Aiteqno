@@ -6,7 +6,7 @@ param(
     [Parameter(Position = 1)]
     [string] $OutputDirectory,
 
-    [string[]] $Language = @("jpn", "eng"),
+    [string[]] $Language = @("jpn"),
 
     [ValidateRange(1.0, 1200.0)]
     [double] $Dpi = 144.0,
@@ -108,7 +108,7 @@ function Find-Tesseract {
         }
     }
 
-    Stop-Demo "Tesseract 5.x or newer was not found. Install Tesseract with jpn and eng language data, then retry." 5
+    Stop-Demo "Tesseract 5.x or newer was not found. Install Tesseract with jpn language data, then retry." 5
 }
 
 $packageRoot = Split-Path -Parent $MyInvocation.MyCommand.Path

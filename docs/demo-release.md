@@ -37,6 +37,10 @@ Use PowerShell for explicit settings:
   -NoOpen
 ```
 
+The drag-and-drop path and an invocation without `-Language` use the adopted
+Japanese-only `jpn` profile. `eng` remains available only when explicitly
+requested as in the example above.
+
 ## Result contract
 
 The result contains three JSON documents with distinct responsibilities:
@@ -70,13 +74,13 @@ Build the demo ZIP from the one wheel in `dist`:
 ```powershell
 python scripts\build_demo_package.py `
   --wheel dist `
-  --output dist\Aiteqno-demo-v0.3.0-demo.1-windows.zip `
-  --release-tag v0.3.0-demo.1
+  --output dist\Aiteqno-demo-v0.4.0-demo.1-windows.zip `
+  --release-tag v0.4.0-demo.1
 
 python scripts\verify_demo_package.py `
-  dist\Aiteqno-demo-v0.3.0-demo.1-windows.zip `
-  --release-tag v0.3.0-demo.1 `
-  --package-version 0.3.0.dev0
+  dist\Aiteqno-demo-v0.4.0-demo.1-windows.zip `
+  --release-tag v0.4.0-demo.1 `
+  --package-version 0.4.0.dev0
 ```
 
 The builder fixes ZIP timestamps, entry ordering, compression settings, and
@@ -91,24 +95,24 @@ wheel and sdist.
 
 The release tag must point to the tested `main` commit. Create a draft first,
 attach the wheel, sdist, demo ZIP, and `SHA256SUMS.txt`, verify the uploaded
-assets, then publish it as a prerelease. The initial V1 demo tag is
-`v0.3.0-demo.1`; the embedded package version remains `0.3.0.dev0`.
+assets, then publish it as a prerelease. The current V1 demo tag is
+`v0.4.0-demo.1`; the embedded package version is `0.4.0.dev0`.
 
 Example with the authenticated GitHub CLI:
 
 ```powershell
-gh release create v0.3.0-demo.1 `
+gh release create v0.4.0-demo.1 `
   --repo Kentaro-Ono-jp/Aiteqno `
   --target main `
-  --title "Aiteqno v0.3.0 demo 1" `
+  --title "Aiteqno v0.4.0 demo 1" `
   --notes-file release-notes.md `
   --draft `
   --prerelease
 
-gh release upload v0.3.0-demo.1 `
-  dist\aiteqno-0.3.0.dev0-py3-none-any.whl `
-  dist\aiteqno-0.3.0.dev0.tar.gz `
-  dist\Aiteqno-demo-v0.3.0-demo.1-windows.zip `
+gh release upload v0.4.0-demo.1 `
+  dist\aiteqno-0.4.0.dev0-py3-none-any.whl `
+  dist\aiteqno-0.4.0.dev0.tar.gz `
+  dist\Aiteqno-demo-v0.4.0-demo.1-windows.zip `
   dist\SHA256SUMS.txt `
   --repo Kentaro-Ono-jp/Aiteqno
 ```
