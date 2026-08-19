@@ -15,8 +15,9 @@ import hashlib
 import math
 import os
 import tempfile
+import unicodedata
 from collections.abc import Iterable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from io import BytesIO
 from os import PathLike
 from pathlib import Path
@@ -96,6 +97,9 @@ _TOPOLOGY_ROW_HEIGHT_SCALE = 0.85
 _TOPOLOGY_GAP_SCALE = 0.75
 _SOURCE_TAG_PREFIX = "aiteqno-source:"
 _TABLE_CAPTION_PREFIX = "aiteqno-table:"
+_TEXT_LAYOUT_TAB_MINIMUM_PT = 24.0
+_TEXT_LAYOUT_TAB_FONT_MULTIPLIER = 4.0
+_TEXT_NARROW_ADVANCE_UNITS = 0.55
 
 _ALIGNMENT_MAP = {
     TextAlign.LEFT: WD_ALIGN_PARAGRAPH.LEFT,
@@ -195,6 +199,15 @@ class _LayoutSlot:
 class _TableSegment:
     width: float
     slot: _LayoutSlot | None
+
+
+@dataclass(frozen=True, slots=True)
+class _TextLine:
+    elements: tuple[TextElement, ...]
+    top: float
+    bottom: float
+    left: float
+    right: float
 
 
 class PythonDocxRenderer:
@@ -633,41 +646,46 @@ class PythonDocxRenderer:
         previous_bottom: float,
         state: _RenderState,
     ) -> float:
-        elements = tuple(
-            sorted(
-                (
-                    element
-                    for element in band.elements
-                    if isinstance(element, TextElement)
-                ),
-                key=lambda element: element.reading_order,
-            )
+        text_elements = tuple(
+            element
+            for element in band.elements
+            if isinstance(element, TextElement)
         )
-        paragraph = word_document.add_paragraph()
-        left = min(element.bbox.x for element in elements)
-        right = max(element.bbox.right for element in elements)
         content_right = page.size.width - horizontal_margin
-        paragraph_format = paragraph.paragraph_format
-        paragraph_format.left_indent = Pt(max(0.0, left - horizontal_margin))
-        paragraph_format.right_indent = Pt(max(0.0, content_right - right))
-        paragraph_format.space_before = Pt(
-            max(0.0, band.top - previous_bottom) * _TOPOLOGY_GAP_SCALE
-        )
-        paragraph_format.space_after = Pt(0)
-        paragraph_format.keep_together = True
-        previous: TextElement | None = None
-        for element in elements:
-            self._append_text_gap(paragraph, previous, element)
-            self._apply_text_style(
-                paragraph,
-                page,
-                element,
-                state=state,
-                source_element_id=element.id,
+        current_bottom = previous_bottom
+        for line in self._plan_text_lines(text_elements):
+            paragraph = word_document.add_paragraph()
+            paragraph_format = paragraph.paragraph_format
+            paragraph_format.left_indent = Pt(
+                max(0.0, line.left - horizontal_margin)
             )
-            state.record_rendered(element.id)
-            previous = element
-        return max(previous_bottom, band.bottom)
+            paragraph_format.right_indent = Pt(max(0.0, content_right - line.right))
+            paragraph_format.space_before = Pt(
+                max(0.0, line.top - current_bottom) * _TOPOLOGY_GAP_SCALE
+            )
+            paragraph_format.space_after = Pt(0)
+            paragraph_format.keep_together = True
+            previous: TextElement | None = None
+            font_size_pt = self._line_font_size(line)
+            for element in line.elements:
+                self._append_text_separator(
+                    paragraph,
+                    previous,
+                    element,
+                    container_left=horizontal_margin,
+                )
+                self._apply_text_style(
+                    paragraph,
+                    page,
+                    element,
+                    state=state,
+                    source_element_id=element.id,
+                    font_size_pt=font_size_pt,
+                )
+                state.record_rendered(element.id)
+                previous = element
+            current_bottom = max(current_bottom, line.bottom)
+        return max(current_bottom, band.bottom)
 
     def _render_topology_horizontal_line(
         self,
@@ -812,7 +830,7 @@ class PythonDocxRenderer:
         if not text_elements:
             return
         assert all(isinstance(element, TextElement) for element in text_elements)
-        lines = self._cluster_text_lines(
+        lines = self._plan_text_lines(
             tuple(
                 element for element in text_elements if isinstance(element, TextElement)
             )
@@ -823,70 +841,220 @@ class PythonDocxRenderer:
             paragraph_format.space_before = Pt(0)
             paragraph_format.space_after = Pt(0)
             paragraph_format.keep_together = True
-            line_left = min(element.bbox.x for element in line)
-            line_right = max(element.bbox.right for element in line)
             paragraph_format.left_indent = Pt(
-                max(0.0, line_left - cell_topology.bbox.x)
+                max(0.0, line.left - cell_topology.bbox.x)
             )
             paragraph_format.right_indent = Pt(
-                max(0.0, cell_topology.bbox.right - line_right)
+                max(0.0, cell_topology.bbox.right - line.right)
             )
             previous: TextElement | None = None
-            for element in line:
-                self._append_text_gap(paragraph, previous, element)
+            font_size_pt = self._line_font_size(line)
+            for element in line.elements:
+                self._append_text_separator(
+                    paragraph,
+                    previous,
+                    element,
+                    container_left=cell_topology.bbox.x,
+                )
                 self._apply_text_style(
                     paragraph,
                     page,
                     element,
                     state=state,
                     source_element_id=element.id,
+                    font_size_pt=font_size_pt,
                 )
                 previous = element
 
     @staticmethod
-    def _cluster_text_lines(
+    def _plan_text_lines(
         elements: tuple[TextElement, ...],
-    ) -> tuple[tuple[TextElement, ...], ...]:
+    ) -> tuple[_TextLine, ...]:
         lines: list[list[TextElement]] = []
-        line_bottoms: list[float] = []
-        for element in sorted(elements, key=lambda item: item.reading_order):
-            candidate_index = next(
-                (
-                    index
-                    for index, bottom in enumerate(line_bottoms)
-                    if element.bbox.y <= bottom + _BAND_TOLERANCE_PT
-                    and element.bbox.bottom
-                    >= min(item.bbox.y for item in lines[index]) - _BAND_TOLERANCE_PT
-                ),
-                None,
-            )
-            if candidate_index is None:
-                lines.append([element])
-                line_bottoms.append(element.bbox.bottom)
-            else:
-                lines[candidate_index].append(element)
-                line_bottoms[candidate_index] = max(
-                    line_bottoms[candidate_index], element.bbox.bottom
+        for element in sorted(
+            elements,
+            key=lambda item: (
+                item.bbox.y,
+                item.bbox.x,
+                item.reading_order,
+                item.id,
+            ),
+        ):
+            candidates: list[tuple[float, float, float, int]] = []
+            element_center = (element.bbox.y + element.bbox.bottom) / 2.0
+            for index, line in enumerate(lines):
+                line_top = min(item.bbox.y for item in line)
+                line_bottom = max(item.bbox.bottom for item in line)
+                overlap = min(line_bottom, element.bbox.bottom) - max(
+                    line_top,
+                    element.bbox.y,
                 )
-        return tuple(tuple(line) for line in lines)
+                if overlap < -_BAND_TOLERANCE_PT:
+                    continue
+                smaller_height = max(
+                    1.0,
+                    min(line_bottom - line_top, element.bbox.height),
+                )
+                overlap_ratio = max(0.0, overlap) / smaller_height
+                line_center = (line_top + line_bottom) / 2.0
+                candidates.append(
+                    (
+                        overlap_ratio,
+                        -abs(element_center - line_center),
+                        -line_top,
+                        -index,
+                    )
+                )
+            if candidates:
+                candidate_index = -max(candidates)[3]
+                lines[candidate_index].append(element)
+            else:
+                lines.append([element])
+
+        planned = [
+            _TextLine(
+                elements=tuple(
+                    sorted(
+                        line,
+                        key=lambda item: (
+                            item.bbox.x,
+                            item.reading_order,
+                            item.bbox.y,
+                            item.id,
+                        ),
+                    )
+                ),
+                top=min(item.bbox.y for item in line),
+                bottom=max(item.bbox.bottom for item in line),
+                left=min(item.bbox.x for item in line),
+                right=max(item.bbox.right for item in line),
+            )
+            for line in lines
+        ]
+        return tuple(
+            sorted(
+                planned,
+                key=lambda line: (
+                    line.top,
+                    line.left,
+                    min(element.reading_order for element in line.elements),
+                    min(element.id for element in line.elements),
+                ),
+            )
+        )
 
     @staticmethod
-    def _append_text_gap(
+    def _append_text_separator(
         paragraph: Paragraph,
         previous: TextElement | None,
         current: TextElement,
+        *,
+        container_left: float,
     ) -> None:
         if previous is None:
             return
         gap = max(0.0, current.bbox.x - previous.bbox.right)
-        character_width = max(
-            1.0,
-            min(previous.style.font_size_pt, current.style.font_size_pt) * 0.5,
+        if gap <= GEOMETRY_TOLERANCE_PT:
+            return
+        font_size = min(previous.style.font_size_pt, current.style.font_size_pt)
+        layout_tab_threshold = max(
+            _TEXT_LAYOUT_TAB_MINIMUM_PT,
+            max(previous.style.font_size_pt, current.style.font_size_pt)
+            * _TEXT_LAYOUT_TAB_FONT_MULTIPLIER,
         )
-        spaces = max(1, min(8, round(gap / character_width)))
-        separator = paragraph.add_run(" " * spaces)
-        separator.font.size = Pt(
-            min(previous.style.font_size_pt, current.style.font_size_pt)
+        if gap >= layout_tab_threshold:
+            tab_position = max(0.0, current.bbox.x - container_left)
+            paragraph.paragraph_format.tab_stops.add_tab_stop(Pt(tab_position))
+            separator = paragraph.add_run()
+            separator.add_tab()
+            separator.font.size = Pt(font_size)
+            return
+        if PythonDocxRenderer._requires_word_space(previous.text, current.text):
+            separator = paragraph.add_run(" ")
+            separator.font.size = Pt(font_size)
+
+    @staticmethod
+    def _line_font_size(line: _TextLine) -> float:
+        """Stabilize OCR-fragment sizes without exceeding their source span."""
+
+        source_maximum = max(element.style.font_size_pt for element in line.elements)
+        advance_units = sum(
+            PythonDocxRenderer._text_advance_units(element.text)
+            for element in line.elements
+        )
+        advance_units += _TEXT_NARROW_ADVANCE_UNITS * sum(
+            PythonDocxRenderer._requires_word_space(previous.text, current.text)
+            for previous, current in zip(
+                line.elements,
+                line.elements[1:],
+                strict=False,
+            )
+        )
+        if advance_units <= 0:
+            return source_maximum
+        geometry_maximum = line.right - line.left
+        if geometry_maximum <= 0:
+            return source_maximum
+        return min(source_maximum, max(0.5, geometry_maximum / advance_units))
+
+    @staticmethod
+    def _text_advance_units(text: str) -> float:
+        return sum(
+            1.0
+            if PythonDocxRenderer._is_cjk_character(character)
+            else _TEXT_NARROW_ADVANCE_UNITS
+            for character in text
+            if not character.isspace()
+        )
+
+    @staticmethod
+    def _requires_word_space(previous_text: str, current_text: str) -> bool:
+        previous_char = next(
+            (character for character in reversed(previous_text) if not character.isspace()),
+            "",
+        )
+        current_char = next(
+            (character for character in current_text if not character.isspace()),
+            "",
+        )
+        if not previous_char or not current_char:
+            return False
+        if PythonDocxRenderer._is_numbered_prefix(previous_text):
+            return PythonDocxRenderer._is_word_character(current_char)
+        return (
+            PythonDocxRenderer._is_word_character(previous_char)
+            and PythonDocxRenderer._is_word_character(current_char)
+            and not PythonDocxRenderer._is_cjk_character(previous_char)
+            and not PythonDocxRenderer._is_cjk_character(current_char)
+        )
+
+    @staticmethod
+    def _is_numbered_prefix(text: str) -> bool:
+        candidate = text.strip()
+        if len(candidate) < 2 or candidate[-1] not in {".", "．", ")", "）"}:
+            return False
+        return all(unicodedata.category(character) == "Nd" for character in candidate[:-1])
+
+    @staticmethod
+    def _is_word_character(character: str) -> bool:
+        return unicodedata.category(character)[0] in {"L", "N"}
+
+    @staticmethod
+    def _is_cjk_character(character: str) -> bool:
+        codepoint = ord(character)
+        return any(
+            start <= codepoint <= end
+            for start, end in (
+                (0x2E80, 0x2FFF),
+                (0x3000, 0x303F),
+                (0x3040, 0x30FF),
+                (0x31F0, 0x31FF),
+                (0x3400, 0x4DBF),
+                (0x4E00, 0x9FFF),
+                (0xAC00, 0xD7AF),
+                (0xF900, 0xFAFF),
+                (0x20000, 0x2FA1F),
+            )
         )
 
     @staticmethod
@@ -1642,8 +1810,13 @@ class PythonDocxRenderer:
         *,
         state: _RenderState,
         source_element_id: str | None = None,
+        font_size_pt: float | None = None,
     ) -> None:
-        style = element.style
+        style = (
+            element.style
+            if font_size_pt is None
+            else replace(element.style, font_size_pt=font_size_pt)
+        )
         paragraph.alignment = _ALIGNMENT_MAP[style.align]
         paragraph.paragraph_format.line_spacing = style.line_height
         run = paragraph.add_run(element.text)

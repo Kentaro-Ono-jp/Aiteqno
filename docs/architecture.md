@@ -502,14 +502,26 @@ The renderer uses this deterministic strategy:
    and ordered cell text.
 4. Encode each source text token as an editable, source-tagged OOXML run. This
    permits natural same-line layout while retaining one-to-one read-back.
-5. Render text outside those tables as source-tagged flow paragraphs in page
+5. Build the same deterministic text-line plan for topology-table cells and
+   outside text bands. Candidate lines are selected from vertical geometry;
+   elements within a line are ordered by source `x`, with reading order, bbox,
+   and element ID as stable tie-breakers. Input tuple order is not semantic.
+6. Stabilize fragment typography at line scope. The line uses no size larger
+   than the largest source run and caps that size by the source line span, so
+   small glyph-specific OCR boxes do not create alternating run sizes or force
+   the composed text beyond its measured width.
+7. Choose separators from source geometry and Unicode classes. Adjacent CJK
+   fragments receive no ASCII space; Latin/number word boundaries receive at
+   most one literal space; punctuation and brackets remain attached; a large
+   layout gap uses a Word tab stop instead of two-to-eight literal spaces.
+8. Render text outside those tables as source-tagged flow paragraphs in page
    order, and map the page frame to one section border.
-6. Treat all supporting table primitives as consumed exactly once; do not draw
+9. Treat all supporting table primitives as consumed exactly once; do not draw
    duplicated cell, boundary, and outer-border evidence on top of the native
    table.
-7. For pages without a supported topology extension, retain the established
+10. For pages without a supported topology extension, retain the established
    horizontal-band/fixed-width-table compatibility path.
-8. Record every native-table consumption, approximation, fallback, or omission
+11. Record every native-table consumption, approximation, fallback, or omission
    in a render report.
 
 This strategy intentionally trades exact coordinates for readability and DOCX
@@ -626,9 +638,14 @@ The planner remains an explicit experiment option rather than the portable
 production default. Issue #59's formal Ubuntu 24.04 comparison recovered the
 title and improved block/anchor metrics, but full-text accuracy improved only
 `+0.757575` points against the fixed `+1.0` adoption gate. Its decision is
-therefore `inconclusive`; production continues to send the adopted 2px + `jpn`
-singleton region plan to the OCR port. Further Tesseract microtuning is closed,
-and the next OCR architecture boundary is tracked by Issue #61.
+therefore recorded as `inconclusive`; production continues to send the adopted
+2px + `jpn` singleton region plan to the OCR port. The project-level result is
+nevertheless a successful completion of the requested OCR work: text, block,
+and anchor scores all improved without losing prior recovery, and the target of
+approximately 70% OCR quality was reached. Issue #61 closes the proposed fourth
+OCR pursuit as not planned. Further OCR tuning or an alternate-engine track is
+not scheduled; current work starts at the selected IR and improves actual DOCX
+rendering.
 
 ### 9.2 OCR adapter protocol
 

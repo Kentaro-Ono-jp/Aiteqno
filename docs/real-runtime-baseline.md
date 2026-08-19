@@ -295,15 +295,14 @@ multilingual-smoke check. `phone-label` remained the unchanged singleton `二話
 `content-structure` remained unrecovered and its character accuracy changed
 from `33.333333` to `26.315789`.
 
-Because the fixed full-text gain is below `+1.0`, the exact decision is
-`inconclusive`. The grouped candidate is neither eligible nor adopted;
-`selected_grouping` remains `single-regions`, so the canonical bundle and
-downstream DOCX continue from the 2px + ordered `jpn` control. The production
-control still misses essential blocks `title`, `phone-label`, and
-`content-structure`, and exact anchors `文書解析評価シート`, `電話`, `対象形式`, and
-`環境情報を保存する`. The third Tesseract micro-hypothesis is therefore closed.
-Issue #61 moves the next design to an alternate OCR engine or trained-data
-track without adding further PSM/DPI/padding/grouping tuning.
+The comparison's fixed machine decision remains `inconclusive`, so
+`selected_grouping` remains `single-regions` and the canonical downstream DOCX
+continues from the 2px + ordered `jpn` control. At project level, however, the
+text, block, and anchor improvements with zero lost recovery are the desired
+successful result and complete the approximately-70% OCR goal. The remaining
+misses are retained as diagnostics, not as authority for another OCR chase.
+Issue #61 closed that proposed fourth pursuit as not planned; Issue #62 starts
+the DOCX text-flow work from the fixed selected IR.
 
 ## Source-quality contract
 
@@ -445,6 +444,13 @@ bundle is published. Each of the five topology tables becomes one
 identifiable, editable native Word table. Cell text is kept as source-tagged
 editable runs, so the read-back observer retains every selected OCR text element while
 Word and LibreOffice can lay out tokens naturally inside 45 physical cells.
+Topology cells and outside text bands share one geometry-first line plan. It
+orders same-line fragments by source `x`, uses deterministic tie-breakers,
+stabilizes fragment font sizes within the measured line span, omits artificial
+ASCII spaces between CJK fragments, retains single Latin/number word
+separators, and represents large visual gaps with native tab stops. Every
+source fragment remains its own tagged editable run; text is not corrected from
+fixture truth or merged into an untraceable replacement run.
 Supporting table primitives remain unchanged in the IR and are accounted for
 once in `native_table_consumed_element_ids`; duplicate border evidence is not
 drawn again. Pages without topology continue through the legacy renderer.
