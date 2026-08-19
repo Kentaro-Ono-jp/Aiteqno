@@ -70,6 +70,7 @@ def visible_paragraph_text(document) -> list[str]:
 class DocxRendererTest(unittest.TestCase):
     def test_canonical_visual_ir_generates_strict_reopenable_docx(self):
         document = load_canonical_document()
+        self.assertEqual(DEFAULT_SUPPORTED_FONTS.count("Noto Sans CJK JP"), 1)
         with tempfile.TemporaryDirectory() as temporary_directory:
             bundle_root = Path(temporary_directory)
             materialize_canonical_asset(bundle_root, document)
@@ -78,7 +79,6 @@ class DocxRendererTest(unittest.TestCase):
                 document,
                 output_path,
                 renderer=PythonDocxRenderer(
-                    supported_fonts=(*DEFAULT_SUPPORTED_FONTS, "Noto Sans CJK JP"),
                     asset_resolver=BundleAssetResolver(bundle_root),
                 ),
                 policy=RenderPolicy.STRICT,
@@ -121,10 +121,11 @@ class DocxRendererTest(unittest.TestCase):
         self.assertEqual(title_run.font.name, "Noto Sans CJK JP")
         self.assertAlmostEqual(title_run.font.size.pt, 18.0)
         self.assertTrue(title_run.bold)
-        self.assertEqual(
-            title_run._element.rPr.rFonts.get(qn("w:eastAsia")),
-            "Noto Sans CJK JP",
-        )
+        for channel in ("ascii", "hAnsi", "eastAsia", "cs"):
+            self.assertEqual(
+                title_run._element.rPr.rFonts.get(qn(f"w:{channel}")),
+                "Noto Sans CJK JP",
+            )
 
         line_borders = reopened._element.body.xpath(".//w:pBdr/w:bottom")
         self.assertEqual(len(line_borders), 1)
@@ -283,6 +284,124 @@ class DocxRendererTest(unittest.TestCase):
         self.assertEqual(result.report.fallback_element_ids, ())
         self.assertEqual(result.report.omitted_element_ids, ())
         self.assertEqual(result.report.warnings, ())
+
+    def test_custom_font_policy_keeps_case_insensitive_resolution_and_fallback(self):
+        canonical_text = load_canonical_document().pages[0].elements[0]
+        self.assertIsInstance(canonical_text, TextElement)
+        supported = replace(
+            canonical_text,
+            text="Supported",
+            style=replace(canonical_text.style, font_family="custom jp"),
+        )
+        excluded_default = replace(
+            canonical_text,
+            id="p001-text-0001",
+            bbox=BoundingBox(x=72, y=96, width=240, height=18),
+            text="Excluded default",
+            reading_order=1,
+            style=replace(
+                canonical_text.style,
+                font_family="Noto Sans CJK JP",
+            ),
+        )
+        unsupported = replace(
+            canonical_text,
+            id="p001-text-0002",
+            bbox=BoundingBox(x=72, y=120, width=240, height=18),
+            text="Unsupported",
+            reading_order=2,
+            style=replace(canonical_text.style, font_family="Imaginary Sans"),
+        )
+        document = text_only_document(supported, excluded_default, unsupported)
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            output_path = Path(temporary_directory) / "custom-fonts.docx"
+            result = render_docx(
+                document,
+                output_path,
+                renderer=PythonDocxRenderer(
+                    supported_fonts=("Custom JP",),
+                    fallback_font="Backup Sans",
+                ),
+            )
+            reopened = open_docx(output_path)
+
+        self.assertEqual(reopened.paragraphs[0].runs[0].font.name, "Custom JP")
+        self.assertEqual(reopened.paragraphs[1].runs[0].font.name, "Backup Sans")
+        self.assertEqual(reopened.paragraphs[2].runs[0].font.name, "Backup Sans")
+        for paragraph, expected_font in zip(
+            reopened.paragraphs,
+            ("Custom JP", "Backup Sans", "Backup Sans"),
+            strict=True,
+        ):
+            run_fonts = paragraph.runs[0]._element.rPr.rFonts
+            for channel in ("ascii", "hAnsi", "eastAsia", "cs"):
+                self.assertEqual(
+                    run_fonts.get(qn(f"w:{channel}")),
+                    expected_font,
+                )
+        self.assertEqual(
+            tuple(
+                (item.element_id, item.requested, item.replacement)
+                for item in result.report.font_substitutions
+            ),
+            (
+                (excluded_default.id, "Noto Sans CJK JP", "Backup Sans"),
+                (unsupported.id, "Imaginary Sans", "Backup Sans"),
+            ),
+        )
+        self.assertEqual(
+            result.report.fallback_element_ids,
+            (excluded_default.id, unsupported.id),
+        )
+        self.assertEqual(
+            [warning.code for warning in result.report.warnings],
+            ["font_substituted", "font_substituted"],
+        )
+
+    def test_font_fallback_report_and_document_xml_are_deterministic(self):
+        canonical_text = load_canonical_document().pages[0].elements[0]
+        self.assertIsInstance(canonical_text, TextElement)
+        first = replace(
+            canonical_text,
+            text="First",
+            style=replace(canonical_text.style, font_family="Unknown First"),
+        )
+        second = replace(
+            canonical_text,
+            id="p001-text-0001",
+            bbox=BoundingBox(x=72, y=96, width=240, height=18),
+            text="Second",
+            reading_order=1,
+            style=replace(canonical_text.style, font_family="Unknown Second"),
+        )
+        ordered = text_only_document(first, second)
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            outputs = (root / "first.docx", root / "second.docx")
+            renderers = (
+                PythonDocxRenderer(supported_fonts=DEFAULT_SUPPORTED_FONTS),
+                PythonDocxRenderer(
+                    supported_fonts=reversed(DEFAULT_SUPPORTED_FONTS)
+                ),
+            )
+            results = tuple(
+                render_docx(ordered, output, renderer=renderer)
+                for output, renderer in zip(outputs, renderers, strict=True)
+            )
+            with ZipFile(outputs[0]) as first_package, ZipFile(
+                outputs[1]
+            ) as second_package:
+                first_xml = first_package.read("word/document.xml")
+                second_xml = second_package.read("word/document.xml")
+
+        self.assertEqual(first_xml, second_xml)
+        self.assertEqual(
+            results[0].report.font_substitutions,
+            results[1].report.font_substitutions,
+        )
+        self.assertEqual(results[0].report.warnings, results[1].report.warnings)
 
     def test_unsupported_styles_have_explicit_fallbacks_and_strict_rejects_them(self):
         canonical_text = load_canonical_document().pages[0].elements[0]

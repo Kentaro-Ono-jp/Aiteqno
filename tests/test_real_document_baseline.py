@@ -1963,9 +1963,12 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         control_document = DocumentIR.from_json(
             (output / "control-bundle" / "document.ir.json").read_bytes()
         )
-        selected_document = DocumentIR.from_json(
-            (output / "bundle" / "document.ir.json").read_bytes()
+        selected_ir_bytes = (output / "bundle" / "document.ir.json").read_bytes()
+        self.assertEqual(
+            hashlib.sha256(selected_ir_bytes).hexdigest(),
+            "5e0e90a43490362916e56e88cd5a46ce30fc19acd77b78db813e3456ce09c32e",
         )
+        selected_document = DocumentIR.from_json(selected_ir_bytes)
         padding_document = DocumentIR.from_json(
             (
                 output / "ocr-padding" / "candidate" / "bundle" / "document.ir.json"
@@ -2008,7 +2011,7 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
             )
             for element_type in ("text", "line", "rectangle", "image")
         }
-        self.assertGreater(raw_type_counts["text"], 0)
+        self.assertEqual(raw_type_counts["text"], 374)
         self.assertEqual(raw_type_counts["line"], 50)
         self.assertEqual(raw_type_counts["rectangle"], 51)
         self.assertEqual(raw_type_counts["image"], 0)
@@ -2124,6 +2127,11 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
             len(docx_report["rendered_element_ids"]),
             selected_element_count,
         )
+        self.assertEqual(docx_report["font_substitutions"], [])
+        self.assertNotIn(
+            "font_substituted",
+            {warning["code"] for warning in docx_report["warnings"]},
+        )
         consumed = set(docx_report["native_table_consumed_element_ids"])
         self.assertFalse(
             any(
@@ -2135,6 +2143,20 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         )
         reconstructed = open_docx(output / "bundle" / "reconstructed.docx")
         self.assertEqual(len(reconstructed.tables), 5)
+        source_contents = reconstructed._element.body.xpath(".//w:sdtContent")
+        self.assertEqual(len(source_contents), raw_type_counts["text"])
+        for content in source_contents:
+            run = content.find(qn("w:r"))
+            self.assertIsNotNone(run)
+            run_properties = run.find(qn("w:rPr"))
+            self.assertIsNotNone(run_properties)
+            run_fonts = run_properties.find(qn("w:rFonts"))
+            self.assertIsNotNone(run_fonts)
+            for channel in ("ascii", "hAnsi", "eastAsia", "cs"):
+                self.assertEqual(
+                    run_fonts.get(qn(f"w:{channel}")),
+                    "Noto Sans CJK JP",
+                )
         self.assertEqual(
             [
                 table._tbl.tblPr.find(qn("w:tblCaption")).get(qn("w:val"))
@@ -2163,6 +2185,32 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         )
         self.assertTrue((output / "source-quality-evaluation.json").is_file())
         self.assertTrue((output / "ir-to-docx-restoration-evaluation.json").is_file())
+        source_components = source_evaluation["components"]
+        self.assertGreater(source_evaluation["overall_score"], 45.22)
+        self.assertGreater(
+            source_components["text_accuracy"]["score"],
+            21.212121,
+        )
+        self.assertGreaterEqual(
+            source_components["logical_block_coverage"]["score"],
+            70.833333,
+        )
+        self.assertGreaterEqual(
+            source_components["structure_similarity"]["score"],
+            46.969697,
+        )
+        self.assertGreaterEqual(
+            source_components["geometry_similarity"]["score"],
+            80.754604,
+        )
+        address_block = next(
+            block
+            for block in source_evaluation["logical_blocks"]
+            if block["reference_id"] == "address-label"
+        )
+        self.assertTrue(address_block["essential"])
+        self.assertTrue(address_block["covered"])
+        self.assertEqual(address_block["observed_text"], "住所")
         restoration = json.loads(
             (output / "ir-to-docx-restoration-evaluation.json").read_text(
                 encoding="utf-8"
@@ -2173,13 +2221,16 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
             for name, component in restoration["components"].items()
         }
         self.assertEqual(restoration["state"], "pass")
-        self.assertGreaterEqual(restoration["overall_score"], 70.0)
+        self.assertGreaterEqual(restoration["overall_score"], 78.73)
         self.assertEqual(restoration_components["text_similarity"], 100.0)
         self.assertGreaterEqual(
             restoration_components["element_coverage"],
-            85.289747,
+            94.209354,
         )
-        self.assertGreater(restoration_components["structure_similarity"], 0.0)
+        self.assertGreaterEqual(
+            restoration_components["structure_similarity"],
+            74.434957,
+        )
         self.assertEqual(restoration_components["geometry_similarity"], 0.0)
         self.assertEqual(
             summary["layers"]["candidate_ir_to_docx"]["state"],
@@ -2198,6 +2249,21 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
             (snapshot / "snapshot-evidence.json").read_text(encoding="utf-8")
         )
         self.assertEqual(snapshot_evidence["page_count"], 1)
+        pdffonts = shutil.which("pdffonts")
+        self.assertIsNotNone(pdffonts)
+        font_inventory = subprocess.run(
+            [pdffonts, str(snapshot / "snapshot.pdf")],
+            cwd=REPOSITORY_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=30,
+        )
+        self.assertEqual(font_inventory.returncode, 0, msg=font_inventory.stderr)
+        self.assertIn("NotoSansCJKjp-Regular", font_inventory.stdout)
+        self.assertNotIn("LiberationSans", font_inventory.stdout)
 
 
 if __name__ == "__main__":

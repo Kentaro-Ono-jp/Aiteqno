@@ -83,6 +83,7 @@ DEFAULT_SUPPORTED_FONTS = (
     "Arial",
     "Calibri",
     "Courier New",
+    "Noto Sans CJK JP",
     "Times New Roman",
     "Yu Gothic",
 )

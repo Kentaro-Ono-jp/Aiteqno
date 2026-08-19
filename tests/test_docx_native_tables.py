@@ -533,6 +533,56 @@ class NativeWordTableRendererTest(unittest.TestCase):
         self.assertEqual(result.report.fallback_element_ids, ())
         self.assertEqual(result.report.omitted_element_ids, ())
 
+    def test_default_japanese_font_is_applied_to_table_and_outside_runs(self):
+        document = _topology_document()
+        page = document.pages[0]
+        elements = tuple(
+            replace(
+                element,
+                style=replace(element.style, font_family="Noto Sans CJK JP"),
+            )
+            if isinstance(element, TextElement)
+            else element
+            for element in page.elements
+        )
+        document = replace(document, pages=(replace(page, elements=elements),))
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            output = Path(temporary_directory) / "noto-native.docx"
+            result = render_docx(
+                document,
+                output,
+                renderer=PythonDocxRenderer(),
+                policy=RenderPolicy.STRICT,
+            )
+            reopened = open_docx(output)
+
+        outside_contents = reopened._element.body.xpath("./w:p//w:sdtContent")
+        table_contents = reopened._element.body.xpath("./w:tbl//w:sdtContent")
+        self.assertTrue(outside_contents)
+        self.assertTrue(table_contents)
+        self.assertEqual(
+            len(outside_contents) + len(table_contents),
+            sum(isinstance(element, TextElement) for element in elements),
+        )
+        for content in (*outside_contents, *table_contents):
+            run = content.find(qn("w:r"))
+            self.assertIsNotNone(run)
+            run_properties = run.find(qn("w:rPr"))
+            self.assertIsNotNone(run_properties)
+            run_fonts = run_properties.find(qn("w:rFonts"))
+            self.assertIsNotNone(run_fonts)
+            for channel in ("ascii", "hAnsi", "eastAsia", "cs"):
+                self.assertEqual(
+                    run_fonts.get(qn(f"w:{channel}")),
+                    "Noto Sans CJK JP",
+                )
+        self.assertEqual(result.report.font_substitutions, ())
+        self.assertNotIn(
+            "font_substituted",
+            {warning.code for warning in result.report.warnings},
+        )
+
     def test_fragmented_text_plan_is_deterministic_for_shuffled_planner_input(self):
         document = _fragmented_topology_document()
         text_elements = tuple(

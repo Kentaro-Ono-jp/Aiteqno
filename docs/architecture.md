@@ -550,6 +550,16 @@ the reviewed one-page fixture on one page without clipping editable cell text.
 | Image | Inline picture sized from point bbox | Placeholder + warning in best-effort mode |
 | Z-order | Deterministic insertion/layer approximation | Warn when exact overlap is impossible |
 
+The default DOCX font policy includes `Noto Sans CJK JP`, matching the Japanese
+font installed in the formal Ubuntu runtime. A resolved source run writes that
+same family to the `ascii`, `hAnsi`, `eastAsia`, and `cs` `w:rFonts` channels;
+native table cells and outside text bands use the same path. This is a static,
+deterministic renderer contract, not host font discovery: fonts are not
+embedded or downloaded, and a caller-supplied `supported_fonts` set remains
+authoritative. A requested family absent from that effective set still maps to
+the configured fallback, emits `font_substituted`, and records requested and
+replacement families in the render report.
+
 The implementation MUST expose `best_effort` and `strict` policies. CLI defaults
 to `best_effort`: unsupported non-essential visuals generate warnings, but
 missing essential text or an invalid asset fails. `strict` fails on every
