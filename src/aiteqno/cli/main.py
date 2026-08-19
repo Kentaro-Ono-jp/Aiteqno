@@ -575,6 +575,7 @@ def _extract_to_bundle(
             bundle_writer=runtime.bundle_writer,
             languages=languages,
             ocr_options=OcrOptions(),
+            enrich_table_topology=True,
         )
     except PngExtractionError as exc:
         raise _cli_error_from_extraction(exc) from exc

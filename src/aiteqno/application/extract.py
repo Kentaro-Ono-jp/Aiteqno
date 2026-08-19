@@ -69,6 +69,7 @@ from aiteqno.ports.structure import (
 )
 
 from .ocr_grouping import plan_ocr_regions
+from .table_topology import infer_table_topology
 
 
 EXTRACTION_PROVIDER = "aiteqno.png-extraction"
@@ -169,6 +170,7 @@ def extract_png(
     ocr_region_grouping: OcrRegionGroupingConfig = OcrRegionGroupingConfig(),
     ocr_region_grouping_observer: Callable[[OcrRegionGroupingEvidence], None]
     | None = None,
+    enrich_table_topology: bool = False,
 ) -> PngExtractionResult:
     """Extract, schema-validate, and atomically publish one PNG document bundle."""
 
@@ -183,6 +185,8 @@ def extract_png(
         ocr_region_grouping_observer
     ):
         raise TypeError("ocr_region_grouping_observer must be callable or None")
+    if not isinstance(enrich_table_topology, bool):
+        raise TypeError("enrich_table_topology must be a boolean")
     diagnostics: list[ExtractionDiagnostic] = []
 
     try:
@@ -363,6 +367,16 @@ def extract_png(
             "document_ir_assembly_invalid",
             str(exc),
         ) from exc
+
+    if enrich_table_topology:
+        try:
+            document = infer_table_topology(document)
+        except DocumentIRValidationError as exc:
+            raise _pipeline_error(
+                "assemble",
+                "table_topology_inference_invalid",
+                str(exc),
+            ) from exc
 
     try:
         validator.validate(document)
