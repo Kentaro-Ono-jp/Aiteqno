@@ -510,7 +510,7 @@ The renderer uses this deterministic strategy:
    larger than the largest source run and cap that size by the source line
    span, so glyph-specific OCR boxes do not create alternating run sizes or
    force composed text beyond its measured width. A one-fragment native-cell
-   label with at most two advance units and a glyph box at least 9pt high may
+   label with at most two advance units and a glyph box at least 8.5pt high may
    use a 10.5pt readability floor, still bounded by cell height and available
    width; smaller annotations and longer cell content are not enlarged.
 7. Choose separators from source geometry and Unicode classes. Adjacent CJK
