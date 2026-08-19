@@ -132,6 +132,15 @@ evidence prevents an otherwise clean automatic pass; a failed human check is a
 hard failure. See the baseline guide for weights, thresholds, artifacts, and CI
 runtime recording.
 
+Font-resolution reporting and visible-text scoring remain independent. A
+supported DOCX font removes a renderer substitution only when the requested
+family is written to the native run; it earns no source-quality credit by
+itself. The source baseline still OCRs the actual LibreOffice page snapshot,
+and the formal real-runtime integration inspects the retained PDF font
+inventory to verify that the requested Japanese family was used. Unknown fonts
+must continue to appear as explicit requested/replacement pairs even when the
+host application could silently choose a glyph fallback.
+
 ## OCR-only baseline
 
 `evaluate_ocr_quality()` stops at the candidate Document IR. It reconstructs
