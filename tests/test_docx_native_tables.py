@@ -340,6 +340,10 @@ def _fragmented_topology_document() -> DocumentIR:
             ("p001-text-0934", ")", 80, 94, 3, 10),
         ),
     )
+    fourth_cell_ids = replace_text(
+        "p001-text-0004",
+        (("p001-text-0004", "項目", 105, 94, 18, 10),),
+    )
 
     fragment_font_sizes = {
         "p001-text-0000": 6,
@@ -349,6 +353,7 @@ def _fragmented_topology_document() -> DocumentIR:
         "p001-text-0001": 7,
         "p001-text-0910": 12,
         "p001-text-0911": 8,
+        "p001-text-0004": 6,
     }
     for element in elements:
         if element["id"] in fragment_font_sizes:
@@ -358,6 +363,7 @@ def _fragmented_topology_document() -> DocumentIR:
     cells[0]["text_element_ids"] = first_cell_ids
     cells[1]["text_element_ids"] = second_cell_ids
     cells[2]["text_element_ids"] = third_cell_ids
+    cells[3]["text_element_ids"] = fourth_cell_ids
     diagnostics = topology["diagnostics"]
     diagnostics["unassigned_text_element_ids"] = [
         *outside_ids,
@@ -479,6 +485,7 @@ class NativeWordTableRendererTest(unittest.TestCase):
         self.assertEqual(text_content(table.cell(0, 0)._tc), "依頼する処理")
         self.assertEqual(text_content(table.cell(0, 1)._tc), "Alpha Beta")
         self.assertEqual(text_content(table.cell(1, 0)._tc), "PNG・PDF(26)")
+        self.assertEqual(text_content(table.cell(1, 1)._tc), "項目")
         self.assertFalse(table.cell(0, 0)._tc.xpath('.//w:t[text()=" "]'))
         self.assertFalse(table.cell(1, 0)._tc.xpath('.//w:t[text()=" "]'))
         cell_font_sizes = {
@@ -488,6 +495,13 @@ class NativeWordTableRendererTest(unittest.TestCase):
             )
         }
         self.assertEqual(len(cell_font_sizes), 1)
+        short_label_font_sizes = {
+            size.get(qn("w:val"))
+            for size in table.cell(1, 1)._tc.xpath(
+                ".//w:sdtContent/w:r/w:rPr/w:sz"
+            )
+        }
+        self.assertEqual(short_label_font_sizes, {"21"})
 
         expected_source_ids = {
             "p001-text-0000",
@@ -507,6 +521,7 @@ class NativeWordTableRendererTest(unittest.TestCase):
             "p001-text-0932",
             "p001-text-0933",
             "p001-text-0934",
+            "p001-text-0004",
         }
         observed_source_ids = [
             element.source_element_id

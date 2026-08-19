@@ -451,6 +451,11 @@ ASCII spaces between CJK fragments, retains single Latin/number word
 separators, and represents large visual gaps with native tab stops. Every
 source fragment remains its own tagged editable run; text is not corrected from
 fixture truth or merged into an untraceable replacement run.
+For short one-fragment cell labels only, a fixed geometry-only readability
+floor may raise the run to at most 10.5pt when the glyph box is at least 9pt
+high and the content occupies no more than two advance units. Cell height and
+remaining width still cap the result; OCR confidence and text truth are not
+inputs.
 Supporting table primitives remain unchanged in the IR and are accounted for
 once in `native_table_consumed_element_ids`; duplicate border evidence is not
 drawn again. Pages without topology continue through the legacy renderer.

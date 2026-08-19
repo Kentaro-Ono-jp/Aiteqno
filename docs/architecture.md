@@ -506,10 +506,13 @@ The renderer uses this deterministic strategy:
    outside text bands. Candidate lines are selected from vertical geometry;
    elements within a line are ordered by source `x`, with reading order, bbox,
    and element ID as stable tie-breakers. Input tuple order is not semantic.
-6. Stabilize fragment typography at line scope. The line uses no size larger
-   than the largest source run and caps that size by the source line span, so
-   small glyph-specific OCR boxes do not create alternating run sizes or force
-   the composed text beyond its measured width.
+6. Stabilize fragment typography at line scope. General lines use no size
+   larger than the largest source run and cap that size by the source line
+   span, so glyph-specific OCR boxes do not create alternating run sizes or
+   force composed text beyond its measured width. A one-fragment native-cell
+   label with at most two advance units and a glyph box at least 9pt high may
+   use a 10.5pt readability floor, still bounded by cell height and available
+   width; smaller annotations and longer cell content are not enlarged.
 7. Choose separators from source geometry and Unicode classes. Adjacent CJK
    fragments receive no ASCII space; Latin/number word boundaries receive at
    most one literal space; punctuation and brackets remain attached; a large

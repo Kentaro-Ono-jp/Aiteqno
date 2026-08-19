@@ -100,6 +100,10 @@ _TABLE_CAPTION_PREFIX = "aiteqno-table:"
 _TEXT_LAYOUT_TAB_MINIMUM_PT = 24.0
 _TEXT_LAYOUT_TAB_FONT_MULTIPLIER = 4.0
 _TEXT_NARROW_ADVANCE_UNITS = 0.55
+_TEXT_SHORT_CELL_MAX_ADVANCE_UNITS = 2.0
+_TEXT_SHORT_CELL_MINIMUM_FONT_PT = 10.5
+_TEXT_SHORT_CELL_HEIGHT_RATIO = 0.4
+_TEXT_SHORT_CELL_MINIMUM_GLYPH_HEIGHT_PT = 9.0
 
 _ALIGNMENT_MAP = {
     TextAlign.LEFT: WD_ALIGN_PARAGRAPH.LEFT,
@@ -848,7 +852,7 @@ class PythonDocxRenderer:
                 max(0.0, cell_topology.bbox.right - line.right)
             )
             previous: TextElement | None = None
-            font_size_pt = self._line_font_size(line)
+            font_size_pt = self._cell_line_font_size(line, cell_topology)
             for element in line.elements:
                 self._append_text_separator(
                     paragraph,
@@ -996,6 +1000,40 @@ class PythonDocxRenderer:
         if geometry_maximum <= 0:
             return source_maximum
         return min(source_maximum, max(0.5, geometry_maximum / advance_units))
+
+    @staticmethod
+    def _cell_line_font_size(
+        line: _TextLine,
+        cell_topology: TableCellTopology,
+    ) -> float:
+        font_size = PythonDocxRenderer._line_font_size(line)
+        advance_units = PythonDocxRenderer._line_advance_units(line)
+        if not PythonDocxRenderer._is_short_cell_line(line):
+            return font_size
+        available_width = max(0.0, cell_topology.bbox.right - line.left)
+        readable_minimum = min(
+            _TEXT_SHORT_CELL_MINIMUM_FONT_PT,
+            cell_topology.bbox.height * _TEXT_SHORT_CELL_HEIGHT_RATIO,
+            available_width / advance_units,
+        )
+        return max(font_size, readable_minimum)
+
+    @staticmethod
+    def _is_short_cell_line(line: _TextLine) -> bool:
+        advance_units = PythonDocxRenderer._line_advance_units(line)
+        return (
+            len(line.elements) == 1
+            and line.elements[0].bbox.height
+            >= _TEXT_SHORT_CELL_MINIMUM_GLYPH_HEIGHT_PT
+            and 0 < advance_units <= _TEXT_SHORT_CELL_MAX_ADVANCE_UNITS
+        )
+
+    @staticmethod
+    def _line_advance_units(line: _TextLine) -> float:
+        return sum(
+            PythonDocxRenderer._text_advance_units(element.text)
+            for element in line.elements
+        )
 
     @staticmethod
     def _text_advance_units(text: str) -> float:
