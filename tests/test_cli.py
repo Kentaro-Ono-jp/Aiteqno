@@ -95,7 +95,7 @@ class CliContractTest(unittest.TestCase):
 
         version_code, version_stdout, version_stderr = _run(["--version"])
         self.assertEqual(version_code, ExitCode.SUCCESS)
-        self.assertIn("aiteqno 0.4.0.dev0", version_stdout)
+        self.assertIn("aiteqno 0.5.0.dev0", version_stdout)
         self.assertEqual(version_stderr, "")
 
         completed = subprocess.run(

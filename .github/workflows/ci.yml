@@ -45,7 +45,7 @@ jobs:
           python scripts/verify_demo_package.py
           build/Aiteqno-demo-ci.zip
           --release-tag ci
-          --package-version 0.4.0.dev0
+          --package-version 0.5.0.dev0
 
   real-runtime-baseline:
     name: Ubuntu 24.04 / real document OCR experiments

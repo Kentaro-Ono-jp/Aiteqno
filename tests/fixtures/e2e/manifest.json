@@ -70,7 +70,7 @@
         ]
       },
       "expected": {
-        "document_ir_semantic_sha256": "8fcd5a4fccaa4546cdbb6e1130e51097830e24af9fda30133c0d41468a587e60",
+        "document_ir_semantic_sha256": "3a876dc9848b120d800f5c7a40fcae6b592fc51c01c6720ce80ef7a7dd3e1712",
         "asset_rgb24_sha256": "fe52e270ca7b5ab66214fcb6a1a2e9108a2141f78be91504e19b8128eb2e0daf",
         "element_counts": {
           "text": 7,

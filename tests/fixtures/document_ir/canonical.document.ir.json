@@ -3,7 +3,7 @@
   "document_id": "canonical-v0.1",
   "generator": {
     "name": "aiteqno-fixture",
-    "version": "0.4.0.dev0"
+    "version": "0.5.0.dev0"
   },
   "pages": [
     {
@@ -37,7 +37,7 @@
             {
               "stage": "manual",
               "provider": "aiteqno-fixture",
-              "provider_version": "0.4.0.dev0",
+              "provider_version": "0.5.0.dev0",
               "source_refs": [
                 "fixture-source"
               ],
@@ -78,7 +78,7 @@
             {
               "stage": "manual",
               "provider": "aiteqno-fixture",
-              "provider_version": "0.4.0.dev0",
+              "provider_version": "0.5.0.dev0",
               "source_refs": []
             }
           ],
@@ -112,7 +112,7 @@
             {
               "stage": "manual",
               "provider": "aiteqno-fixture",
-              "provider_version": "0.4.0.dev0",
+              "provider_version": "0.5.0.dev0",
               "source_refs": []
             }
           ],
@@ -139,7 +139,7 @@
             {
               "stage": "manual",
               "provider": "aiteqno-fixture",
-              "provider_version": "0.4.0.dev0",
+              "provider_version": "0.5.0.dev0",
               "source_refs": []
             }
           ],
