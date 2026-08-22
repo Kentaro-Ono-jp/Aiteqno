@@ -10,6 +10,10 @@
     "pixel_height": 991,
     "dpi": 96
   },
+  "reference": {
+    "path": "reference.json",
+    "sha256": "45d3322ee7eea3d86fe981d93dba5cc9ac83b27ca638259051a62868c8f15a31"
+  },
   "license": "MIT",
   "provenance": "Original synthetic Japanese form authored and rasterized for Aiteqno by scripts/build_real_baseline_fixture.py; wording and layout are project-original and do not reproduce the excluded third-party form.",
   "redistribution_allowed": true,

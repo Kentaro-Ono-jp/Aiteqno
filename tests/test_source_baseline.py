@@ -2,14 +2,18 @@ import copy
 import unittest
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from aiteqno.application import (
+    SOURCE_BASELINE_EVALUATOR_VERSION,
     SourceBaselineConfig,
     evaluate_source_baseline,
     normalize_source_text,
     source_character_accuracy,
 )
-from aiteqno.domain import DocumentIR, ElementType, TextElement
+from aiteqno.application.baseline import _candidate_structures
+from aiteqno.domain import DocumentIR, ElementType, TablePrimitiveRole, TextElement
 from aiteqno.ports import (
     EvaluationState,
     ManualCheckEvidence,
@@ -202,6 +206,33 @@ def relationship_observation(document: DocumentIR) -> SourceBaselineObservation:
 
 
 class SourceBaselineTest(unittest.TestCase):
+    def test_topology_duplicate_primitives_do_not_inflate_structure_denominator(self):
+        document = load_document()
+        topology = SimpleNamespace(
+            primitive_roles=(
+                SimpleNamespace(
+                    element_id="p001-line-0001",
+                    role=TablePrimitiveRole.DUPLICATED_SUPPORTING_PRIMITIVE,
+                ),
+                SimpleNamespace(
+                    element_id="p001-rectangle-0002",
+                    role=TablePrimitiveRole.CELL_RECTANGLE,
+                ),
+            )
+        )
+
+        with patch(
+            "aiteqno.application.baseline.read_page_table_topology",
+            return_value=topology,
+        ):
+            candidates = _candidate_structures(document)
+
+        self.assertEqual(SOURCE_BASELINE_EVALUATOR_VERSION, "1.1")
+        self.assertEqual(
+            {item.id for item in candidates},
+            {"p001-image-0003"},
+        )
+
     def test_nfkc_whitespace_normalization_and_edit_distance_accuracy(self):
         self.assertEqual(normalize_source_text("Ａ B\nC\u3000"), "ABC")
         self.assertEqual(source_character_accuracy("Ａ B C", "ABC"), 100.0)

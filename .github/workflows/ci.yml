@@ -58,6 +58,7 @@ jobs:
       AITEQNO_RUN_REAL_IMAGE_BASELINE: "1"
       AITEQNO_RUN_TESSERACT_INTEGRATION: "1"
       AITEQNO_REAL_BASELINE_OUTPUT: build/real-runtime-baseline
+      AITEQNO_STAGE_OUTPUT: build/questionnaire-stage-1
       AITEQNO_TESSERACT_EXECUTABLE: /usr/bin/tesseract
       AITEQNO_TESSDATA_PREFIX: /usr/share/tesseract-ocr/5/tessdata
       AITEQNO_LIBREOFFICE_EXECUTABLE: /usr/bin/libreoffice
@@ -101,6 +102,11 @@ jobs:
             tests.test_cli.RealCliRoundtripIntegrationTest \
             tests.test_golden_roundtrip.RealLibreOfficeGoldenIntegrationTest \
             tests.test_real_document_baseline.RealDocumentBaselineIntegrationTest
+      - name: Run cumulative questionnaire Stage 1 gate
+        run: >-
+          python scripts/run_stage_suite.py
+          --output "$AITEQNO_STAGE_OUTPUT"
+          --expect-state pass
       - name: Upload baseline evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -108,4 +114,12 @@ jobs:
           name: real-runtime-baseline-${{ github.sha }}
           path: build/real-runtime-baseline
           if-no-files-found: warn
+          retention-days: 14
+      - name: Upload questionnaire Stage 1 evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: questionnaire-stage-1-${{ github.sha }}
+          path: build/questionnaire-stage-1
+          if-no-files-found: error
           retention-days: 14

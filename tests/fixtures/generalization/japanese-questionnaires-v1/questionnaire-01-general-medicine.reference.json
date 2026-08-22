@@ -1,0 +1,983 @@
+{
+  "reference_version": 1,
+  "reference_id": "questionnaire-01-general-medicine",
+  "source_sha256": "e6aadded4a7ca5d92358c93d87679b65f5f81f9ebf886a13871968a1dd96a734",
+  "source_dimensions": {
+    "pixel_width": 1240,
+    "pixel_height": 1754,
+    "dpi": 150,
+    "color_mode": "RGB",
+    "sha256": "e6aadded4a7ca5d92358c93d87679b65f5f81f9ebf886a13871968a1dd96a734"
+  },
+  "normalization": "NFKC then remove every Unicode whitespace character",
+  "reviewed": true,
+  "review": {
+    "status": "reviewed",
+    "reviewer": "Kentaro Ono (blanket approval); transcription and 100% visual cross-check by Noel",
+    "reviewed_at": "2026-08-22",
+    "reference_revision": 1,
+    "authorization": "User explicitly approved all actions for Issue #75 on 2026-08-22.",
+    "method": "Source PNG inspected at 100%; every visible printed string and every material grid, cell boundary, rule, writing line, section band, reading order, containment, and adjacency relation was cross-checked against source pixels.",
+    "exclusions": []
+  },
+  "text_regions": [
+    {
+      "id": "title",
+      "text": "内科 初診問診票",
+      "bbox": {
+        "x": 0.05483871,
+        "y": 0.02736602,
+        "width": 0.21370968,
+        "height": 0.02394527
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "specialty",
+      "text": "一般内科",
+      "bbox": {
+        "x": 0.87741935,
+        "y": 0.03021665,
+        "width": 0.07258065,
+        "height": 0.01710376
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "name-label",
+      "text": "氏名",
+      "bbox": {
+        "x": 0.06290323,
+        "y": 0.07981756,
+        "width": 0.06129032,
+        "height": 0.02166477
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "furigana-label",
+      "text": "ふりがな",
+      "bbox": {
+        "x": 0.15645161,
+        "y": 0.07981756,
+        "width": 0.08870968,
+        "height": 0.02166477
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "entry-date-label",
+      "text": "記入日",
+      "bbox": {
+        "x": 0.57419355,
+        "y": 0.07981756,
+        "width": 0.08467742,
+        "height": 0.02166477
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "birth-date-label",
+      "text": "生年月日",
+      "bbox": {
+        "x": 0.06290323,
+        "y": 0.11972634,
+        "width": 0.08467742,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "age-label",
+      "text": "年齢",
+      "bbox": {
+        "x": 0.22258065,
+        "y": 0.11972634,
+        "width": 0.06048387,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "age-unit",
+      "text": "歳",
+      "bbox": {
+        "x": 0.39919355,
+        "y": 0.11972634,
+        "width": 0.04435484,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "gender-label",
+      "text": "性別（任意）",
+      "bbox": {
+        "x": 0.51612903,
+        "y": 0.11972634,
+        "width": 0.11693548,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "gender-options",
+      "text": "□ 女性　□ 男性　□ 回答しない",
+      "bbox": {
+        "x": 0.66935484,
+        "y": 0.11858609,
+        "width": 0.24596774,
+        "height": 0.02508552
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "symptoms-section-title",
+      "text": "受診される症状について",
+      "bbox": {
+        "x": 0.06048387,
+        "y": 0.16989738,
+        "width": 0.21774194,
+        "height": 0.02508552
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "visit-symptoms-question",
+      "text": "本日はどのような症状で受診されましたか。",
+      "bbox": {
+        "x": 0.06612903,
+        "y": 0.20296465,
+        "width": 0.3266129,
+        "height": 0.02736602
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "onset-question",
+      "text": "その症状はいつ頃からありますか。",
+      "bbox": {
+        "x": 0.06612903,
+        "y": 0.2713797,
+        "width": 0.26209677,
+        "height": 0.02964652
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "onset-label",
+      "text": "発症時期",
+      "bbox": {
+        "x": 0.41129032,
+        "y": 0.2713797,
+        "width": 0.09274194,
+        "height": 0.02736602
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "history-section-title",
+      "text": "病歴・服薬・アレルギー",
+      "bbox": {
+        "x": 0.06048387,
+        "y": 0.35290764,
+        "width": 0.21774194,
+        "height": 0.02508552
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-disease-question",
+      "text": "現在治療中の病気はありますか。",
+      "bbox": {
+        "x": 0.06612903,
+        "y": 0.38711517,
+        "width": 0.15725806,
+        "height": 0.04675029
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-disease-options",
+      "text": "□ ない　□ ある",
+      "bbox": {
+        "x": 0.2516129,
+        "y": 0.38768529,
+        "width": 0.13709677,
+        "height": 0.02394527
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "medication-question",
+      "text": "現在飲んでいる薬やサプリメントをご記入ください。",
+      "bbox": {
+        "x": 0.06612903,
+        "y": 0.45496009,
+        "width": 0.16129032,
+        "height": 0.05245154
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "allergy-question",
+      "text": "薬や食べ物でアレルギーを起こしたことがありますか。",
+      "bbox": {
+        "x": 0.06612903,
+        "y": 0.5290764,
+        "width": 0.16129032,
+        "height": 0.05245154
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "allergy-options",
+      "text": "□ ない　□ ある",
+      "bbox": {
+        "x": 0.2516129,
+        "y": 0.53021665,
+        "width": 0.13709677,
+        "height": 0.02394527
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "habits-section-title",
+      "text": "生活習慣",
+      "bbox": {
+        "x": 0.06048387,
+        "y": 0.61174458,
+        "width": 0.11290323,
+        "height": 0.02508552
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "smoking-label",
+      "text": "喫煙",
+      "bbox": {
+        "x": 0.06774194,
+        "y": 0.64652223,
+        "width": 0.07258065,
+        "height": 0.02394527
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "smoking-options",
+      "text": "□ 吸わない　□ 以前吸っていた　□ 吸う",
+      "bbox": {
+        "x": 0.22419355,
+        "y": 0.64652223,
+        "width": 0.28225806,
+        "height": 0.02394527
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "height-label",
+      "text": "身長",
+      "bbox": {
+        "x": 0.59274194,
+        "y": 0.64652223,
+        "width": 0.06451613,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "height-unit",
+      "text": "cm",
+      "bbox": {
+        "x": 0.72983871,
+        "y": 0.64652223,
+        "width": 0.0483871,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "drinking-label",
+      "text": "飲酒",
+      "bbox": {
+        "x": 0.06774194,
+        "y": 0.68415051,
+        "width": 0.07258065,
+        "height": 0.02394527
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "drinking-options",
+      "text": "□ 飲まない　□ 時々　□ 週3日以上",
+      "bbox": {
+        "x": 0.22419355,
+        "y": 0.68415051,
+        "width": 0.28225806,
+        "height": 0.02394527
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "weight-label",
+      "text": "体重",
+      "bbox": {
+        "x": 0.59274194,
+        "y": 0.68415051,
+        "width": 0.06451613,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "weight-unit",
+      "text": "kg",
+      "bbox": {
+        "x": 0.72983871,
+        "y": 0.68415051,
+        "width": 0.0483871,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "sleep-label",
+      "text": "睡眠",
+      "bbox": {
+        "x": 0.06774194,
+        "y": 0.72177879,
+        "width": 0.07258065,
+        "height": 0.02394527
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "sleep-options",
+      "text": "□ 十分　□ やや不足　□ 不足",
+      "bbox": {
+        "x": 0.22419355,
+        "y": 0.72177879,
+        "width": 0.25,
+        "height": 0.02394527
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "temperature-label",
+      "text": "体温",
+      "bbox": {
+        "x": 0.59274194,
+        "y": 0.72177879,
+        "width": 0.06451613,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "temperature-unit",
+      "text": "℃",
+      "bbox": {
+        "x": 0.72983871,
+        "y": 0.72177879,
+        "width": 0.0483871,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "doctor-note-label",
+      "text": "医師へ伝えておきたいこと",
+      "bbox": {
+        "x": 0.05967742,
+        "y": 0.77423033,
+        "width": 0.2016129,
+        "height": 0.02394527
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "footer-instruction",
+      "text": "ご記入後、受付へお渡しください。",
+      "bbox": {
+        "x": 0.0516129,
+        "y": 0.96579247,
+        "width": 0.22177419,
+        "height": 0.02166477
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "page-number",
+      "text": "1 / 1",
+      "bbox": {
+        "x": 0.91290323,
+        "y": 0.96579247,
+        "width": 0.04435484,
+        "height": 0.02166477
+      },
+      "page_number": 1,
+      "essential": false
+    }
+  ],
+  "structural_items": [
+    {
+      "id": "header-rule",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.05644242,
+        "width": 0.89435484,
+        "height": 0.0022805
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "identity-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.07354618,
+        "width": 0.89274194,
+        "height": 0.08095781
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.11345496,
+        "width": 0.89435484,
+        "height": 0.0022805
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-row1-label-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.1516129,
+        "y": 0.07354618,
+        "width": 0.00241935,
+        "height": 0.04104903
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-row1-name-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.57177419,
+        "y": 0.07354618,
+        "width": 0.00241935,
+        "height": 0.04104903
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-row1-date-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.67258065,
+        "y": 0.07354618,
+        "width": 0.00241935,
+        "height": 0.04104903
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-row2-label-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.1516129,
+        "y": 0.11345496,
+        "width": 0.00241935,
+        "height": 0.04161916
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-row2-birth-field-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.21854839,
+        "y": 0.11345496,
+        "width": 0.00241935,
+        "height": 0.04161916
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-row2-age-label-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.3983871,
+        "y": 0.11345496,
+        "width": 0.00241935,
+        "height": 0.04161916
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-row2-age-field-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.51612903,
+        "y": 0.11345496,
+        "width": 0.00241935,
+        "height": 0.04161916
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-row2-age-unit-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.57177419,
+        "y": 0.11345496,
+        "width": 0.00241935,
+        "height": 0.04161916
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-row2-gender-label-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.66693548,
+        "y": 0.11345496,
+        "width": 0.00241935,
+        "height": 0.04161916
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-row2-gender-options-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.77741935,
+        "y": 0.11345496,
+        "width": 0.00241935,
+        "height": 0.04161916
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "symptoms-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.1704675,
+        "width": 0.89274194,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "symptoms-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.1995439,
+        "width": 0.89274194,
+        "height": 0.13797035
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "symptoms-grid-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.26567845,
+        "width": 0.89435484,
+        "height": 0.0022805
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "onset-writing-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.48709677,
+        "y": 0.28962372,
+        "width": 0.41451613,
+        "height": 0.00171038
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.35404789,
+        "width": 0.89274194,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "history-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.38255416,
+        "width": 0.89274194,
+        "height": 0.21379704
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-grid-row-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.45096921,
+        "width": 0.89435484,
+        "height": 0.0022805
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-grid-row-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.52337514,
+        "width": 0.89435484,
+        "height": 0.0022805
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-grid-label-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.23790323,
+        "y": 0.38255416,
+        "width": 0.00322581,
+        "height": 0.21550741
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-disease-writing-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.43709677,
+        "y": 0.42246294,
+        "width": 0.48870968,
+        "height": 0.00171038
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "medication-writing-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.25967742,
+        "y": 0.49087799,
+        "width": 0.66612903,
+        "height": 0.00171038
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "allergy-writing-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.43709677,
+        "y": 0.5649943,
+        "width": 0.48870968,
+        "height": 0.00171038
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "habits-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.61288483,
+        "width": 0.89274194,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "habits-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.64139111,
+        "width": 0.89274194,
+        "height": 0.11402509
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "habits-grid-row-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.67901938,
+        "width": 0.89435484,
+        "height": 0.0022805
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "habits-grid-row-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.71664766,
+        "width": 0.89435484,
+        "height": 0.0022805
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "habits-grid-label-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.21209677,
+        "y": 0.64139111,
+        "width": 0.00241935,
+        "height": 0.11573546
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "habits-grid-measure-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.57822581,
+        "y": 0.64139111,
+        "width": 0.00241935,
+        "height": 0.11573546
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "doctor-note-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.77194983,
+        "width": 0.89274194,
+        "height": 0.08722919
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "doctor-note-line-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.06451613,
+        "y": 0.82212087,
+        "width": 0.8733871,
+        "height": 0.00171038
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "doctor-note-line-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.06451613,
+        "y": 0.85404789,
+        "width": 0.8733871,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "footer-rule",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.96123147,
+        "width": 0.89435484,
+        "height": 0.00171038
+      },
+      "page_number": 1,
+      "essential": false
+    }
+  ],
+  "relationships": [
+    {
+      "kind": "reading_order",
+      "source": "title",
+      "target": "symptoms-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "symptoms-section-title",
+      "target": "history-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "history-section-title",
+      "target": "habits-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "habits-section-title",
+      "target": "doctor-note-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "name-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "symptoms-grid-outer",
+      "target": "visit-symptoms-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "history-grid-outer",
+      "target": "current-disease-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "habits-grid-outer",
+      "target": "smoking-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "doctor-note-outer",
+      "target": "doctor-note-label",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "current-disease-question",
+      "target": "current-disease-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "allergy-question",
+      "target": "allergy-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "smoking-label",
+      "target": "smoking-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "drinking-label",
+      "target": "drinking-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "sleep-label",
+      "target": "sleep-options",
+      "essential": true
+    }
+  ],
+  "essential_text_anchors": [
+    "内科初診問診票",
+    "氏名",
+    "生年月日",
+    "受診される症状について",
+    "本日はどのような症状で受診されましたか",
+    "病歴・服薬・アレルギー",
+    "現在治療中の病気はありますか",
+    "生活習慣",
+    "医師へ伝えておきたいこと"
+  ],
+  "expected_page_count": 1,
+  "required_manual_checks": [
+    "no_fatal_text_overlap",
+    "no_text_clipping",
+    "layout_human_usable",
+    "word_open_edit_save"
+  ]
+}
