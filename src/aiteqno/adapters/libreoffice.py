@@ -16,6 +16,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
 from dataclasses import dataclass
 from os import PathLike
 from pathlib import Path
@@ -33,6 +34,8 @@ PDFTOPPM_RASTERIZER_NAME = "pdftoppm"
 
 _PDFTOPPM_ENVIRONMENT_VARIABLE = "AITEQNO_PDFTOPPM_EXECUTABLE"
 _RASTERIZED_PAGE_PATTERN = re.compile(r"^raw-page-(\d+)\.png$")
+_CLEANUP_RETRY_ATTEMPTS = 100
+_CLEANUP_RETRY_DELAY_SECONDS = 0.1
 
 _REPAIR_MARKERS = (
     "corrupt",
@@ -41,6 +44,28 @@ _REPAIR_MARKERS = (
     "recovery",
     "repair",
 )
+
+
+def _remove_tree_with_retry(path: Path) -> bool:
+    """Remove a temporary tree after late LibreOffice profile writes settle.
+
+    On Windows, the headless launcher can return just before its profile
+    registry finishes one final write.  A bounded retry keeps that runtime
+    race from turning an otherwise repeatable snapshot operation into a
+    partially published result.
+    """
+
+    for attempt in range(_CLEANUP_RETRY_ATTEMPTS):
+        try:
+            shutil.rmtree(path)
+            return True
+        except FileNotFoundError:
+            return True
+        except OSError:
+            if attempt == _CLEANUP_RETRY_ATTEMPTS - 1:
+                return False
+            time.sleep(_CLEANUP_RETRY_DELAY_SECONDS)
+    return False
 
 
 @dataclass(frozen=True, slots=True)
@@ -233,17 +258,24 @@ class LibreOfficeSnapshotRenderer:
         rasterizer_version = self._read_rasterizer_version(rasterizer)
         evidence_output.parent.mkdir(parents=True, exist_ok=True)
 
-        with tempfile.TemporaryDirectory(
-            prefix=f".{evidence_output.name}-staging-",
-            dir=evidence_output.parent,
-        ) as raw_root:
-            root = Path(raw_root)
-            conversion_directory = root / "conversion"
-            profile_directory = root / "profile"
-            staged_evidence = root / "evidence"
+        work_root = Path(
+            tempfile.mkdtemp(
+                prefix=f".{evidence_output.name}-work-",
+                dir=evidence_output.parent,
+            )
+        )
+        staged_evidence: Path | None = None
+        try:
+            staged_evidence = Path(
+                tempfile.mkdtemp(
+                    prefix=f".{evidence_output.name}-staging-",
+                    dir=evidence_output.parent,
+                )
+            )
+            conversion_directory = work_root / "conversion"
+            profile_directory = work_root / "profile"
             conversion_directory.mkdir()
             profile_directory.mkdir()
-            staged_evidence.mkdir()
 
             command = [
                 str(executable),
@@ -320,6 +352,7 @@ class LibreOfficeSnapshotRenderer:
                 page_count=len(pages),
                 pages=tuple(pages),
             )
+
             try:
                 staged_evidence.replace(evidence_output)
             except FileExistsError as exc:
@@ -327,6 +360,14 @@ class LibreOfficeSnapshotRenderer:
                     "snapshot evidence output_directory was created concurrently; "
                     f"no files were overwritten: {evidence_output}"
                 ) from exc
+        finally:
+            # Cleanup is deliberately post-publication.  The profile lives in
+            # a separate tree and cannot mutate the validated PDF/PNG set, so
+            # a late Windows profile writer is resource hygiene rather than a
+            # reason to invalidate or strand immutable evidence.
+            _remove_tree_with_retry(work_root)
+            if staged_evidence is not None:
+                _remove_tree_with_retry(staged_evidence)
 
         return evidence
 
