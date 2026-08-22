@@ -16,6 +16,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any, Mapping, Sequence
+from xml.etree import ElementTree
 from zipfile import BadZipFile, ZipFile
 
 from docx import Document as open_docx
@@ -53,6 +54,24 @@ DEFAULT_SUITE_PATH = (
 )
 STAGE_RUNNER_NAME = "aiteqno-cumulative-fixture-stage-runner"
 STAGE_RUNNER_VERSION = "1.0"
+
+_WORDPROCESSINGML_NAMESPACE = (
+    "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+)
+_WORD_RUN = f"{{{_WORDPROCESSINGML_NAMESPACE}}}r"
+_WORD_RUN_PROPERTIES = f"{{{_WORDPROCESSINGML_NAMESPACE}}}rPr"
+_WORD_VANISH = f"{{{_WORDPROCESSINGML_NAMESPACE}}}vanish"
+_WORD_WEB_HIDDEN = f"{{{_WORDPROCESSINGML_NAMESPACE}}}webHidden"
+_WORD_TEXT_TAGS = frozenset(
+    {
+        f"{{{_WORDPROCESSINGML_NAMESPACE}}}t",
+        f"{{{_WORDPROCESSINGML_NAMESPACE}}}delText",
+        f"{{{_WORDPROCESSINGML_NAMESPACE}}}instrText",
+    }
+)
+_LAYOUT_ONLY_ZERO_WIDTH_CHARACTERS = frozenset(
+    {"\u200b", "\u200c", "\u200d", "\u2060", "\ufeff"}
+)
 
 
 def _sha256(data: bytes) -> str:
@@ -528,16 +547,40 @@ def _hidden_text_check(docx_path: Path) -> tuple[bool, str]:
     try:
         with ZipFile(docx_path) as package:
             xml_parts = [
-                package.read(name)
+                (name, package.read(name))
                 for name in package.namelist()
                 if name.startswith("word/") and name.endswith(".xml")
             ]
     except (BadZipFile, OSError) as exc:
         return False, f"DOCX hidden-text inspection failed: {exc}"
-    forbidden_markers = (b"w:vanish", b"w:webHidden")
-    if any(marker in payload for payload in xml_parts for marker in forbidden_markers):
-        return False, "DOCX contains hidden-text formatting"
-    return True, "DOCX contains no vanish or webHidden text"
+
+    hidden_semantic_runs: list[str] = []
+    for name, payload in xml_parts:
+        try:
+            root = ElementTree.fromstring(payload)
+        except ElementTree.ParseError as exc:
+            return False, f"DOCX hidden-text inspection failed in {name}: {exc}"
+        for run in root.iter(_WORD_RUN):
+            properties = run.find(_WORD_RUN_PROPERTIES)
+            if properties is None or (
+                properties.find(_WORD_VANISH) is None
+                and properties.find(_WORD_WEB_HIDDEN) is None
+            ):
+                continue
+            value = "".join(
+                node.text or "" for node in run.iter() if node.tag in _WORD_TEXT_TAGS
+            )
+            if any(
+                not character.isspace()
+                and character not in _LAYOUT_ONLY_ZERO_WIDTH_CHARACTERS
+                for character in value
+            ):
+                hidden_semantic_runs.append(name)
+
+    if hidden_semantic_runs:
+        parts = ", ".join(sorted(set(hidden_semantic_runs)))
+        return False, f"DOCX contains hidden-text semantic content in: {parts}"
+    return True, "DOCX contains no hidden semantic text"
 
 
 def _integrity_report(

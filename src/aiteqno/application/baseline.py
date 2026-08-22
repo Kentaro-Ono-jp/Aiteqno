@@ -8,7 +8,14 @@ import unicodedata
 from dataclasses import dataclass
 from typing import Final, Sequence
 
-from aiteqno.domain import DocumentIR, ElementType, TextElement, validate_document
+from aiteqno.domain import (
+    DocumentIR,
+    ElementType,
+    TablePrimitiveRole,
+    TextElement,
+    read_page_table_topology,
+    validate_document,
+)
 from aiteqno.ports.baseline import (
     BaselineComponentScore,
     LogicalBlockEvaluation,
@@ -30,10 +37,17 @@ from aiteqno.ports.evaluation import (
 
 
 SOURCE_BASELINE_EVALUATOR_NAME: Final = "aiteqno-source-baseline-evaluator"
-SOURCE_BASELINE_EVALUATOR_VERSION: Final = "1.0"
+SOURCE_BASELINE_EVALUATOR_VERSION: Final = "1.1"
 DEFAULT_SOURCE_BASELINE_THRESHOLD: Final = 70.0
 DEFAULT_LOGICAL_BLOCK_ACCURACY_THRESHOLD: Final = 60.0
 DEFAULT_STRUCTURE_MATCH_THRESHOLD: Final = 50.0
+
+_REDUNDANT_TOPOLOGY_STRUCTURE_ROLES: Final = frozenset(
+    {
+        TablePrimitiveRole.CELL_RECTANGLE,
+        TablePrimitiveRole.DUPLICATED_SUPPORTING_PRIMITIVE,
+    }
+)
 
 SOURCE_BASELINE_COMPONENT_WEIGHTS: Final = (
     ("text_accuracy", 0.45),
@@ -415,8 +429,18 @@ def _evaluate_structures(
 def _candidate_structures(document: DocumentIR) -> Sequence[_CandidateGeometry]:
     candidates: list[_CandidateGeometry] = []
     for page in document.pages:
+        topology = read_page_table_topology(page)
+        redundant_ids = (
+            {
+                assignment.element_id
+                for assignment in topology.primitive_roles
+                if assignment.role in _REDUNDANT_TOPOLOGY_STRUCTURE_ROLES
+            }
+            if topology is not None
+            else set()
+        )
         for element in page.elements:
-            if element.type is ElementType.TEXT:
+            if element.type is ElementType.TEXT or element.id in redundant_ids:
                 continue
             candidates.append(
                 _CandidateGeometry(

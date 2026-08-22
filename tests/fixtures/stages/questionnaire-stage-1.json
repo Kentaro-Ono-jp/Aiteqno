@@ -14,10 +14,9 @@
   "evaluation": {
     "evaluator_name": "aiteqno-source-baseline-evaluator",
     "text_evidence": "rendered_visible",
-    "snapshot_dpi": 144,
+    "snapshot_dpi": 300,
     "visible_ocr_languages": [
-      "jpn",
-      "eng"
+      "jpn"
     ],
     "page_segmentation_mode": 6,
     "engine_mode": 3,

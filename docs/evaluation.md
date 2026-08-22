@@ -141,6 +141,35 @@ inventory to verify that the requested Japanese family was used. Unknown fonts
 must continue to appear as explicit requested/replacement pairs even when the
 host application could silently choose a glyph fallback.
 
+### Cumulative questionnaire stages
+
+`scripts/run_stage_suite.py` runs every active fixture declared by one stage
+descriptor through the public `aiteqno roundtrip` production path. It retains
+the input and reviewed-reference identities, Document IR, editable DOCX,
+LibreOffice PDF/PNG snapshot, visible OCR, evaluator JSON, integrity report,
+runtime record, and an aggregate stage summary in create-only directories.
+The stage passes only when every fixture individually has
+`source-quality-evaluation.json.overall_score >= 70.0` and its integrity report
+passes. The diagnostic average and the legacy evaluator state never compensate
+for an individual result below 70.
+
+Stage 1 is pinned by
+`tests/fixtures/stages/questionnaire-stage-1.json`. Production and visible
+observation both use the Japanese language profile; the actual LibreOffice
+page is rasterized at 300 DPI so small but visible Japanese text is not lost to
+the observer. These settings are common to all active fixtures. The CI
+real-runtime lane runs the stage with `--expect-state pass` and uploads the
+complete evidence directory.
+
+Source baseline evaluator 1.1 canonicalizes table-topology structure evidence:
+derived cell rectangles and duplicated supporting primitives are not counted
+again beside their table outer border and row/column boundaries. This removes
+representation duplicates from the F1 denominator without changing the
+reviewed reference, weights, normalization, or threshold. Integrity inspection
+rejects hidden semantic text while permitting only zero-width hidden spacer
+runs used to carry native Word layout borders; such spacers contain no source
+truth and earn no text score.
+
 ## OCR-only baseline
 
 `evaluate_ocr_quality()` stops at the candidate Document IR. It reconstructs

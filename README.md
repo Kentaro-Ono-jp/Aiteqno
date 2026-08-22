@@ -196,7 +196,8 @@ Install the development tools and run the same deterministic checks used by CI:
 CI runs deterministic tests on Windows and Linux with Python 3.11 and 3.14
 without depending on machine-global document runtimes. A dedicated Ubuntu 24.04
 job exercises real Tesseract, LibreOffice, Poppler, and Japanese fonts, then
-uploads the complete expected-failure baseline evidence.
+uploads both the historical experiment evidence and the passing cumulative
+questionnaire Stage 1 evidence.
 
 ## Migrating from the pre-V1 prototype
 

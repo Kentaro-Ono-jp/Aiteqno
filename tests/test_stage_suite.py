@@ -46,7 +46,8 @@ class StageSuiteContractTest(unittest.TestCase):
         self.assertEqual([item.source_dpi for item in suite.fixtures], [96, 150])
         self.assertEqual(suite.threshold, 70)
         self.assertEqual(suite.production_languages, ("jpn",))
-        self.assertEqual(suite.visible_languages, ("jpn", "eng"))
+        self.assertEqual(suite.visible_languages, suite.production_languages)
+        self.assertEqual(suite.snapshot_dpi, 300)
 
     def test_q01_reference_is_reviewed_source_grounded_and_complete(self):
         fixture = _read_fixture(Q01_MANIFEST, Q01_ID)
@@ -173,6 +174,15 @@ class StageSuiteContractTest(unittest.TestCase):
             hidden_passed, hidden_reason = _hidden_text_check(hidden_docx)
             self.assertFalse(hidden_passed)
             self.assertIn("hidden-text", hidden_reason)
+
+            layout_docx = root_path / "layout-spacer.docx"
+            layout = Document()
+            spacer = layout.add_paragraph().add_run("\u200b")
+            spacer.font.hidden = True
+            layout.save(layout_docx)
+            layout_passed, layout_reason = _hidden_text_check(layout_docx)
+            self.assertTrue(layout_passed)
+            self.assertIn("no hidden semantic text", layout_reason)
 
     def test_external_relationship_makes_integrity_fail(self):
         fixture = _read_fixture(Q01_MANIFEST, Q01_ID)
