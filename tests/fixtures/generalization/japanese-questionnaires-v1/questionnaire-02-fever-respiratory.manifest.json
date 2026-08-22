@@ -1,0 +1,49 @@
+{
+  "manifest_version": 1,
+  "fixture_id": "questionnaire-02-fever-respiratory",
+  "role": "generalization_stage_fixture",
+  "source": {
+    "path": "questionnaire-02-fever-respiratory.png",
+    "encoding": "raw",
+    "sha256": "6c27901390f4a1b43729d681884aae144886d2725ac3d585d9570f4499137ba2",
+    "pixel_width": 1654,
+    "pixel_height": 2339,
+    "dpi": 200,
+    "color_mode": "RGB"
+  },
+  "reference": {
+    "path": "questionnaire-02-fever-respiratory.reference.json",
+    "sha256": "94b073eb3d7cb6df5001054d61f212c99b476c7af0fc08df55385dfce1d12b0a"
+  },
+  "license": "MIT",
+  "provenance": "Project-original Japanese fever and respiratory intake questionnaire authored and rasterized for Aiteqno fixture corpus Issue #73.",
+  "redistribution_allowed": true,
+  "contains_personal_data": false,
+  "review": {
+    "status": "reviewed",
+    "reviewer": "Kentaro Ono (blanket approval); transcription and 100% visual cross-check by Noel",
+    "reviewed_at": "2026-08-23",
+    "reference_revision": 1,
+    "authorization": "User explicitly approved all actions for Issue #77 on 2026-08-23.",
+    "excluded_items": []
+  },
+  "ocr_contract": {
+    "provider": "tesseract",
+    "minimum_major_version": 5,
+    "production_languages": [
+      "jpn"
+    ],
+    "visible_evidence_languages": [
+      "jpn"
+    ],
+    "page_segmentation_mode": 6,
+    "engine_mode": 3,
+    "source_dpi": 200
+  },
+  "quality_contract": {
+    "normalization": "NFKC then remove every Unicode whitespace character",
+    "overall_minimum": 70.0,
+    "stage_gate": "each active fixture independently meets overall_minimum; averages never compensate",
+    "expected_page_count_is_diagnostic": true
+  }
+}

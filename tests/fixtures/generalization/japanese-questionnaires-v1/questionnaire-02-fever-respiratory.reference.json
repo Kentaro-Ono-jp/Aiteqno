@@ -1,0 +1,1242 @@
+{
+  "reference_version": 1,
+  "reference_id": "questionnaire-02-fever-respiratory",
+  "source_sha256": "6c27901390f4a1b43729d681884aae144886d2725ac3d585d9570f4499137ba2",
+  "source_dimensions": {
+    "pixel_width": 1654,
+    "pixel_height": 2339,
+    "dpi": 200,
+    "color_mode": "RGB",
+    "sha256": "6c27901390f4a1b43729d681884aae144886d2725ac3d585d9570f4499137ba2"
+  },
+  "normalization": "NFKC then remove every Unicode whitespace character",
+  "reviewed": true,
+  "review": {
+    "status": "reviewed",
+    "reviewer": "Kentaro Ono (blanket approval); transcription and 100% visual cross-check by Noel",
+    "reviewed_at": "2026-08-23",
+    "reference_revision": 1,
+    "authorization": "User explicitly approved all actions for Issue #77 on 2026-08-23.",
+    "method": "Source PNG inspected at 100%; every visible printed string and every material grid, cell boundary, rule, writing line, section band, checkbox, reading order, containment, and adjacency relation was cross-checked against source pixels. OCR and OpenCV measurements were used only to locate source pixels, never as transcription truth.",
+    "exclusions": []
+  },
+  "text_regions": [
+    {
+      "id": "title",
+      "text": "発熱・呼吸器症状 問診票",
+      "bbox": {
+        "x": 0.05441354,
+        "y": 0.02308679,
+        "width": 0.33252721,
+        "height": 0.03719538
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "specialty",
+      "text": "発熱外来・呼吸器内科",
+      "bbox": {
+        "x": 0.80229746,
+        "y": 0.03377512,
+        "width": 0.14510278,
+        "height": 0.01581873
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "name-label",
+      "text": "氏名",
+      "bbox": {
+        "x": 0.06771463,
+        "y": 0.08721676,
+        "width": 0.03929867,
+        "height": 0.01539119
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "furigana-label",
+      "text": "ふりがな",
+      "bbox": {
+        "x": 0.18923821,
+        "y": 0.08721676,
+        "width": 0.05441354,
+        "height": 0.01539119
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "entry-date-label",
+      "text": "記入日",
+      "bbox": {
+        "x": 0.51813785,
+        "y": 0.08721676,
+        "width": 0.04111245,
+        "height": 0.01539119
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "birth-date-label",
+      "text": "生年月日",
+      "bbox": {
+        "x": 0.66928658,
+        "y": 0.08721676,
+        "width": 0.05441354,
+        "height": 0.01539119
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "age-label",
+      "text": "年齢",
+      "bbox": {
+        "x": 0.81015719,
+        "y": 0.08721676,
+        "width": 0.03325272,
+        "height": 0.01581873
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "gender-label",
+      "text": "性別（任意）",
+      "bbox": {
+        "x": 0.06771463,
+        "y": 0.12569474,
+        "width": 0.07255139,
+        "height": 0.01539119
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "gender-options",
+      "text": "□ 女性　□ 男性　□ 回答しない",
+      "bbox": {
+        "x": 0.18923821,
+        "y": 0.12569474,
+        "width": 0.19347037,
+        "height": 0.01539119
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-temperature-label",
+      "text": "現在の体温",
+      "bbox": {
+        "x": 0.51813785,
+        "y": 0.12569474,
+        "width": 0.06650544,
+        "height": 0.01539119
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-temperature-unit",
+      "text": "℃",
+      "bbox": {
+        "x": 0.77750907,
+        "y": 0.12569474,
+        "width": 0.01813785,
+        "height": 0.01539119
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "contact-label",
+      "text": "連絡先",
+      "bbox": {
+        "x": 0.06771463,
+        "y": 0.16417272,
+        "width": 0.04232164,
+        "height": 0.01539119
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "visit-time-label",
+      "text": "来院時刻",
+      "bbox": {
+        "x": 0.51813785,
+        "y": 0.16417272,
+        "width": 0.05743652,
+        "height": 0.01496366
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "fever-course-section-title",
+      "text": "発熱の経過",
+      "bbox": {
+        "x": 0.06408706,
+        "y": 0.2116289,
+        "width": 0.08524788,
+        "height": 0.01710133
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "fever-onset-question",
+      "text": "発熱に気づいた日時をご記入ください。",
+      "bbox": {
+        "x": 0.06408706,
+        "y": 0.23599829,
+        "width": 0.26299879,
+        "height": 0.01752886
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "date-time-label",
+      "text": "日時",
+      "bbox": {
+        "x": 0.55501814,
+        "y": 0.23599829,
+        "width": 0.03022975,
+        "height": 0.01624626
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "highest-temperature-question",
+      "text": "これまでの最高体温は何度でしたか。",
+      "bbox": {
+        "x": 0.06650544,
+        "y": 0.2787516,
+        "width": 0.24546554,
+        "height": 0.01624626
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "highest-temperature-label",
+      "text": "最高体温",
+      "bbox": {
+        "x": 0.55501814,
+        "y": 0.2787516,
+        "width": 0.05804111,
+        "height": 0.01624626
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "current-symptoms-section-title",
+      "text": "現在の症状",
+      "bbox": {
+        "x": 0.06408706,
+        "y": 0.33304831,
+        "width": 0.08524788,
+        "height": 0.01710133
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "cough-options",
+      "text": "□ せき　□ なし",
+      "bbox": {
+        "x": 0.07376058,
+        "y": 0.36981616,
+        "width": 0.12091898,
+        "height": 0.01496366
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "sputum-options",
+      "text": "□ たん　□ なし",
+      "bbox": {
+        "x": 0.51874244,
+        "y": 0.36981616,
+        "width": 0.12091898,
+        "height": 0.01496366
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "sore-throat-options",
+      "text": "□ のどの痛み　□ なし",
+      "bbox": {
+        "x": 0.07376058,
+        "y": 0.41256947,
+        "width": 0.16324063,
+        "height": 0.01496366
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "runny-nose-options",
+      "text": "□ 鼻水　□ なし",
+      "bbox": {
+        "x": 0.51874244,
+        "y": 0.41256947,
+        "width": 0.12091898,
+        "height": 0.01496366
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "dyspnea-options",
+      "text": "□ 息苦しさ　□ なし",
+      "bbox": {
+        "x": 0.07376058,
+        "y": 0.45532279,
+        "width": 0.14812576,
+        "height": 0.01581873
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "chest-pain-options",
+      "text": "□ 胸の痛み　□ なし",
+      "bbox": {
+        "x": 0.51874244,
+        "y": 0.45532279,
+        "width": 0.14812576,
+        "height": 0.01581873
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "fatigue-options",
+      "text": "□ 強いだるさ　□ なし",
+      "bbox": {
+        "x": 0.07376058,
+        "y": 0.4980761,
+        "width": 0.16324063,
+        "height": 0.01624626
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "headache-options",
+      "text": "□ 頭痛　□ なし",
+      "bbox": {
+        "x": 0.51874244,
+        "y": 0.4980761,
+        "width": 0.12091898,
+        "height": 0.01624626
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "taste-smell-options",
+      "text": "□ 味やにおいの変化　□ なし",
+      "bbox": {
+        "x": 0.07376058,
+        "y": 0.54082941,
+        "width": 0.20556227,
+        "height": 0.01624626
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "appetite-options",
+      "text": "□ 食欲低下　□ なし",
+      "bbox": {
+        "x": 0.51874244,
+        "y": 0.54082941,
+        "width": 0.14812576,
+        "height": 0.01624626
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "respiratory-symptoms-question",
+      "text": "せき、たん、のどの痛み、鼻水、息苦しさはありますか。",
+      "bbox": {
+        "x": 0.07376058,
+        "y": 0.574177,
+        "width": 0.35187424,
+        "height": 0.01710133
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "exposure-section-title",
+      "text": "周囲の流行・接触歴",
+      "bbox": {
+        "x": 0.06408706,
+        "y": 0.62548097,
+        "width": 0.15296252,
+        "height": 0.01881146
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "similar-symptoms-question",
+      "text": "周囲に同じような症状の方はいますか。",
+      "bbox": {
+        "x": 0.07073761,
+        "y": 0.66011116,
+        "width": 0.25392987,
+        "height": 0.01710133
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "similar-symptoms-options",
+      "text": "□ いない　□ いる",
+      "bbox": {
+        "x": 0.62454655,
+        "y": 0.67037195,
+        "width": 0.12394196,
+        "height": 0.01325353
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "infectious-contact-question",
+      "text": "最近、感染症と診断された方との接触はありましたか。",
+      "bbox": {
+        "x": 0.07073761,
+        "y": 0.72808893,
+        "width": 0.35429262,
+        "height": 0.01710133
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "infectious-contact-options",
+      "text": "□ ない　□ ある　□ 不明",
+      "bbox": {
+        "x": 0.62454655,
+        "y": 0.73535699,
+        "width": 0.16324063,
+        "height": 0.01710133
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "notes-label",
+      "text": "補足（発症の順序、使用した解熱薬など）",
+      "bbox": {
+        "x": 0.06287787,
+        "y": 0.80461736,
+        "width": 0.25695284,
+        "height": 0.01752886
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "footer-instruction",
+      "text": "受付の案内に従い、待機場所でお待ちください。",
+      "bbox": {
+        "x": 0.05441354,
+        "y": 0.97007268,
+        "width": 0.25997582,
+        "height": 0.01368106
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "page-number",
+      "text": "1 / 1",
+      "bbox": {
+        "x": 0.92140266,
+        "y": 0.97007268,
+        "width": 0.02599758,
+        "height": 0.01368106
+      },
+      "page_number": 1,
+      "essential": false
+    }
+  ],
+  "structural_items": [
+    {
+      "id": "header-rule",
+      "type": "line",
+      "bbox": {
+        "x": 0.05441354,
+        "y": 0.05643437,
+        "width": 0.8929867,
+        "height": 0.0012826
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "identity-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.0761009,
+        "width": 0.8929867,
+        "height": 0.11714408
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-row-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.05441354,
+        "y": 0.11628901,
+        "width": 0.8929867,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-row-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.05441354,
+        "y": 0.15433946,
+        "width": 0.8929867,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-label-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.17472793,
+        "y": 0.07652843,
+        "width": 0.00120919,
+        "height": 0.11671655
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-left-right-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.50423216,
+        "y": 0.07652843,
+        "width": 0.00120919,
+        "height": 0.11671655
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-right-label-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.65538089,
+        "y": 0.07652843,
+        "width": 0.00120919,
+        "height": 0.11671655
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-right-field-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.79685611,
+        "y": 0.07652843,
+        "width": 0.00120919,
+        "height": 0.11671655
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "fever-course-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05441354,
+        "y": 0.2090637,
+        "width": 0.8929867,
+        "height": 0.02180419
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "date-time-writing-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.59250302,
+        "y": 0.24882428,
+        "width": 0.31620314,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "highest-temperature-writing-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.62152358,
+        "y": 0.2915776,
+        "width": 0.28718259,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-symptoms-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05441354,
+        "y": 0.33005558,
+        "width": 0.8929867,
+        "height": 0.02180419
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "current-symptoms-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.3587003,
+        "width": 0.8929867,
+        "height": 0.2141941
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-symptoms-grid-row-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.05441354,
+        "y": 0.40145361,
+        "width": 0.8929867,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-symptoms-grid-row-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.05441354,
+        "y": 0.44420693,
+        "width": 0.8929867,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-symptoms-grid-row-3",
+      "type": "line",
+      "bbox": {
+        "x": 0.05441354,
+        "y": 0.48696024,
+        "width": 0.8929867,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-symptoms-grid-row-4",
+      "type": "line",
+      "bbox": {
+        "x": 0.05441354,
+        "y": 0.52971355,
+        "width": 0.8929867,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-symptoms-grid-column",
+      "type": "line",
+      "bbox": {
+        "x": 0.49939541,
+        "y": 0.35912783,
+        "width": 0.00120919,
+        "height": 0.2141941
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "cough-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.07436518,
+        "y": 0.37323643,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "cough-none-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.15054414,
+        "y": 0.37323643,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "sputum-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.51934704,
+        "y": 0.37323643,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "sputum-none-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.595526,
+        "y": 0.37323643,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "sore-throat-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.07436518,
+        "y": 0.41598974,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "sore-throat-none-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.19165659,
+        "y": 0.41598974,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "runny-nose-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.51934704,
+        "y": 0.41598974,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "runny-nose-none-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.595526,
+        "y": 0.41598974,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "dyspnea-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.07436518,
+        "y": 0.45874305,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "dyspnea-none-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.1783555,
+        "y": 0.45874305,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "chest-pain-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.51934704,
+        "y": 0.45874305,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "chest-pain-none-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.62333736,
+        "y": 0.45874305,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "fatigue-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.07436518,
+        "y": 0.5019239,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "fatigue-none-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.19226119,
+        "y": 0.5019239,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "headache-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.51934704,
+        "y": 0.5019239,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "headache-none-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.595526,
+        "y": 0.5019239,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "taste-smell-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.07436518,
+        "y": 0.54467721,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "taste-smell-none-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.23397823,
+        "y": 0.54467721,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "appetite-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.51934704,
+        "y": 0.54467721,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "appetite-none-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.62333736,
+        "y": 0.54467721,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "exposure-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05441354,
+        "y": 0.62248824,
+        "width": 0.8929867,
+        "height": 0.02180419
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "exposure-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.65070543,
+        "width": 0.8929867,
+        "height": 0.13339034
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "exposure-grid-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.05441354,
+        "y": 0.7174006,
+        "width": 0.8929867,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "exposure-grid-column",
+      "type": "line",
+      "bbox": {
+        "x": 0.60519952,
+        "y": 0.65113296,
+        "width": 0.00120919,
+        "height": 0.13339034
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "similar-none-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.62515115,
+        "y": 0.67293715,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "similar-yes-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.70374849,
+        "y": 0.67293715,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "contact-none-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.62515115,
+        "y": 0.74048739,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "contact-yes-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.68500605,
+        "y": 0.74048739,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "contact-unknown-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.74425635,
+        "y": 0.74048739,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "notes-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.80034203,
+        "width": 0.8929867,
+        "height": 0.07695596
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "notes-writing-line-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.06469166,
+        "y": 0.84566054,
+        "width": 0.87243047,
+        "height": 0.00042753
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "notes-writing-line-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.06469166,
+        "y": 0.87174006,
+        "width": 0.87243047,
+        "height": 0.00042753
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "footer-rule",
+      "type": "line",
+      "bbox": {
+        "x": 0.05441354,
+        "y": 0.96194955,
+        "width": 0.8929867,
+        "height": 0.00042753
+      },
+      "page_number": 1,
+      "essential": false
+    }
+  ],
+  "relationships": [
+    {
+      "kind": "reading_order",
+      "source": "title",
+      "target": "fever-course-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "fever-course-section-title",
+      "target": "current-symptoms-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "current-symptoms-section-title",
+      "target": "exposure-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "exposure-section-title",
+      "target": "notes-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "notes-label",
+      "target": "footer-instruction",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "name-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "gender-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "current-symptoms-grid-outer",
+      "target": "cough-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "current-symptoms-grid-outer",
+      "target": "appetite-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "exposure-grid-outer",
+      "target": "similar-symptoms-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "exposure-grid-outer",
+      "target": "infectious-contact-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "notes-outer",
+      "target": "notes-label",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "fever-onset-question",
+      "target": "date-time-label",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "highest-temperature-question",
+      "target": "highest-temperature-label",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "cough-options",
+      "target": "sputum-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "sore-throat-options",
+      "target": "runny-nose-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "dyspnea-options",
+      "target": "chest-pain-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "fatigue-options",
+      "target": "headache-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "taste-smell-options",
+      "target": "appetite-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "similar-symptoms-question",
+      "target": "similar-symptoms-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "infectious-contact-question",
+      "target": "infectious-contact-options",
+      "essential": true
+    }
+  ],
+  "essential_text_anchors": [
+    "発熱・呼吸器症状問診票",
+    "氏名",
+    "発熱の経過",
+    "発熱に気づいた日時をご記入ください",
+    "これまでの最高体温は何度でしたか",
+    "現在の症状",
+    "せき、たん、のどの痛み、鼻水、息苦しさはありますか",
+    "周囲の流行・接触歴",
+    "最近、感染症と診断された方との接触はありましたか",
+    "補足"
+  ],
+  "expected_page_count": 1,
+  "required_manual_checks": [
+    "no_fatal_text_overlap",
+    "no_text_clipping",
+    "layout_human_usable",
+    "word_open_edit_save"
+  ]
+}

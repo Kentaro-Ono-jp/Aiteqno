@@ -22,7 +22,11 @@ def measurement(
 class StageGateTest(unittest.TestCase):
     def test_each_fixture_at_exactly_70_passes(self):
         result = evaluate_stage_gate(
-            (measurement("baseline", 70), measurement("q01", 70))
+            (
+                measurement("baseline", 70),
+                measurement("q01", 70),
+                measurement("q02", 70),
+            )
         )
 
         self.assertTrue(result.passed)
@@ -31,7 +35,11 @@ class StageGateTest(unittest.TestCase):
 
     def test_average_70_cannot_compensate_for_a_50(self):
         result = evaluate_stage_gate(
-            (measurement("baseline", 90), measurement("q01", 50))
+            (
+                measurement("baseline", 90),
+                measurement("q01", 70),
+                measurement("q02", 50),
+            )
         )
 
         self.assertFalse(result.passed)
@@ -40,7 +48,11 @@ class StageGateTest(unittest.TestCase):
 
     def test_69_99_fails_even_when_the_other_fixture_is_100(self):
         result = evaluate_stage_gate(
-            (measurement("baseline", 100), measurement("q01", 69.99))
+            (
+                measurement("baseline", 100),
+                measurement("q01", 100),
+                measurement("q02", 69.99),
+            )
         )
 
         self.assertFalse(result.passed)
@@ -51,6 +63,7 @@ class StageGateTest(unittest.TestCase):
             (
                 measurement("baseline", 70, previous=90),
                 measurement("q01", 75, previous=75),
+                measurement("q02", 80, previous=80),
             )
         )
 
@@ -78,12 +91,20 @@ class StageGateTest(unittest.TestCase):
         self.assertIn("integrity_failed", q01.reasons)
 
     def test_order_does_not_change_scores_or_decision(self):
-        values = (measurement("baseline", 72), measurement("q01", 81))
+        values = (
+            measurement("baseline", 72),
+            measurement("q01", 81),
+            measurement("q02", 76),
+        )
 
         forward = evaluate_stage_gate(values).to_dict()
         reverse = evaluate_stage_gate(tuple(reversed(values))).to_dict()
 
         self.assertEqual(forward, reverse)
+        self.assertEqual(
+            len({item["artifact_path"] for item in forward["fixtures"]}),
+            3,
+        )
 
     def test_duplicate_fixture_ids_are_rejected(self):
         with self.assertRaisesRegex(ValueError, "fixture IDs must be unique"):
