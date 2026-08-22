@@ -59,6 +59,7 @@ jobs:
       AITEQNO_RUN_TESSERACT_INTEGRATION: "1"
       AITEQNO_REAL_BASELINE_OUTPUT: build/real-runtime-baseline
       AITEQNO_STAGE_OUTPUT: build/questionnaire-stage-1
+      AITEQNO_STAGE_TWO_OUTPUT: build/questionnaire-stage-2
       AITEQNO_TESSERACT_EXECUTABLE: /usr/bin/tesseract
       AITEQNO_TESSDATA_PREFIX: /usr/share/tesseract-ocr/5/tessdata
       AITEQNO_LIBREOFFICE_EXECUTABLE: /usr/bin/libreoffice
@@ -107,6 +108,12 @@ jobs:
           python scripts/run_stage_suite.py
           --output "$AITEQNO_STAGE_OUTPUT"
           --expect-state pass
+      - name: Run cumulative questionnaire Stage 2 gate
+        run: >-
+          python scripts/run_stage_suite.py
+          --suite tests/fixtures/stages/questionnaire-stage-2.json
+          --output "$AITEQNO_STAGE_TWO_OUTPUT"
+          --expect-state pass
       - name: Upload baseline evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -121,5 +128,13 @@ jobs:
         with:
           name: questionnaire-stage-1-${{ github.sha }}
           path: build/questionnaire-stage-1
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload questionnaire Stage 2 evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: questionnaire-stage-2-${{ github.sha }}
+          path: build/questionnaire-stage-2
           if-no-files-found: error
           retention-days: 14
