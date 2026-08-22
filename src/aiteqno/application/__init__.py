@@ -87,6 +87,13 @@ from .ocr_region_grouping import (
 )
 from .preview import render_preview
 from .render import render_docx
+from .stage import (
+    STAGE_GATE_VERSION,
+    StageFixtureDecision,
+    StageFixtureMeasurement,
+    StageGateResult,
+    evaluate_stage_gate,
+)
 from .table_topology import (
     TABLE_TOPOLOGY_BOUNDARY_TOLERANCE_PT,
     TABLE_TOPOLOGY_PARAMETERS_DIGEST,
@@ -134,6 +141,10 @@ __all__ = [
     "SOURCE_BASELINE_EVALUATOR_NAME",
     "SOURCE_BASELINE_EVALUATOR_VERSION",
     "SourceBaselineConfig",
+    "STAGE_GATE_VERSION",
+    "StageFixtureDecision",
+    "StageFixtureMeasurement",
+    "StageGateResult",
     "TABLE_TOPOLOGY_BOUNDARY_TOLERANCE_PT",
     "TABLE_TOPOLOGY_PARAMETERS_DIGEST",
     "PngExtractionError",
@@ -158,6 +169,7 @@ __all__ = [
     "compare_ocr_resolution",
     "compare_ocr_region_grouping",
     "evaluate_source_baseline",
+    "evaluate_stage_gate",
     "infer_table_topology",
     "normalize_evaluation_text",
     "normalize_ocr_text",
