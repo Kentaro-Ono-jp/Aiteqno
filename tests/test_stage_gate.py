@@ -26,6 +26,7 @@ class StageGateTest(unittest.TestCase):
                 measurement("baseline", 70),
                 measurement("q01", 70),
                 measurement("q02", 70),
+                measurement("q03", 70),
             )
         )
 
@@ -37,8 +38,9 @@ class StageGateTest(unittest.TestCase):
         result = evaluate_stage_gate(
             (
                 measurement("baseline", 90),
-                measurement("q01", 70),
-                measurement("q02", 50),
+                measurement("q01", 80),
+                measurement("q02", 60),
+                measurement("q03", 50),
             )
         )
 
@@ -51,7 +53,8 @@ class StageGateTest(unittest.TestCase):
             (
                 measurement("baseline", 100),
                 measurement("q01", 100),
-                measurement("q02", 69.99),
+                measurement("q02", 100),
+                measurement("q03", 69.99),
             )
         )
 
@@ -64,6 +67,7 @@ class StageGateTest(unittest.TestCase):
                 measurement("baseline", 70, previous=90),
                 measurement("q01", 75, previous=75),
                 measurement("q02", 80, previous=80),
+                measurement("q03", 85, previous=85),
             )
         )
 
@@ -95,6 +99,7 @@ class StageGateTest(unittest.TestCase):
             measurement("baseline", 72),
             measurement("q01", 81),
             measurement("q02", 76),
+            measurement("q03", 79),
         )
 
         forward = evaluate_stage_gate(values).to_dict()
@@ -103,7 +108,7 @@ class StageGateTest(unittest.TestCase):
         self.assertEqual(forward, reverse)
         self.assertEqual(
             len({item["artifact_path"] for item in forward["fixtures"]}),
-            3,
+            4,
         )
 
     def test_duplicate_fixture_ids_are_rejected(self):
