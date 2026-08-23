@@ -33,10 +33,11 @@ class PixelMode(str, Enum):
 
 
 class LineOrientation(str, Enum):
-    """Axis-aligned line orientations guaranteed by the V1 extractor."""
+    """Normalized source-line orientations emitted by structure extraction."""
 
     HORIZONTAL = "horizontal"
     VERTICAL = "vertical"
+    DIAGONAL = "diagonal"
 
 
 class RegionKind(str, Enum):
@@ -154,7 +155,9 @@ class LineCandidate:
                     LineOrientation(self.orientation),
                 )
             except (TypeError, ValueError) as exc:
-                raise ValueError("line orientation must be horizontal or vertical") from exc
+                raise ValueError(
+                    "line orientation must be horizontal, vertical, or diagonal"
+                ) from exc
         if not isinstance(self.start, PixelPoint) or not isinstance(
             self.end, PixelPoint
         ):
@@ -164,8 +167,17 @@ class LineCandidate:
         if self.orientation is LineOrientation.HORIZONTAL:
             if self.start.y != self.end.y or self.start.x >= self.end.x:
                 raise ValueError("horizontal line endpoints must advance along x")
-        elif self.start.x != self.end.x or self.start.y >= self.end.y:
-            raise ValueError("vertical line endpoints must advance along y")
+        elif self.orientation is LineOrientation.VERTICAL:
+            if self.start.x != self.end.x or self.start.y >= self.end.y:
+                raise ValueError("vertical line endpoints must advance along y")
+        elif (
+            self.start.x == self.end.x
+            or self.start.y == self.end.y
+            or self.start.x >= self.end.x
+        ):
+            raise ValueError(
+                "diagonal line endpoints must differ on both axes and advance along x"
+            )
         if not _bbox_contains_point(self.bbox, self.start) or not _bbox_contains_point(
             self.bbox, self.end
         ):

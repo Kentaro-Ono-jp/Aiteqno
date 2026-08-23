@@ -25,8 +25,10 @@ from aiteqno.domain import (
     FontStyle,
     ImageElement,
     ImageFit,
+    LineElement,
     PageSize,
     Point,
+    RectangleElement,
     TextAlign,
     TextElement,
 )
@@ -693,6 +695,71 @@ class DocxRendererTest(unittest.TestCase):
         self.assertEqual(section.orientation, WD_ORIENT.LANDSCAPE)
         self.assertAlmostEqual(section.page_width.pt, 841.89, places=1)
         self.assertAlmostEqual(section.page_height.pt, 595.28, places=1)
+
+    def test_structure_rich_landscape_page_uses_one_editable_absolute_canvas(self):
+        canonical = load_canonical_document()
+        text = next(
+            element
+            for element in canonical.pages[0].elements
+            if isinstance(element, TextElement)
+        )
+        line = next(
+            element
+            for element in canonical.pages[0].elements
+            if isinstance(element, LineElement)
+        )
+        rectangle = next(
+            element
+            for element in canonical.pages[0].elements
+            if isinstance(element, RectangleElement)
+        )
+        elements = (
+            text,
+            line,
+            replace(
+                rectangle,
+                bbox=BoundingBox(x=20, y=80, width=300, height=300),
+            ),
+            replace(
+                rectangle,
+                id="p001-rectangle-0001",
+                bbox=BoundingBox(x=340, y=80, width=480, height=300),
+            ),
+        )
+        landscape_page = replace(
+            canonical.pages[0],
+            size=PageSize(width=841.89, height=595.28),
+            elements=elements,
+        )
+        document = replace(canonical, pages=(landscape_page,), assets=())
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            output_path = Path(temporary_directory) / "landscape-canvas.docx"
+            result = render_docx(
+                document,
+                output_path,
+                renderer=PythonDocxRenderer(),
+                policy=RenderPolicy.STRICT,
+            )
+            with ZipFile(output_path) as package:
+                document_xml = package.read("word/document.xml")
+            reopened = open_docx(output_path)
+
+        self.assertIn(b"urn:schemas-microsoft-com:vml", document_xml)
+        self.assertIn(b"<v:rect", document_xml)
+        self.assertIn(b"<v:line", document_xml)
+        self.assertIn(b"<v:textbox", document_xml)
+        self.assertIn(b"aiteqno-source:p001-text-0000", document_xml)
+        self.assertNotIn(b"<w:tbl", document_xml)
+        self.assertEqual(set(result.report.rendered_element_ids), {e.id for e in elements})
+        section = reopened.sections[0]
+        for margin in (
+            section.left_margin,
+            section.right_margin,
+            section.top_margin,
+            section.bottom_margin,
+        ):
+            self.assertAlmostEqual(margin.pt, 0.0, places=1)
 
 
 if __name__ == "__main__":

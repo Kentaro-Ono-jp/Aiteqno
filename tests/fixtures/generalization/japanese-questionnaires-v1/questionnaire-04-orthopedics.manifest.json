@@ -1,0 +1,50 @@
+{
+  "manifest_version": 1,
+  "fixture_id": "questionnaire-04-orthopedics",
+  "role": "generalization_stage_fixture",
+  "source": {
+    "path": "questionnaire-04-orthopedics.png",
+    "encoding": "raw",
+    "sha256": "0e322bc9b5e8593d5a0fda959bd314cb6dc2c46de79fc3c07467527dba6dc4cd",
+    "pixel_width": 1754,
+    "pixel_height": 1240,
+    "dpi": 150,
+    "color_mode": "RGB",
+    "orientation": "landscape"
+  },
+  "reference": {
+    "path": "questionnaire-04-orthopedics.reference.json",
+    "sha256": "21d5279d9da146f4170f3adc197fd0d0927d6a50c920e7896d4eb6e4d9ce09c2"
+  },
+  "license": "MIT",
+  "provenance": "Project-original Japanese orthopedic intake questionnaire authored and rasterized for Aiteqno fixture corpus Issue #73.",
+  "redistribution_allowed": true,
+  "contains_personal_data": false,
+  "review": {
+    "status": "reviewed",
+    "reviewer": "Kentaro Ono (blanket approval); transcription and 100% visual cross-check by Noel",
+    "reviewed_at": "2026-08-24",
+    "reference_revision": 1,
+    "authorization": "User explicitly authorized implementation through Issue #81 closure on 2026-08-24.",
+    "excluded_items": []
+  },
+  "ocr_contract": {
+    "provider": "tesseract",
+    "minimum_major_version": 5,
+    "production_languages": [
+      "jpn"
+    ],
+    "visible_evidence_languages": [
+      "jpn"
+    ],
+    "page_segmentation_mode": 6,
+    "engine_mode": 3,
+    "source_dpi": 150
+  },
+  "quality_contract": {
+    "normalization": "NFKC then remove every Unicode whitespace character",
+    "overall_minimum": 70.0,
+    "stage_gate": "each active fixture independently meets overall_minimum; averages never compensate",
+    "expected_page_count_is_diagnostic": true
+  }
+}

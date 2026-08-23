@@ -1,0 +1,1467 @@
+{
+  "reference_version": 1,
+  "reference_id": "questionnaire-04-orthopedics",
+  "source_sha256": "0e322bc9b5e8593d5a0fda959bd314cb6dc2c46de79fc3c07467527dba6dc4cd",
+  "source_dimensions": {
+    "pixel_width": 1754,
+    "pixel_height": 1240,
+    "dpi": 150,
+    "color_mode": "RGB",
+    "orientation": "landscape",
+    "sha256": "0e322bc9b5e8593d5a0fda959bd314cb6dc2c46de79fc3c07467527dba6dc4cd"
+  },
+  "normalization": "NFKC then remove every Unicode whitespace character",
+  "reviewed": true,
+  "review": {
+    "status": "reviewed",
+    "reviewer": "Kentaro Ono (blanket approval); transcription and 100% visual cross-check by Noel",
+    "reviewed_at": "2026-08-24",
+    "reference_revision": 1,
+    "authorization": "User explicitly authorized implementation through Issue #81 closure on 2026-08-24.",
+    "method": "Source PNG inspected at 100%; every visible printed string and every material identity-grid boundary, section band, panel boundary, response line, checkbox, radio circle, front/back body-map line, pain-scale axis and tick, footer rule, reading order, containment, and adjacency relation was cross-checked against source pixels. OCR and OpenCV measurements were used only to locate source pixels, never as transcription truth.",
+    "exclusions": []
+  },
+  "text_regions": [
+    {
+      "id": "title",
+      "text": "整形外科 初診問診票",
+      "bbox": {
+        "x": 0.03876853,
+        "y": 0.03870968,
+        "width": 0.19099202,
+        "height": 0.03225806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "specialty",
+      "text": "整形外科",
+      "bbox": {
+        "x": 0.92132269,
+        "y": 0.0483871,
+        "width": 0.04047891,
+        "height": 0.01451613
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "name-label",
+      "text": "氏名",
+      "bbox": {
+        "x": 0.04789054,
+        "y": 0.11854839,
+        "width": 0.01767389,
+        "height": 0.01370968
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "furigana-label",
+      "text": "ふりがな",
+      "bbox": {
+        "x": 0.11915621,
+        "y": 0.11854839,
+        "width": 0.0359179,
+        "height": 0.01370968
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "birth-date-label",
+      "text": "生年月日",
+      "bbox": {
+        "x": 0.38426454,
+        "y": 0.11854839,
+        "width": 0.03534778,
+        "height": 0.01370968
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "age-label",
+      "text": "年齢",
+      "bbox": {
+        "x": 0.47263398,
+        "y": 0.11854839,
+        "width": 0.02109464,
+        "height": 0.01370968
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "gender-label",
+      "text": "性別（任意）",
+      "bbox": {
+        "x": 0.61003421,
+        "y": 0.11774194,
+        "width": 0.05188141,
+        "height": 0.01451613
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "entry-date-label",
+      "text": "記入日",
+      "bbox": {
+        "x": 0.69213227,
+        "y": 0.11854839,
+        "width": 0.0290764,
+        "height": 0.01370968
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "visit-category-label",
+      "text": "受診区分",
+      "bbox": {
+        "x": 0.79931585,
+        "y": 0.11854839,
+        "width": 0.03762828,
+        "height": 0.01370968
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "contact-label",
+      "text": "連絡先",
+      "bbox": {
+        "x": 0.04789054,
+        "y": 0.17016129,
+        "width": 0.02964652,
+        "height": 0.01370968
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "dominant-hand-label",
+      "text": "利き手",
+      "bbox": {
+        "x": 0.38426454,
+        "y": 0.17016129,
+        "width": 0.02850627,
+        "height": 0.01370968
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "dominant-hand-options",
+      "text": "□ 右　□ 左",
+      "bbox": {
+        "x": 0.48175599,
+        "y": 0.16693548,
+        "width": 0.05188141,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "occupation-label",
+      "text": "職業",
+      "bbox": {
+        "x": 0.61003421,
+        "y": 0.17016129,
+        "width": 0.01938426,
+        "height": 0.01370968
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "referral-label",
+      "text": "紹介状",
+      "bbox": {
+        "x": 0.79931585,
+        "y": 0.17016129,
+        "width": 0.02964652,
+        "height": 0.01370968
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "referral-options",
+      "text": "□ なし　□ あり",
+      "bbox": {
+        "x": 0.87571266,
+        "y": 0.16693548,
+        "width": 0.05929304,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "symptom-section-title",
+      "text": "症状の場所と経過",
+      "bbox": {
+        "x": 0.04503991,
+        "y": 0.23548387,
+        "width": 0.09692132,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "body-map-prompt",
+      "text": "痛みやしびれのある場所を図に記してください。",
+      "bbox": {
+        "x": 0.05074116,
+        "y": 0.28709677,
+        "width": 0.23204105,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "front-label",
+      "text": "前面",
+      "bbox": {
+        "x": 0.12314709,
+        "y": 0.35080645,
+        "width": 0.02223489,
+        "height": 0.01532258
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "back-label",
+      "text": "背面",
+      "bbox": {
+        "x": 0.27080958,
+        "y": 0.35080645,
+        "width": 0.02223489,
+        "height": 0.01532258
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "symptom-type-options",
+      "text": "□ 痛み　□ しびれ　□ 腫れ　□ 動かしにくい",
+      "bbox": {
+        "x": 0.05758267,
+        "y": 0.69032258,
+        "width": 0.19213227,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "laterality-label",
+      "text": "右・左・両側の別：",
+      "bbox": {
+        "x": 0.05416192,
+        "y": 0.74516129,
+        "width": 0.07639681,
+        "height": 0.01532258
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "laterality-options",
+      "text": "○ 右　○ 左　○ 両側",
+      "bbox": {
+        "x": 0.17787913,
+        "y": 0.74354839,
+        "width": 0.08722919,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "onset-question",
+      "text": "症状はいつ、どのように始まりましたか。",
+      "bbox": {
+        "x": 0.40992018,
+        "y": 0.28548387,
+        "width": 0.18985177,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-question",
+      "text": "現在の痛みを0から10で表すと、どの程度ですか。",
+      "bbox": {
+        "x": 0.40992018,
+        "y": 0.38790323,
+        "width": 0.23033067,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "difficulty-question",
+      "text": "歩行、階段、着替えなどで困っている動作はありますか。",
+      "bbox": {
+        "x": 0.40992018,
+        "y": 0.49112903,
+        "width": 0.26282782,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-scale-label",
+      "text": "痛みの尺度",
+      "bbox": {
+        "x": 0.40992018,
+        "y": 0.59677419,
+        "width": 0.04960091,
+        "height": 0.01693548
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-current-value",
+      "text": "0",
+      "bbox": {
+        "x": 0.57012543,
+        "y": 0.5983871,
+        "width": 0.00684151,
+        "height": 0.01532258
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "pain-scale-numbers",
+      "text": "0　1　2　3　4　5　6　7　8　9　10",
+      "bbox": {
+        "x": 0.59179019,
+        "y": 0.64919355,
+        "width": 0.31641961,
+        "height": 0.01209677
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "prior-treatment-question",
+      "text": "今回の症状について、ほかの医療機関で治療を受けましたか。",
+      "bbox": {
+        "x": 0.40307868,
+        "y": 0.70241935,
+        "width": 0.26795895,
+        "height": 0.01774194
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "prior-treatment-options",
+      "text": "□ 受けていない　□ 受けた",
+      "bbox": {
+        "x": 0.41049031,
+        "y": 0.7516129,
+        "width": 0.12029647,
+        "height": 0.01532258
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "treatment-details-label",
+      "text": "医療機関・治療内容",
+      "bbox": {
+        "x": 0.59464082,
+        "y": 0.7516129,
+        "width": 0.08266819,
+        "height": 0.01532258
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "footer-instruction",
+      "text": "ご記入後、受付へお渡しください。",
+      "bbox": {
+        "x": 0.03933865,
+        "y": 0.95967742,
+        "width": 0.13169897,
+        "height": 0.01370968
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "page-number",
+      "text": "1 / 1",
+      "bbox": {
+        "x": 0.94355758,
+        "y": 0.96048387,
+        "width": 0.01824401,
+        "height": 0.01209677
+      },
+      "page_number": 1,
+      "essential": false
+    }
+  ],
+  "structural_items": [
+    {
+      "id": "header-rule",
+      "type": "line",
+      "bbox": {
+        "x": 0.03876853,
+        "y": 0.08064516,
+        "width": 0.92417332,
+        "height": 0.0016129
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "identity-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.03876853,
+        "y": 0.10241935,
+        "width": 0.92417332,
+        "height": 0.10483871
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.03876853,
+        "y": 0.15483871,
+        "width": 0.92417332,
+        "height": 0.0016129
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.10946408,
+        "y": 0.10241935,
+        "width": 0.00114025,
+        "height": 0.10483871
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.37400228,
+        "y": 0.10241935,
+        "width": 0.00114025,
+        "height": 0.10483871
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-3",
+      "type": "line",
+      "bbox": {
+        "x": 0.46294185,
+        "y": 0.10241935,
+        "width": 0.00114025,
+        "height": 0.10483871
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-4",
+      "type": "line",
+      "bbox": {
+        "x": 0.59977195,
+        "y": 0.10241935,
+        "width": 0.00114025,
+        "height": 0.10483871
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-5",
+      "type": "line",
+      "bbox": {
+        "x": 0.68301026,
+        "y": 0.10241935,
+        "width": 0.00114025,
+        "height": 0.10483871
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-6",
+      "type": "line",
+      "bbox": {
+        "x": 0.78962372,
+        "y": 0.10241935,
+        "width": 0.00114025,
+        "height": 0.10483871
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-7",
+      "type": "line",
+      "bbox": {
+        "x": 0.86716078,
+        "y": 0.10241935,
+        "width": 0.00114025,
+        "height": 0.10483871
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "symptom-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.03876853,
+        "y": 0.23064516,
+        "width": 0.92417332,
+        "height": 0.03064516
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "body-map-panel",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.0381984,
+        "y": 0.27096774,
+        "width": 0.33808438,
+        "height": 0.53145161
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "question-panel",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.3968073,
+        "y": 0.27096774,
+        "width": 0.56556442,
+        "height": 0.41048387
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "question-row-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.39737742,
+        "y": 0.3733871,
+        "width": 0.56556442,
+        "height": 0.0016129
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "question-row-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.39737742,
+        "y": 0.47580645,
+        "width": 0.56556442,
+        "height": 0.0016129
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "question-row-3",
+      "type": "line",
+      "bbox": {
+        "x": 0.39737742,
+        "y": 0.57822581,
+        "width": 0.56556442,
+        "height": 0.0016129
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "question-row-4",
+      "type": "line",
+      "bbox": {
+        "x": 0.39737742,
+        "y": 0.67983871,
+        "width": 0.56556442,
+        "height": 0.0016129
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-scale-split",
+      "type": "line",
+      "bbox": {
+        "x": 0.55815279,
+        "y": 0.57822581,
+        "width": 0.00114025,
+        "height": 0.10322581
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "onset-writing-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.67730901,
+        "y": 0.34596774,
+        "width": 0.26795895,
+        "height": 0.00080645
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-writing-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.67730901,
+        "y": 0.4483871,
+        "width": 0.26795895,
+        "height": 0.00080645
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "difficulty-writing-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.67730901,
+        "y": 0.5516129,
+        "width": 0.26795895,
+        "height": 0.00080645
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-scale-axis",
+      "type": "line",
+      "bbox": {
+        "x": 0.59464082,
+        "y": 0.6233871,
+        "width": 0.30900798,
+        "height": 0.0016129
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-scale-tick-0",
+      "type": "line",
+      "bbox": {
+        "x": 0.5940707,
+        "y": 0.61451613,
+        "width": 0.00114025,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-scale-tick-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.62485747,
+        "y": 0.61451613,
+        "width": 0.00114025,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-scale-tick-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.65564424,
+        "y": 0.61451613,
+        "width": 0.00114025,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-scale-tick-3",
+      "type": "line",
+      "bbox": {
+        "x": 0.68643101,
+        "y": 0.61451613,
+        "width": 0.00114025,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-scale-tick-4",
+      "type": "line",
+      "bbox": {
+        "x": 0.71721779,
+        "y": 0.61451613,
+        "width": 0.00114025,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-scale-tick-5",
+      "type": "line",
+      "bbox": {
+        "x": 0.74800456,
+        "y": 0.61451613,
+        "width": 0.00114025,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-scale-tick-6",
+      "type": "line",
+      "bbox": {
+        "x": 0.77936146,
+        "y": 0.61451613,
+        "width": 0.00114025,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-scale-tick-7",
+      "type": "line",
+      "bbox": {
+        "x": 0.81014823,
+        "y": 0.61451613,
+        "width": 0.00114025,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-scale-tick-8",
+      "type": "line",
+      "bbox": {
+        "x": 0.84093501,
+        "y": 0.61451613,
+        "width": 0.00114025,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-scale-tick-9",
+      "type": "line",
+      "bbox": {
+        "x": 0.87172178,
+        "y": 0.61451613,
+        "width": 0.00114025,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-scale-tick-10",
+      "type": "line",
+      "bbox": {
+        "x": 0.90250855,
+        "y": 0.61451613,
+        "width": 0.00114025,
+        "height": 0.01935484
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "treatment-details-writing-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.68244014,
+        "y": 0.76612903,
+        "width": 0.26282782,
+        "height": 0.00080645
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "dominant-right-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.48232611,
+        "y": 0.17016129,
+        "width": 0.00741163,
+        "height": 0.01048387
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "dominant-left-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.51026226,
+        "y": 0.17016129,
+        "width": 0.00741163,
+        "height": 0.01048387
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "referral-none-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.87628278,
+        "y": 0.17016129,
+        "width": 0.00741163,
+        "height": 0.01048387
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "referral-yes-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.90877993,
+        "y": 0.17016129,
+        "width": 0.00741163,
+        "height": 0.01048387
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05758267,
+        "y": 0.69435484,
+        "width": 0.00741163,
+        "height": 0.01048387
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "numbness-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.0963512,
+        "y": 0.69435484,
+        "width": 0.00741163,
+        "height": 0.01048387
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "swelling-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.14367161,
+        "y": 0.69435484,
+        "width": 0.00741163,
+        "height": 0.01048387
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "limited-motion-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.18358039,
+        "y": 0.69435484,
+        "width": 0.00741163,
+        "height": 0.01048387
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "untreated-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.41106043,
+        "y": 0.75322581,
+        "width": 0.00741163,
+        "height": 0.01048387
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "treated-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.49087799,
+        "y": 0.75322581,
+        "width": 0.00741163,
+        "height": 0.01048387
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "right-radio",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.17844926,
+        "y": 0.7483871,
+        "width": 0.00855188,
+        "height": 0.01209677
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "left-radio",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.20695553,
+        "y": 0.7483871,
+        "width": 0.00855188,
+        "height": 0.01209677
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "bilateral-radio",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.23489168,
+        "y": 0.7483871,
+        "width": 0.00855188,
+        "height": 0.01209677
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "front-head-outline",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.11687571,
+        "y": 0.38306452,
+        "width": 0.03249715,
+        "height": 0.04596774
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "front-spine",
+      "type": "line",
+      "bbox": {
+        "x": 0.13283922,
+        "y": 0.42822581,
+        "width": 0.00114025,
+        "height": 0.15403226
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "front-shoulder",
+      "type": "line",
+      "bbox": {
+        "x": 0.11117446,
+        "y": 0.45887097,
+        "width": 0.04618016,
+        "height": 0.0016129
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "front-left-arm",
+      "type": "line",
+      "bbox": {
+        "x": 0.09806157,
+        "y": 0.45887097,
+        "width": 0.01368301,
+        "height": 0.11370968
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "front-right-arm",
+      "type": "line",
+      "bbox": {
+        "x": 0.15678449,
+        "y": 0.45887097,
+        "width": 0.01197263,
+        "height": 0.11370968
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "front-hip",
+      "type": "line",
+      "bbox": {
+        "x": 0.11972634,
+        "y": 0.57983871,
+        "width": 0.0290764,
+        "height": 0.0016129
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "front-left-leg",
+      "type": "line",
+      "bbox": {
+        "x": 0.11174458,
+        "y": 0.57983871,
+        "width": 0.00855188,
+        "height": 0.075
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "front-right-leg",
+      "type": "line",
+      "bbox": {
+        "x": 0.14823261,
+        "y": 0.57983871,
+        "width": 0.00741163,
+        "height": 0.075
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "back-head-outline",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.2645382,
+        "y": 0.38306452,
+        "width": 0.03249715,
+        "height": 0.04596774
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "back-spine",
+      "type": "line",
+      "bbox": {
+        "x": 0.28050171,
+        "y": 0.42822581,
+        "width": 0.00114025,
+        "height": 0.15403226
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "back-shoulder",
+      "type": "line",
+      "bbox": {
+        "x": 0.25826682,
+        "y": 0.45887097,
+        "width": 0.04618016,
+        "height": 0.0016129
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "back-left-arm",
+      "type": "line",
+      "bbox": {
+        "x": 0.24572406,
+        "y": 0.45887097,
+        "width": 0.01311288,
+        "height": 0.11370968
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "back-right-arm",
+      "type": "line",
+      "bbox": {
+        "x": 0.30387685,
+        "y": 0.45887097,
+        "width": 0.01254276,
+        "height": 0.11370968
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "back-hip",
+      "type": "line",
+      "bbox": {
+        "x": 0.2668187,
+        "y": 0.57983871,
+        "width": 0.0290764,
+        "height": 0.0016129
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "back-left-leg",
+      "type": "line",
+      "bbox": {
+        "x": 0.25940707,
+        "y": 0.57983871,
+        "width": 0.00798176,
+        "height": 0.075
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "back-right-leg",
+      "type": "line",
+      "bbox": {
+        "x": 0.29532497,
+        "y": 0.57983871,
+        "width": 0.00741163,
+        "height": 0.075
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "footer-rule",
+      "type": "line",
+      "bbox": {
+        "x": 0.03876853,
+        "y": 0.94596774,
+        "width": 0.92417332,
+        "height": 0.00080645
+      },
+      "page_number": 1,
+      "essential": false
+    }
+  ],
+  "relationships": [
+    {
+      "kind": "reading_order",
+      "source": "title",
+      "target": "symptom-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "symptom-section-title",
+      "target": "body-map-prompt",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "body-map-prompt",
+      "target": "onset-question",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "onset-question",
+      "target": "pain-question",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "pain-question",
+      "target": "difficulty-question",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "difficulty-question",
+      "target": "pain-scale-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "pain-scale-label",
+      "target": "prior-treatment-question",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "prior-treatment-question",
+      "target": "footer-instruction",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "name-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "furigana-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "birth-date-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "age-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "gender-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "entry-date-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "visit-category-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "contact-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "dominant-hand-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "dominant-hand-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "occupation-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "referral-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "referral-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "symptom-section-band",
+      "target": "symptom-section-title",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "body-map-panel",
+      "target": "body-map-prompt",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "body-map-panel",
+      "target": "front-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "body-map-panel",
+      "target": "back-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "body-map-panel",
+      "target": "symptom-type-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "body-map-panel",
+      "target": "laterality-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "body-map-panel",
+      "target": "laterality-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "question-panel",
+      "target": "onset-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "question-panel",
+      "target": "pain-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "question-panel",
+      "target": "difficulty-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "question-panel",
+      "target": "pain-scale-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "question-panel",
+      "target": "pain-current-value",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "question-panel",
+      "target": "pain-scale-numbers",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "dominant-hand-label",
+      "target": "dominant-hand-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "referral-label",
+      "target": "referral-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "body-map-prompt",
+      "target": "front-label",
+      "essential": false
+    },
+    {
+      "kind": "adjacency",
+      "source": "front-label",
+      "target": "back-label",
+      "essential": false
+    },
+    {
+      "kind": "adjacency",
+      "source": "symptom-type-options",
+      "target": "laterality-label",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "pain-scale-label",
+      "target": "pain-current-value",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "prior-treatment-question",
+      "target": "prior-treatment-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "prior-treatment-options",
+      "target": "treatment-details-label",
+      "essential": true
+    }
+  ],
+  "essential_text_anchors": [
+    "整形外科初診問診票",
+    "氏名",
+    "症状の場所と経過",
+    "痛みやしびれのある場所を図に記してください",
+    "前面",
+    "背面",
+    "症状はいつ、どのように始まりましたか",
+    "現在の痛みを0から10で表すと、どの程度ですか",
+    "歩行、階段、着替えなどで困っている動作はありますか",
+    "痛みの尺度",
+    "今回の症状について、ほかの医療機関で治療を受けましたか",
+    "医療機関・治療内容"
+  ],
+  "expected_page_count": 1,
+  "required_manual_checks": [
+    "no_fatal_text_overlap",
+    "no_text_clipping",
+    "layout_human_usable",
+    "word_open_edit_save"
+  ]
+}

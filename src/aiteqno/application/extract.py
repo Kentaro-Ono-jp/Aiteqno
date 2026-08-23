@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from os import PathLike
 from typing import Callable, Sequence
 
@@ -155,6 +155,13 @@ class _TokenRow:
     left: int
 
 
+@dataclass(frozen=True, slots=True)
+class _LandscapeColumnLayout:
+    top: int
+    bottom: int
+    split_x: float
+
+
 def extract_png(
     png_data: bytes,
     output_directory: str | PathLike[str],
@@ -210,6 +217,7 @@ def extract_png(
     rectangles = _normalize_rectangles(structure.rectangles)
     text_regions = _normalize_regions(structure.text_regions)
     image_regions = _normalize_regions(structure.image_regions)
+    landscape_columns = _landscape_column_layout(image, rectangles)
     source_region_entries = tuple(
         (f"p001-text-region-{index:04d}", region)
         for index, region in enumerate(text_regions)
@@ -229,13 +237,34 @@ def extract_png(
         for region_ref, region in region_entries
     )
 
+    adaptive_landscape_ocr = (
+        landscape_columns is not None and ocr_options.page_segmentation_mode == 6
+    )
+    effective_ocr_options = (
+        replace(ocr_options, page_segmentation_mode=3)
+        if adaptive_landscape_ocr
+        else ocr_options
+    )
+    effective_ocr_regions = () if adaptive_landscape_ocr else ocr_regions
+    if adaptive_landscape_ocr:
+        diagnostics.append(
+            ExtractionDiagnostic(
+                code="ocr_landscape_column_profile_applied",
+                stage="ocr",
+                message=(
+                    "landscape side-by-side panels use full-page automatic "
+                    "segmentation and column-preserving reading order"
+                ),
+            )
+        )
+
     try:
         raw_tokens = tuple(
             ocr_backend.recognize(
                 image,
-                regions=ocr_regions,
+                regions=effective_ocr_regions,
                 languages=normalized_languages,
-                options=ocr_options,
+                options=effective_ocr_options,
             )
         )
     except OcrBackendError as exc:
@@ -260,7 +289,12 @@ def extract_png(
                     source_ref=token.parent_region_ref,
                 )
             )
-    normalized_tokens, duplicate_count = _normalize_tokens(tokens_inside_page)
+    if adaptive_landscape_ocr:
+        normalized_tokens, duplicate_count = _normalize_tokens_preserving_order(
+            tokens_inside_page
+        )
+    else:
+        normalized_tokens, duplicate_count = _normalize_tokens(tokens_inside_page)
     if duplicate_count:
         diagnostics.append(
             ExtractionDiagnostic(
@@ -316,8 +350,13 @@ def extract_png(
             )
         )
 
+    ordered_tokens = (
+        _landscape_column_reading_order(associated, landscape_columns)
+        if adaptive_landscape_ocr and landscape_columns is not None
+        else _reading_order(associated)
+    )
     text_elements = _text_elements(
-        _reading_order(associated),
+        ordered_tokens,
         image,
         diagnostics,
     )
@@ -515,6 +554,82 @@ def _normalize_tokens(tokens: Sequence[OcrToken]) -> tuple[tuple[OcrToken, ...],
     return tuple(unique.values()), len(ordered) - len(unique)
 
 
+def _normalize_tokens_preserving_order(
+    tokens: Sequence[OcrToken],
+) -> tuple[tuple[OcrToken, ...], int]:
+    unique: dict[tuple[object, ...], OcrToken] = {}
+    for token in tokens:
+        unique.setdefault((*_bbox_key(token.bbox), token.text), token)
+    return tuple(unique.values()), len(tokens) - len(unique)
+
+
+def _landscape_column_layout(
+    image: ImageInput,
+    rectangles: Sequence[RectangleCandidate],
+) -> _LandscapeColumnLayout | None:
+    width = image.source.pixel_width
+    height = image.source.pixel_height
+    if width <= height:
+        return None
+    panels = tuple(
+        rectangle
+        for rectangle in rectangles
+        if rectangle.bbox.width >= width * 0.20
+        and rectangle.bbox.height >= height * 0.20
+    )
+    matches: list[
+        tuple[float, int, int, int, RectangleCandidate, RectangleCandidate]
+    ] = []
+    for first in panels:
+        for second in panels:
+            if first is second:
+                continue
+            left, right = (
+                (first, second)
+                if first.bbox.x <= second.bbox.x
+                else (second, first)
+            )
+            left_edge = left.bbox.x + left.bbox.width
+            if left_edge > right.bbox.x:
+                continue
+            overlap = max(
+                0,
+                min(
+                    left.bbox.y + left.bbox.height,
+                    right.bbox.y + right.bbox.height,
+                )
+                - max(left.bbox.y, right.bbox.y),
+            )
+            overlap_ratio = overlap / min(left.bbox.height, right.bbox.height)
+            combined_span = right.bbox.x + right.bbox.width - left.bbox.x
+            if overlap_ratio < 0.50 or combined_span < width * 0.65:
+                continue
+            matches.append(
+                (
+                    overlap_ratio,
+                    min(left.bbox.height, right.bbox.height),
+                    combined_span,
+                    -abs(left.bbox.y - right.bbox.y),
+                    left,
+                    right,
+                )
+            )
+    if not matches:
+        return None
+    _overlap, _height, _span, _alignment, left, right = max(
+        matches,
+        key=lambda value: value[:4],
+    )
+    return _LandscapeColumnLayout(
+        top=min(left.bbox.y, right.bbox.y),
+        bottom=max(
+            left.bbox.y + left.bbox.height,
+            right.bbox.y + right.bbox.height,
+        ),
+        split_x=(left.bbox.x + left.bbox.width + right.bbox.x) / 2.0,
+    )
+
+
 def _associate_region(
     token: OcrToken,
     regions: Sequence[tuple[str, RegionCandidate]],
@@ -600,6 +715,27 @@ def _reading_order(tokens: Sequence[_AssociatedToken]) -> tuple[_AssociatedToken
     return tuple(result)
 
 
+def _landscape_column_reading_order(
+    tokens: Sequence[_AssociatedToken],
+    layout: _LandscapeColumnLayout,
+) -> tuple[_AssociatedToken, ...]:
+    top: list[_AssociatedToken] = []
+    left: list[_AssociatedToken] = []
+    right: list[_AssociatedToken] = []
+    bottom: list[_AssociatedToken] = []
+    for item in tokens:
+        bbox = item.token.bbox
+        center_x = bbox.x + bbox.width / 2.0
+        center_y = bbox.y + bbox.height / 2.0
+        if center_y < layout.top:
+            top.append(item)
+        elif center_y <= layout.bottom:
+            (left if center_x < layout.split_x else right).append(item)
+        else:
+            bottom.append(item)
+    return tuple((*top, *left, *right, *bottom))
+
+
 def _text_elements(
     tokens: Sequence[_AssociatedToken],
     image: ImageInput,
@@ -676,16 +812,15 @@ def _line_elements(
 ) -> tuple[LineElement, ...]:
     elements: list[LineElement] = []
     for index, candidate in enumerate(candidates):
-        thickness_px = (
-            candidate.bbox.height
-            if candidate.orientation is LineOrientation.HORIZONTAL
-            else candidate.bbox.width
-        )
-        thickness_dpi = (
-            image.source.dpi_y
-            if candidate.orientation is LineOrientation.HORIZONTAL
-            else image.source.dpi_x
-        )
+        if candidate.orientation is LineOrientation.HORIZONTAL:
+            thickness_px = candidate.bbox.height
+            thickness_dpi = image.source.dpi_y
+        elif candidate.orientation is LineOrientation.VERTICAL:
+            thickness_px = candidate.bbox.width
+            thickness_dpi = image.source.dpi_x
+        else:
+            thickness_px = 1
+            thickness_dpi = (image.source.dpi_x + image.source.dpi_y) / 2
         elements.append(
             LineElement(
                 id=f"p001-line-{index:04d}",
@@ -719,22 +854,30 @@ def _rectangle_elements(
         0.25,
         min(_pt(1, image.source.dpi_x), _pt(1, image.source.dpi_y)),
     )
-    return tuple(
-        RectangleElement(
-            id=f"p001-rectangle-{index:04d}",
-            bbox=_point_bbox(candidate.bbox, image),
-            z_index=_RECTANGLE_Z_INDEX,
-            confidence=candidate.confidence,
-            provenance=candidate.provenance,
-            style=RectangleStyle(
-                stroke_color="#000000",
-                stroke_width_pt=stroke_width,
-                fill_color=None,
-                corner_radius_pt=0.0,
-            ),
+    elements: list[RectangleElement] = []
+    for index, candidate in enumerate(candidates):
+        bbox = _point_bbox(candidate.bbox, image)
+        notes = " ".join(record.notes or "" for record in candidate.provenance)
+        circular = "circular closed-outline" in notes
+        filled_band = "filled horizontal section-band" in notes
+        elements.append(
+            RectangleElement(
+                id=f"p001-rectangle-{index:04d}",
+                bbox=bbox,
+                z_index=_RECTANGLE_Z_INDEX,
+                confidence=candidate.confidence,
+                provenance=candidate.provenance,
+                style=RectangleStyle(
+                    stroke_color=None if filled_band else "#000000",
+                    stroke_width_pt=0.0 if filled_band else stroke_width,
+                    fill_color="#e9ecef" if filled_band else None,
+                    corner_radius_pt=(
+                        min(bbox.width, bbox.height) / 2 if circular else 0.0
+                    ),
+                ),
+            )
         )
-        for index, candidate in enumerate(candidates)
-    )
+    return tuple(elements)
 
 
 def _image_elements(

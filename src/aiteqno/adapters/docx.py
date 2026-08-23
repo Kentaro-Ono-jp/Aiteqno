@@ -1,12 +1,12 @@
-"""Flow-first DOCX reconstruction backed by ``python-docx``.
+"""Editable DOCX reconstruction backed by ``python-docx``.
 
 The adapter treats Document IR as the visual authority. It maps page settings,
 text, lines, rectangles, and verified bundle-local images to interoperable
-WordprocessingML. Coordinate-perfect layering is intentionally replaced by
-deterministic flow layout. Pages carrying the validated table-topology
-extension use real editable Word tables; other pages retain the legacy
-horizontal-band path. Every approximation is reported against the affected
-element ID.
+WordprocessingML. Structure-rich landscape pages use editable, page-relative
+text boxes and vector shapes so independent columns do not serialize into a
+multi-page flow. Pages carrying the validated table-topology extension use real
+editable Word tables; other pages retain the legacy horizontal-band path. Every
+approximation is reported against the affected element ID.
 """
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import math
 import os
+import statistics
 import tempfile
 import unicodedata
 from collections.abc import Iterable
@@ -39,6 +40,7 @@ from docx.shared import Pt, RGBColor
 from docx.table import _Cell, Table
 from docx.text.paragraph import Paragraph
 from docx.text.run import Run
+from lxml import etree
 from PIL import Image
 
 from aiteqno._version import __version__
@@ -105,6 +107,12 @@ _TEXT_SHORT_CELL_MAX_ADVANCE_UNITS = 2.0
 _TEXT_SHORT_CELL_MINIMUM_FONT_PT = 10.5
 _TEXT_SHORT_CELL_HEIGHT_RATIO = 0.5
 _TEXT_SHORT_CELL_MINIMUM_GLYPH_HEIGHT_PT = 8.5
+_ABSOLUTE_TEXT_MINIMUM_FONT_PT = 8.0
+_ABSOLUTE_TEXT_MAXIMUM_FONT_PT = 18.0
+_ABSOLUTE_TEXT_MINIMUM_GAP_PT = 12.0
+_ABSOLUTE_TEXT_GAP_HEIGHT_MULTIPLIER = 2.0
+_ABSOLUTE_TEXT_LINE_OVERLAP = 0.45
+_VML_NAMESPACE = "urn:schemas-microsoft-com:vml"
 
 _ALIGNMENT_MAP = {
     TextAlign.LEFT: WD_ALIGN_PARAGRAPH.LEFT,
@@ -215,6 +223,15 @@ class _TextLine:
     right: float
 
 
+@dataclass(frozen=True, slots=True)
+class _AbsoluteTextSegment:
+    elements: tuple[TextElement, ...]
+    top: float
+    bottom: float
+    left: float
+    right: float
+
+
 class PythonDocxRenderer:
     """Render validated Document IR without consulting its source page image."""
 
@@ -275,12 +292,16 @@ class PythonDocxRenderer:
             else:
                 section = word_document.add_section(WD_SECTION.NEW_PAGE)
             topology = read_page_table_topology(page)
+            absolute_canvas = self._uses_absolute_canvas(page, topology)
             horizontal_margin, vertical_margin = self._configure_section(
                 section,
                 page,
                 topology_page=topology is not None and bool(topology.tables),
+                absolute_page=absolute_canvas,
             )
-            if topology is not None and topology.tables:
+            if absolute_canvas:
+                self._render_absolute_page(word_document, page, state=state)
+            elif topology is not None and topology.tables:
                 self._render_topology_page(
                     word_document,
                     section,
@@ -430,6 +451,7 @@ class PythonDocxRenderer:
         page: Page,
         *,
         topology_page: bool = False,
+        absolute_page: bool = False,
     ) -> tuple[float, float]:
         width = page.size.width
         height = page.size.height
@@ -440,9 +462,17 @@ class PythonDocxRenderer:
         section.page_height = Pt(height)
 
         horizontal_requested = (
-            _TOPOLOGY_PAGE_MARGIN_PT if topology_page else DEFAULT_PAGE_MARGIN_PT
+            0.0
+            if absolute_page
+            else (
+                _TOPOLOGY_PAGE_MARGIN_PT
+                if topology_page
+                else DEFAULT_PAGE_MARGIN_PT
+            )
         )
-        vertical_requested = 0.0 if topology_page else DEFAULT_PAGE_MARGIN_PT
+        vertical_requested = (
+            0.0 if absolute_page or topology_page else DEFAULT_PAGE_MARGIN_PT
+        )
         horizontal_margin = min(horizontal_requested, width / 4)
         vertical_margin = min(vertical_requested, height / 4)
         section.left_margin = Pt(horizontal_margin)
@@ -450,7 +480,408 @@ class PythonDocxRenderer:
         section.top_margin = Pt(vertical_margin)
         section.bottom_margin = Pt(vertical_margin)
         section.gutter = Pt(0)
+        if absolute_page:
+            section.header_distance = Pt(0)
+            section.footer_distance = Pt(0)
         return horizontal_margin, vertical_margin
+
+    @staticmethod
+    def _uses_absolute_canvas(
+        page: Page,
+        topology: PageTableTopology | None,
+    ) -> bool:
+        """Select page-relative layout for side-by-side landscape panels."""
+
+        if page.size.width <= page.size.height:
+            return False
+        if any(isinstance(element, ImageElement) for element in page.elements):
+            return False
+        panels = tuple(
+            element
+            for element in page.elements
+            if isinstance(element, RectangleElement)
+            and element.bbox.width >= page.size.width * 0.20
+            and element.bbox.height >= page.size.height * 0.20
+        )
+        table_element_ids = (
+            {
+                element_id
+                for table in topology.tables
+                for element_id in table.supporting_element_ids
+            }
+            if topology is not None
+            else set()
+        )
+        for first_index, first in enumerate(panels):
+            for second in panels[first_index + 1 :]:
+                left, right = sorted((first, second), key=lambda item: item.bbox.x)
+                if left.bbox.right > right.bbox.x + GEOMETRY_TOLERANCE_PT:
+                    continue
+                vertical_overlap = max(
+                    0.0,
+                    min(left.bbox.bottom, right.bbox.bottom)
+                    - max(left.bbox.y, right.bbox.y),
+                )
+                if vertical_overlap < 0.50 * min(
+                    left.bbox.height,
+                    right.bbox.height,
+                ):
+                    continue
+                combined_span = right.bbox.right - left.bbox.x
+                if combined_span < page.size.width * 0.65:
+                    continue
+                if {left.id, right.id} <= table_element_ids:
+                    continue
+                return True
+        return False
+
+    def _render_absolute_page(
+        self,
+        word_document: WordDocument,
+        page: Page,
+        *,
+        state: _RenderState,
+    ) -> None:
+        """Render one landscape page as editable page-relative VML objects."""
+
+        anchor = word_document.add_paragraph()
+        anchor.paragraph_format.space_before = Pt(0)
+        anchor.paragraph_format.space_after = Pt(0)
+        anchor.paragraph_format.line_spacing = Pt(1)
+
+        for element in sorted(page.elements, key=lambda item: (item.z_index, item.id)):
+            if isinstance(element, RectangleElement):
+                if not self._absolute_outline_represented_by_text(page, element):
+                    self._append_absolute_rectangle(anchor, page, element, state)
+                state.record_rendered(element.id)
+            elif isinstance(element, LineElement):
+                self._append_absolute_line(anchor, page, element, state)
+                state.record_rendered(element.id)
+
+        for segment_index, segment in enumerate(self._absolute_text_segments(page)):
+            self._append_absolute_text(
+                word_document,
+                anchor,
+                page,
+                segment,
+                segment_index=segment_index,
+                state=state,
+            )
+
+    @staticmethod
+    def _append_absolute_shape(anchor: Paragraph, shape: etree._Element) -> None:
+        run = OxmlElement("w:r")
+        picture = OxmlElement("w:pict")
+        picture.append(shape)
+        run.append(picture)
+        anchor._p.append(run)
+
+    @staticmethod
+    def _absolute_box_style(
+        *,
+        left: float,
+        top: float,
+        width: float,
+        height: float,
+        z_index: int,
+    ) -> str:
+        return (
+            "position:absolute;"
+            f"margin-left:{left:.3f}pt;"
+            f"margin-top:{top:.3f}pt;"
+            f"width:{max(0.5, width):.3f}pt;"
+            f"height:{max(0.5, height):.3f}pt;"
+            f"z-index:{z_index};"
+            "mso-position-horizontal-relative:page;"
+            "mso-position-vertical-relative:page;"
+            "mso-wrap-style:none;"
+            "mso-wrap-distance-left:0;"
+            "mso-wrap-distance-right:0;"
+            "mso-wrap-distance-top:0;"
+            "mso-wrap-distance-bottom:0"
+        )
+
+    def _append_absolute_rectangle(
+        self,
+        anchor: Paragraph,
+        page: Page,
+        element: RectangleElement,
+        state: _RenderState,
+    ) -> None:
+        style = element.style
+        circular = (
+            style.corner_radius_pt >= min(element.bbox.width, element.bbox.height) * 0.45
+            and 0.75 <= element.bbox.width / max(0.5, element.bbox.height) <= 1.25
+        )
+        shape_name = (
+            "oval"
+            if circular
+            else ("roundrect" if style.corner_radius_pt > 0 else "rect")
+        )
+        shape = etree.Element(
+            f"{{{_VML_NAMESPACE}}}{shape_name}",
+            nsmap={"v": _VML_NAMESPACE},
+        )
+        shape.set("id", element.id)
+        shape.set(
+            "style",
+            self._absolute_box_style(
+                left=element.bbox.x,
+                top=element.bbox.y,
+                width=element.bbox.width,
+                height=element.bbox.height,
+                z_index=(
+                    -1
+                    if style.fill_color is not None
+                    and style.stroke_color is None
+                    else element.z_index
+                ),
+            ),
+        )
+        if shape_name == "roundrect":
+            shortest_side = max(0.5, min(element.bbox.width, element.bbox.height))
+            shape.set(
+                "arcsize",
+                f"{min(0.5, style.corner_radius_pt / shortest_side):.3f}",
+            )
+        if style.stroke_width_pt <= 0 or style.stroke_color is None:
+            shape.set("stroked", "f")
+        else:
+            shape.set("strokecolor", style.stroke_color)
+            shape.set("strokeweight", f"{style.stroke_width_pt:.3f}pt")
+        if style.fill_color is None:
+            shape.set("filled", "f")
+        else:
+            shape.set("fillcolor", style.fill_color)
+        if not math.isclose(style.opacity, 1.0, abs_tol=1e-9):
+            state.warn_fallback(
+                page_id=page.id,
+                element_id=element.id,
+                code="opacity_approximated",
+                message="rectangle opacity was rendered as fully opaque",
+            )
+        self._append_absolute_shape(anchor, shape)
+
+    @staticmethod
+    def _absolute_outline_represented_by_text(
+        page: Page,
+        rectangle: RectangleElement,
+    ) -> bool:
+        """Avoid drawing a compact outline twice when OCR retained its glyph."""
+
+        notes = " ".join(record.notes or "" for record in rectangle.provenance)
+        if "closed-outline" not in notes:
+            return False
+        if max(rectangle.bbox.width, rectangle.bbox.height) > 12.0:
+            return False
+        outline_glyphs = frozenset({"口", "ロ", "□", "○", "〇", "O", "0"})
+        for element in page.elements:
+            if not isinstance(element, TextElement):
+                continue
+            if unicodedata.normalize("NFKC", element.text).strip() not in outline_glyphs:
+                continue
+            overlap_width = max(
+                0.0,
+                min(rectangle.bbox.right, element.bbox.right)
+                - max(rectangle.bbox.x, element.bbox.x),
+            )
+            overlap_height = max(
+                0.0,
+                min(rectangle.bbox.bottom, element.bbox.bottom)
+                - max(rectangle.bbox.y, element.bbox.y),
+            )
+            overlap_area = overlap_width * overlap_height
+            minimum_area = min(
+                rectangle.bbox.width * rectangle.bbox.height,
+                element.bbox.width * element.bbox.height,
+            )
+            if overlap_area / max(0.5, minimum_area) >= 0.20:
+                return True
+        return False
+
+    def _append_absolute_line(
+        self,
+        anchor: Paragraph,
+        page: Page,
+        element: LineElement,
+        state: _RenderState,
+    ) -> None:
+        shape = etree.Element(
+            f"{{{_VML_NAMESPACE}}}line",
+            nsmap={"v": _VML_NAMESPACE},
+        )
+        shape.set("id", element.id)
+        shape.set(
+            "style",
+            (
+                "position:absolute;"
+                f"z-index:{element.z_index};"
+                "mso-position-horizontal-relative:page;"
+                "mso-position-vertical-relative:page;"
+                "mso-wrap-style:none"
+            ),
+        )
+        shape.set("from", f"{element.start.x:.3f}pt,{element.start.y:.3f}pt")
+        shape.set("to", f"{element.end.x:.3f}pt,{element.end.y:.3f}pt")
+        if element.style.color is None:
+            shape.set("stroked", "f")
+        else:
+            shape.set("strokecolor", element.style.color)
+            shape.set("strokeweight", f"{element.style.width_pt:.3f}pt")
+            if element.style.dash is not LineDash.SOLID:
+                stroke = etree.Element(f"{{{_VML_NAMESPACE}}}stroke")
+                stroke.set(
+                    "dashstyle",
+                    {
+                        LineDash.DASHED: "dash",
+                        LineDash.DOTTED: "dot",
+                        LineDash.DASH_DOT: "dashDot",
+                    }[element.style.dash],
+                )
+                shape.append(stroke)
+        if not math.isclose(element.style.opacity, 1.0, abs_tol=1e-9):
+            state.warn_fallback(
+                page_id=page.id,
+                element_id=element.id,
+                code="opacity_approximated",
+                message="line opacity was rendered as fully opaque",
+            )
+        self._append_absolute_shape(anchor, shape)
+
+    @staticmethod
+    def _absolute_text_segments(page: Page) -> tuple[_AbsoluteTextSegment, ...]:
+        ordered = sorted(
+            (
+                element
+                for element in page.elements
+                if isinstance(element, TextElement)
+            ),
+            key=lambda element: (element.reading_order, element.id),
+        )
+        grouped: list[list[TextElement]] = []
+        for element in ordered:
+            if not grouped:
+                grouped.append([element])
+                continue
+            previous = grouped[-1][-1]
+            overlap = max(
+                0.0,
+                min(previous.bbox.bottom, element.bbox.bottom)
+                - max(previous.bbox.y, element.bbox.y),
+            )
+            overlap_ratio = overlap / max(
+                0.5,
+                min(previous.bbox.height, element.bbox.height),
+            )
+            gap = element.bbox.x - previous.bbox.right
+            maximum_gap = max(
+                _ABSOLUTE_TEXT_MINIMUM_GAP_PT,
+                _ABSOLUTE_TEXT_GAP_HEIGHT_MULTIPLIER
+                * max(previous.bbox.height, element.bbox.height),
+            )
+            if (
+                overlap_ratio >= _ABSOLUTE_TEXT_LINE_OVERLAP
+                and 0 <= gap <= maximum_gap
+            ):
+                grouped[-1].append(element)
+            else:
+                grouped.append([element])
+        return tuple(
+            _AbsoluteTextSegment(
+                elements=tuple(group),
+                top=min(element.bbox.y for element in group),
+                bottom=max(element.bbox.bottom for element in group),
+                left=min(element.bbox.x for element in group),
+                right=max(element.bbox.right for element in group),
+            )
+            for group in grouped
+        )
+
+    def _append_absolute_text(
+        self,
+        word_document: WordDocument,
+        anchor: Paragraph,
+        page: Page,
+        segment: _AbsoluteTextSegment,
+        *,
+        segment_index: int,
+        state: _RenderState,
+    ) -> None:
+        font_size = min(
+            _ABSOLUTE_TEXT_MAXIMUM_FONT_PT,
+            max(
+                _ABSOLUTE_TEXT_MINIMUM_FONT_PT,
+                statistics.median(
+                    element.style.font_size_pt for element in segment.elements
+                ),
+            ),
+        )
+        advance_units = sum(
+            self._text_advance_units(element.text)
+            for element in segment.elements
+        ) + _TEXT_NARROW_ADVANCE_UNITS * sum(
+            self._requires_word_space(previous.text, current.text)
+            for previous, current in zip(
+                segment.elements,
+                segment.elements[1:],
+                strict=False,
+            )
+        )
+        advance_width = advance_units * font_size
+        width = min(
+            page.size.width - segment.left,
+            max(segment.right - segment.left, advance_width),
+        )
+        height = max(segment.bottom - segment.top, font_size * 1.25)
+
+        shape = etree.Element(
+            f"{{{_VML_NAMESPACE}}}rect",
+            nsmap={"v": _VML_NAMESPACE},
+        )
+        shape.set("id", f"aiteqno-text-{segment_index:04d}")
+        shape.set(
+            "style",
+            self._absolute_box_style(
+                left=segment.left,
+                top=segment.top,
+                width=width,
+                height=height,
+                z_index=max(element.z_index for element in segment.elements) + 100,
+            ),
+        )
+        shape.set("stroked", "f")
+        shape.set("filled", "f")
+        textbox = etree.Element(f"{{{_VML_NAMESPACE}}}textbox")
+        textbox.set("inset", "0,0,0,0")
+        textbox.set("style", "mso-fit-shape-to-text:false")
+        content = OxmlElement("w:txbxContent")
+        paragraph = word_document.add_paragraph()
+        paragraph.paragraph_format.space_before = Pt(0)
+        paragraph.paragraph_format.space_after = Pt(0)
+
+        previous = None
+        for element in segment.elements:
+            if previous is not None and self._requires_word_space(
+                previous.text,
+                element.text,
+            ):
+                separator = paragraph.add_run(" ")
+                separator.font.size = Pt(font_size)
+            self._apply_text_style(
+                paragraph,
+                page,
+                element,
+                state=state,
+                source_element_id=element.id,
+                font_size_pt=font_size,
+            )
+            state.record_rendered(element.id)
+            previous = element
+        paragraph.paragraph_format.line_spacing = Pt(max(1.0, height))
+        content.append(paragraph._p)
+        textbox.append(content)
+        shape.append(textbox)
+        self._append_absolute_shape(anchor, shape)
 
     def _render_topology_page(
         self,
