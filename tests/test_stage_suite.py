@@ -33,8 +33,15 @@ Q02_MANIFEST = Q01_DIRECTORY / "questionnaire-02-fever-respiratory.manifest.json
 Q02_ID = "questionnaire-02-fever-respiratory"
 Q02_SOURCE_SHA256 = "6c27901390f4a1b43729d681884aae144886d2725ac3d585d9570f4499137ba2"
 Q02_REFERENCE_SHA256 = "94b073eb3d7cb6df5001054d61f212c99b476c7af0fc08df55385dfce1d12b0a"
+Q03_MANIFEST = Q01_DIRECTORY / "questionnaire-03-gastroenterology.manifest.json"
+Q03_ID = "questionnaire-03-gastroenterology"
+Q03_SOURCE_SHA256 = "825bddca8853986288cb5762bb26e80143762120ffe5859793f4ec5a171f83a7"
+Q03_REFERENCE_SHA256 = "d358c1b7f92ef52ca1b59b3667f3d7922e81538fdd3429ac02e964a229baf1df"
 STAGE_TWO_SUITE_PATH = (
     Path(__file__).parent / "fixtures" / "stages" / "questionnaire-stage-2.json"
+)
+STAGE_THREE_SUITE_PATH = (
+    Path(__file__).parent / "fixtures" / "stages" / "questionnaire-stage-3.json"
 )
 
 
@@ -68,6 +75,26 @@ class StageSuiteContractTest(unittest.TestCase):
             ["base64", "raw", "raw"],
         )
         self.assertEqual([item.source_dpi for item in suite.fixtures], [96, 150, 200])
+        self.assertEqual(suite.threshold, 70)
+        self.assertEqual(suite.production_languages, ("jpn",))
+        self.assertEqual(suite.visible_languages, suite.production_languages)
+        self.assertEqual(suite.snapshot_dpi, 300)
+
+    def test_stage_three_adds_only_q03_in_the_pinned_order(self):
+        suite = _load_suite(STAGE_THREE_SUITE_PATH)
+
+        self.assertEqual(
+            [item.fixture_id for item in suite.fixtures],
+            ["synthetic-dense-japanese-form-v1", Q01_ID, Q02_ID, Q03_ID],
+        )
+        self.assertEqual(
+            [item.source_encoding for item in suite.fixtures],
+            ["base64", "raw", "raw", "raw"],
+        )
+        self.assertEqual(
+            [item.source_dpi for item in suite.fixtures],
+            [96, 150, 200, 150],
+        )
         self.assertEqual(suite.threshold, 70)
         self.assertEqual(suite.production_languages, ("jpn",))
         self.assertEqual(suite.visible_languages, suite.production_languages)
@@ -122,6 +149,42 @@ class StageSuiteContractTest(unittest.TestCase):
             "最近、感染症と診断された方との接触はありましたか。",
             "補足（発症の順序、使用した解熱薬など）",
             "受付の案内に従い、待機場所でお待ちください。",
+        ):
+            self.assertIn(phrase, expected_text)
+        reference_json = json.loads(fixture.reference_path.read_text(encoding="utf-8"))
+        self.assertEqual(reference_json["review"]["exclusions"], [])
+        self.assertTrue(fixture.manifest["redistribution_allowed"])
+        self.assertFalse(fixture.manifest["contains_personal_data"])
+
+    def test_q03_reference_is_reviewed_source_grounded_and_complete(self):
+        fixture = _read_fixture(Q03_MANIFEST, Q03_ID)
+        reference = fixture.reference
+
+        self.assertEqual(fixture.source_sha256, Q03_SOURCE_SHA256)
+        self.assertEqual(fixture.reference_sha256, Q03_REFERENCE_SHA256)
+        self.assertEqual((fixture.source_width, fixture.source_height), (1240, 1754))
+        self.assertEqual(fixture.source_dpi, 150)
+        self.assertTrue(reference.reviewed)
+        self.assertGreaterEqual(len(reference.text_regions), 35)
+        self.assertGreaterEqual(len(reference.structural_items), 66)
+        self.assertGreaterEqual(len(reference.relationships), 28)
+        self.assertGreaterEqual(
+            sum("checkbox" in item.id for item in reference.structural_items),
+            30,
+        )
+        expected_text = "".join(item.text for item in reference.text_regions)
+        for phrase in (
+            "消化器内科 問診票",
+            "腹部症状と便の状態",
+            "痛む場所と、痛みが始まった時期をご記入ください。",
+            "食事をすると症状は強くなりますか、軽くなりますか。",
+            "便の回数や硬さに変化はありますか。",
+            "便に血が混じったことや、黒い便が出たことはありますか。",
+            "伴う症状",
+            "吐き気、嘔吐、胸やけ、食欲低下はありますか。",
+            "既往歴・服薬・アレルギー・手術歴",
+            "症状の経過や気になる食べ物",
+            "ご記入後、受付へお渡しください。",
         ):
             self.assertIn(phrase, expected_text)
         reference_json = json.loads(fixture.reference_path.read_text(encoding="utf-8"))

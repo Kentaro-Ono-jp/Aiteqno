@@ -1,0 +1,1430 @@
+{
+  "reference_version": 1,
+  "reference_id": "questionnaire-03-gastroenterology",
+  "source_sha256": "825bddca8853986288cb5762bb26e80143762120ffe5859793f4ec5a171f83a7",
+  "source_dimensions": {
+    "pixel_width": 1240,
+    "pixel_height": 1754,
+    "dpi": 150,
+    "color_mode": "RGB",
+    "sha256": "825bddca8853986288cb5762bb26e80143762120ffe5859793f4ec5a171f83a7"
+  },
+  "normalization": "NFKC then remove every Unicode whitespace character",
+  "reviewed": true,
+  "review": {
+    "status": "reviewed",
+    "reviewer": "Kentaro Ono (blanket approval); transcription and 100% visual cross-check by Noel",
+    "reviewed_at": "2026-08-23",
+    "reference_revision": 1,
+    "authorization": "User explicitly approved all actions for Issue #79 on 2026-08-23.",
+    "method": "Source PNG inspected at 100%; every visible printed string and every material grid, cell boundary, rule, writing line, section band, checkbox, reading order, containment, and adjacency relation was cross-checked against source pixels. OCR and pixel-run measurements were used only to locate source pixels, never as transcription truth.",
+    "exclusions": []
+  },
+  "text_regions": [
+    {
+      "id": "title",
+      "text": "消化器内科 問診票",
+      "bbox": {
+        "x": 0.05564516,
+        "y": 0.0267959,
+        "width": 0.24032258,
+        "height": 0.03078677
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "specialty",
+      "text": "消化器内科",
+      "bbox": {
+        "x": 0.875,
+        "y": 0.03249715,
+        "width": 0.0733871,
+        "height": 0.01710376
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "name-label",
+      "text": "氏名",
+      "bbox": {
+        "x": 0.06612903,
+        "y": 0.08665906,
+        "width": 0.0233871,
+        "height": 0.00798176
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "furigana-label",
+      "text": "ふりがな",
+      "bbox": {
+        "x": 0.16370968,
+        "y": 0.08665906,
+        "width": 0.04919355,
+        "height": 0.00798176
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "entry-date-label",
+      "text": "記入日",
+      "bbox": {
+        "x": 0.58387097,
+        "y": 0.08380844,
+        "width": 0.03870968,
+        "height": 0.01596351
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "birth-date-label",
+      "text": "生年月日",
+      "bbox": {
+        "x": 0.06612903,
+        "y": 0.11801596,
+        "width": 0.0483871,
+        "height": 0.01596351
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "age-label",
+      "text": "年齢",
+      "bbox": {
+        "x": 0.22903226,
+        "y": 0.11801596,
+        "width": 0.02741935,
+        "height": 0.01596351
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "age-unit",
+      "text": "歳",
+      "bbox": {
+        "x": 0.40887097,
+        "y": 0.12086659,
+        "width": 0.01129032,
+        "height": 0.00798176
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "gender-label",
+      "text": "性別（任意）",
+      "bbox": {
+        "x": 0.52983871,
+        "y": 0.11801596,
+        "width": 0.06935484,
+        "height": 0.01653364
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "gender-options",
+      "text": "□ 女性　□ 男性　□ 回答しない",
+      "bbox": {
+        "x": 0.68064516,
+        "y": 0.11801596,
+        "width": 0.20564516,
+        "height": 0.01653364
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "abdominal-section-title",
+      "text": "腹部症状と便の状態",
+      "bbox": {
+        "x": 0.06370968,
+        "y": 0.15906499,
+        "width": 0.15403226,
+        "height": 0.02052452
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-question",
+      "text": "痛む場所と、痛みが始まった時期をご記入ください。",
+      "bbox": {
+        "x": 0.07096774,
+        "y": 0.19327252,
+        "width": 0.33951613,
+        "height": 0.01881414
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-location-options",
+      "text": "□ 上腹部　□ 下腹部　□ 全体",
+      "bbox": {
+        "x": 0.07258065,
+        "y": 0.26339795,
+        "width": 0.17177419,
+        "height": 0.01596351
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "meal-effect-question",
+      "text": "食事をすると症状は強くなりますか、軽くなりますか。",
+      "bbox": {
+        "x": 0.07177419,
+        "y": 0.28905359,
+        "width": 0.33225806,
+        "height": 0.01596351
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "meal-effect-options",
+      "text": "□ 強くなる　□ 軽くなる　□ 変わらない",
+      "bbox": {
+        "x": 0.07258065,
+        "y": 0.33352338,
+        "width": 0.23467742,
+        "height": 0.01539339
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "stool-change-question",
+      "text": "便の回数や硬さに変化はありますか。",
+      "bbox": {
+        "x": 0.5233871,
+        "y": 0.19327252,
+        "width": 0.24112903,
+        "height": 0.01881414
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "stool-change-options",
+      "text": "□ 便秘　□ 下痢　□ 交互",
+      "bbox": {
+        "x": 0.52580645,
+        "y": 0.26339795,
+        "width": 0.15322581,
+        "height": 0.01596351
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "blood-stool-question",
+      "text": "便に血が混じったことや、黒い便が出たことはありますか。",
+      "bbox": {
+        "x": 0.525,
+        "y": 0.28905359,
+        "width": 0.35887097,
+        "height": 0.01596351
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "blood-stool-options",
+      "text": "□ ない　□ 血便　□ 黒い便",
+      "bbox": {
+        "x": 0.52580645,
+        "y": 0.34549601,
+        "width": 0.16935484,
+        "height": 0.01539339
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "associated-section-title",
+      "text": "伴う症状",
+      "bbox": {
+        "x": 0.06370968,
+        "y": 0.41049031,
+        "width": 0.07177419,
+        "height": 0.02109464
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "associated-symptoms-question",
+      "text": "吐き気、嘔吐、胸やけ、食欲低下はありますか。",
+      "bbox": {
+        "x": 0.07177419,
+        "y": 0.44412771,
+        "width": 0.29193548,
+        "height": 0.01767389
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "upper-associated-options",
+      "text": "□ 吐き気　□ 嘔吐　□ 胸やけ",
+      "bbox": {
+        "x": 0.51935484,
+        "y": 0.44754846,
+        "width": 0.17096774,
+        "height": 0.01482326
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "lower-associated-options",
+      "text": "□ 食欲低下　□ 発熱　□ 体重減少",
+      "bbox": {
+        "x": 0.07258065,
+        "y": 0.49258837,
+        "width": 0.20806452,
+        "height": 0.01596351
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "other-label",
+      "text": "その他",
+      "bbox": {
+        "x": 0.51935484,
+        "y": 0.49486887,
+        "width": 0.03870968,
+        "height": 0.00855188
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "history-section-title",
+      "text": "既往歴・服薬・アレルギー・手術歴",
+      "bbox": {
+        "x": 0.06048387,
+        "y": 0.54618016,
+        "width": 0.2733871,
+        "height": 0.01995439
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "digestive-history-label",
+      "text": "消化器の病気",
+      "bbox": {
+        "x": 0.07096774,
+        "y": 0.58209806,
+        "width": 0.08225806,
+        "height": 0.01767389
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "digestive-history-options",
+      "text": "□ ない　□ 胃・十二指腸　□ 肝臓　□ 胆のう　□ 大腸",
+      "bbox": {
+        "x": 0.25403226,
+        "y": 0.58323831,
+        "width": 0.28870968,
+        "height": 0.01539339
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-medication-label",
+      "text": "現在の薬",
+      "bbox": {
+        "x": 0.07096774,
+        "y": 0.62485747,
+        "width": 0.05725806,
+        "height": 0.01767389
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "allergy-label",
+      "text": "アレルギー",
+      "bbox": {
+        "x": 0.07177419,
+        "y": 0.66989738,
+        "width": 0.06612903,
+        "height": 0.00912201
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "allergy-options",
+      "text": "□ ない　□ ある",
+      "bbox": {
+        "x": 0.25403226,
+        "y": 0.66875713,
+        "width": 0.10806452,
+        "height": 0.01539339
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "abdominal-surgery-label",
+      "text": "腹部の手術",
+      "bbox": {
+        "x": 0.07096774,
+        "y": 0.71037628,
+        "width": 0.06854839,
+        "height": 0.01767389
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "abdominal-surgery-options",
+      "text": "□ ない　□ ある",
+      "bbox": {
+        "x": 0.25403226,
+        "y": 0.71151653,
+        "width": 0.10806452,
+        "height": 0.01539339
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "course-food-label",
+      "text": "症状の経過や気になる食べ物",
+      "bbox": {
+        "x": 0.06290323,
+        "y": 0.76567845,
+        "width": 0.1766129,
+        "height": 0.01596351
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "footer-instruction",
+      "text": "ご記入後、受付へお渡しください。",
+      "bbox": {
+        "x": 0.05645161,
+        "y": 0.96921323,
+        "width": 0.18306452,
+        "height": 0.01596351
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "page-number",
+      "text": "1 / 1",
+      "bbox": {
+        "x": 0.92096774,
+        "y": 0.9732041,
+        "width": 0.0233871,
+        "height": 0.00627138
+      },
+      "page_number": 1,
+      "essential": false
+    }
+  ],
+  "structural_items": [
+    {
+      "id": "header-rule",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.05701254,
+        "width": 0.89274194,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "identity-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.07354618,
+        "width": 0.89274194,
+        "height": 0.0695553
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.10832383,
+        "width": 0.89274194,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-left-label-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.1516129,
+        "y": 0.07354618,
+        "width": 0.0016129,
+        "height": 0.0695553
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-half-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.57177419,
+        "y": 0.07354618,
+        "width": 0.0016129,
+        "height": 0.0695553
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-entry-date-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.67258065,
+        "y": 0.07354618,
+        "width": 0.0016129,
+        "height": 0.0359179
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-birth-field-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.21854839,
+        "y": 0.10832383,
+        "width": 0.0016129,
+        "height": 0.03477765
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-age-field-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.3983871,
+        "y": 0.10832383,
+        "width": 0.0016129,
+        "height": 0.03477765
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-age-unit-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.51612903,
+        "y": 0.10832383,
+        "width": 0.0016129,
+        "height": 0.03477765
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-gender-label-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.66693548,
+        "y": 0.10832383,
+        "width": 0.0016129,
+        "height": 0.03477765
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-gender-answer-boundary",
+      "type": "line",
+      "bbox": {
+        "x": 0.7766129,
+        "y": 0.10832383,
+        "width": 0.0016129,
+        "height": 0.03477765
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "abdominal-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.15678449,
+        "width": 0.89274194,
+        "height": 0.02166477
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "pain-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.18529076,
+        "width": 0.43387097,
+        "height": 0.20695553
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-grid-row-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.25427594,
+        "width": 0.43387097,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-grid-row-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.32326112,
+        "width": 0.43387097,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "stool-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.50725806,
+        "y": 0.18529076,
+        "width": 0.43951613,
+        "height": 0.20695553
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "stool-grid-row-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.50725806,
+        "y": 0.25427594,
+        "width": 0.43951613,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "stool-grid-row-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.50725806,
+        "y": 0.32326112,
+        "width": 0.43951613,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-details-writing-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.07096774,
+        "y": 0.37286203,
+        "width": 0.39677419,
+        "height": 0.00057013
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "associated-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.40877993,
+        "width": 0.89274194,
+        "height": 0.02166477
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "associated-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.4372862,
+        "width": 0.89274194,
+        "height": 0.09064994
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "associated-grid-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.48232611,
+        "width": 0.89274194,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "associated-grid-column",
+      "type": "line",
+      "bbox": {
+        "x": 0.49919355,
+        "y": 0.4372862,
+        "width": 0.0016129,
+        "height": 0.09064994
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "other-writing-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.56693548,
+        "y": 0.504561,
+        "width": 0.34677419,
+        "height": 0.00057013
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.54389966,
+        "width": 0.89274194,
+        "height": 0.02223489
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "history-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.57240593,
+        "width": 0.89274194,
+        "height": 0.17160775
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-grid-row-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.61516534,
+        "width": 0.89274194,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-grid-row-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.65792474,
+        "width": 0.89274194,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-grid-row-3",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.70068415,
+        "width": 0.89274194,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-grid-column",
+      "type": "line",
+      "bbox": {
+        "x": 0.23225806,
+        "y": 0.57240593,
+        "width": 0.0016129,
+        "height": 0.17160775
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-medication-writing-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.25241935,
+        "y": 0.64595211,
+        "width": 0.67258065,
+        "height": 0.00057013
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "allergy-writing-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.43709677,
+        "y": 0.68871152,
+        "width": 0.48790323,
+        "height": 0.00057013
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "surgery-writing-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.43709677,
+        "y": 0.73147092,
+        "width": 0.48790323,
+        "height": 0.00057013
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "course-food-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.75997719,
+        "width": 0.89274194,
+        "height": 0.0695553
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "course-food-writing-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.06370968,
+        "y": 0.82440137,
+        "width": 0.8733871,
+        "height": 0.00057013
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "footer-rule",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.9618016,
+        "width": 0.89274194,
+        "height": 0.00057013
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "gender-female-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.68064516,
+        "y": 0.11858609,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "gender-male-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.72822581,
+        "y": 0.11858609,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "gender-no-answer-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.78387097,
+        "y": 0.11858609,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "upper-abdomen-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.07258065,
+        "y": 0.2668187,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "lower-abdomen-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.14274194,
+        "y": 0.2668187,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "whole-abdomen-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.20403226,
+        "y": 0.2668187,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "stronger-after-meal-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.07258065,
+        "y": 0.336374,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "lighter-after-meal-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.15080645,
+        "y": 0.336374,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "unchanged-after-meal-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.22580645,
+        "y": 0.336374,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "constipation-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.52580645,
+        "y": 0.2668187,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "diarrhea-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.58629032,
+        "y": 0.2668187,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "alternating-stool-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.63870968,
+        "y": 0.2668187,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "no-blood-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.52580645,
+        "y": 0.34834664,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "bloody-stool-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.58225806,
+        "y": 0.34834664,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "black-stool-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.63870968,
+        "y": 0.34834664,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "nausea-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.51935484,
+        "y": 0.45039909,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "vomiting-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.58709677,
+        "y": 0.45039909,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "heartburn-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.64112903,
+        "y": 0.45039909,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "appetite-loss-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.07258065,
+        "y": 0.49600912,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "fever-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.15725806,
+        "y": 0.49600912,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "weight-loss-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.21693548,
+        "y": 0.49600912,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "no-digestive-disease-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.25403226,
+        "y": 0.58551881,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "stomach-duodenum-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.3016129,
+        "y": 0.58551881,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "liver-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.40241935,
+        "y": 0.58551881,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "gallbladder-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.45241935,
+        "y": 0.58551881,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "colon-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.50645161,
+        "y": 0.58551881,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "no-allergy-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.25403226,
+        "y": 0.67103763,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "has-allergy-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.31774194,
+        "y": 0.67103763,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "no-surgery-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.25403226,
+        "y": 0.71379704,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "has-surgery-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.31774194,
+        "y": 0.71379704,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    }
+  ],
+  "relationships": [
+    {
+      "kind": "reading_order",
+      "source": "title",
+      "target": "abdominal-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "abdominal-section-title",
+      "target": "associated-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "associated-section-title",
+      "target": "history-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "history-section-title",
+      "target": "course-food-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "course-food-label",
+      "target": "footer-instruction",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "name-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "gender-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "pain-grid-outer",
+      "target": "pain-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "pain-grid-outer",
+      "target": "meal-effect-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "stool-grid-outer",
+      "target": "stool-change-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "stool-grid-outer",
+      "target": "blood-stool-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "associated-grid-outer",
+      "target": "associated-symptoms-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "associated-grid-outer",
+      "target": "upper-associated-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "associated-grid-outer",
+      "target": "lower-associated-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "history-grid-outer",
+      "target": "digestive-history-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "history-grid-outer",
+      "target": "current-medication-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "history-grid-outer",
+      "target": "allergy-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "history-grid-outer",
+      "target": "abdominal-surgery-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "course-food-outer",
+      "target": "course-food-label",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "pain-question",
+      "target": "pain-location-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "meal-effect-question",
+      "target": "meal-effect-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "stool-change-question",
+      "target": "stool-change-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "blood-stool-question",
+      "target": "blood-stool-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "associated-symptoms-question",
+      "target": "upper-associated-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "lower-associated-options",
+      "target": "other-label",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "digestive-history-label",
+      "target": "digestive-history-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "allergy-label",
+      "target": "allergy-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "abdominal-surgery-label",
+      "target": "abdominal-surgery-options",
+      "essential": true
+    }
+  ],
+  "essential_text_anchors": [
+    "消化器内科問診票",
+    "氏名",
+    "腹部症状と便の状態",
+    "痛む場所と、痛みが始まった時期をご記入ください",
+    "食事をすると症状は強くなりますか、軽くなりますか",
+    "便の回数や硬さに変化はありますか",
+    "便に血が混じったことや、黒い便が出たことはありますか",
+    "伴う症状",
+    "吐き気、嘔吐、胸やけ、食欲低下はありますか",
+    "既往歴・服薬・アレルギー・手術歴",
+    "消化器の病気",
+    "症状の経過や気になる食べ物"
+  ],
+  "expected_page_count": 1,
+  "required_manual_checks": [
+    "no_fatal_text_overlap",
+    "no_text_clipping",
+    "layout_human_usable",
+    "word_open_edit_save"
+  ]
+}
