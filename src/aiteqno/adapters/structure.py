@@ -40,7 +40,7 @@ DEFAULT_FALLBACK_DPI = 96.0
 DEFAULT_MAX_PNG_BYTES = 25 * 1024 * 1024
 DEFAULT_MAX_PNG_PIXELS = 40_000_000
 STRUCTURE_PROVIDER = "aiteqno.opencv-structure"
-STRUCTURE_PROVIDER_VERSION = "1.0"
+STRUCTURE_PROVIDER_VERSION = "1.1"
 
 _ALGORITHM_PARAMETERS = {
     "algorithm_version": STRUCTURE_PROVIDER_VERSION,
@@ -48,8 +48,15 @@ _ALGORITHM_PARAMETERS = {
     "line_kernel_fraction": 0.05,
     "line_merge_gap_fraction": 0.01,
     "max_line_thickness_fraction": 0.025,
+    "compact_outline_max_fraction": 0.06,
+    "compact_outline_min_rectangularity": 0.82,
+    "circular_outline_min_circularity": 0.82,
+    "filled_band_min_row_coverage": 0.65,
+    "landscape_detail_min_shortest_px": 600,
     "min_image_area_fraction": 0.0025,
     "min_line_fraction": 0.06,
+    "short_tick_max_height_fraction": 0.04,
+    "short_tick_min_group_size": 3,
     "text_join_fraction": 0.015,
 }
 
@@ -252,8 +259,38 @@ class OpenCvStructureExtractor:
         gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
         binary = _binarize(gray)
         raw_lines, line_mask = _detect_raw_lines(binary)
-        lines = self._line_candidates(raw_lines, source)
-        rectangles = self._rectangle_candidates(line_mask, lines)
+        long_lines = self._line_candidates(raw_lines, source)
+        rectangles = self._rectangle_candidates(line_mask, long_lines)
+        landscape_detail_profile = (
+            source.pixel_width > source.pixel_height
+            and min(source.pixel_width, source.pixel_height)
+            >= int(_ALGORITHM_PARAMETERS["landscape_detail_min_shortest_px"])
+        )
+        if landscape_detail_profile:
+            raw_ticks, tick_mask = _detect_short_axis_ticks(binary, long_lines)
+            axis_lines = self._line_candidates([*raw_lines, *raw_ticks], source)
+            circular_rectangles = self._circular_rectangle_candidates(
+                binary,
+                source,
+            )
+            diagram_lines, diagram_mask = self._diagram_line_candidates(
+                binary,
+                source,
+                circular_rectangles,
+            )
+            lines = [*axis_lines, *diagram_lines]
+            line_mask = cv2.bitwise_or(line_mask, tick_mask)
+            line_mask = cv2.bitwise_or(line_mask, diagram_mask)
+            rectangles = _merge_rectangle_candidates(
+                rectangles,
+                [
+                    *self._compact_rectangle_candidates(binary, source),
+                    *circular_rectangles,
+                    *self._filled_horizontal_band_candidates(gray, source),
+                ],
+            )
+        else:
+            lines = long_lines
         content_mask = cv2.bitwise_and(binary, cv2.bitwise_not(_expand(line_mask, 3)))
         image_regions = self._image_candidates(content_mask, source)
         text_regions = self._text_candidates(content_mask, image_regions, source)
@@ -405,6 +442,374 @@ class OpenCvStructureExtractor:
                 item.bbox.width,
             ),
         )
+
+    def _compact_rectangle_candidates(
+        self,
+        binary: np.ndarray,
+        source: PageSource,
+    ) -> list[RectangleCandidate]:
+        """Detect isolated checkbox-sized closed outlines omitted by line morphology."""
+
+        contours, raw_hierarchy = cv2.findContours(
+            binary,
+            cv2.RETR_TREE,
+            cv2.CHAIN_APPROX_SIMPLE,
+        )
+        if raw_hierarchy is None:
+            return []
+        hierarchy = raw_hierarchy[0]
+        shortest = min(source.pixel_width, source.pixel_height)
+        minimum_size = max(8, int(round(shortest * 0.006)))
+        maximum_size = max(
+            minimum_size + 1,
+            int(
+                round(
+                    shortest
+                    * float(_ALGORITHM_PARAMETERS["compact_outline_max_fraction"])
+                )
+            ),
+        )
+        minimum_rectangularity = float(
+            _ALGORITHM_PARAMETERS["compact_outline_min_rectangularity"]
+        )
+        found: dict[tuple[int, int, int, int], RectangleCandidate] = {}
+        for index, contour in enumerate(contours):
+            child_index = int(hierarchy[index][2])
+            if child_index < 0:
+                continue
+            x, y, width, height = cv2.boundingRect(contour)
+            if not (
+                minimum_size <= width <= maximum_size
+                and minimum_size <= height <= maximum_size
+            ):
+                continue
+            aspect_ratio = width / height
+            if not 0.75 <= aspect_ratio <= 1.25:
+                continue
+            outer_area = abs(float(cv2.contourArea(contour)))
+            rectangularity = outer_area / max(1.0, width * height)
+            if rectangularity < minimum_rectangularity:
+                continue
+            perimeter = cv2.arcLength(contour, True)
+            if perimeter <= 0:
+                continue
+            vertices = len(cv2.approxPolyDP(contour, 0.04 * perimeter, True))
+            if vertices != 4:
+                continue
+            child_area = abs(float(cv2.contourArea(contours[child_index])))
+            hole_ratio = child_area / max(1.0, outer_area)
+            if hole_ratio < 0.12:
+                continue
+            bbox = PixelBoundingBox(x=x, y=y, width=width, height=height)
+            score = _score(
+                0.60
+                + 0.25 * min(1.0, rectangularity)
+                + 0.15 * min(1.0, hole_ratio)
+            )
+            candidate = RectangleCandidate(
+                bbox=bbox,
+                confidence=Confidence(overall=score, detection=score),
+                provenance=(
+                    self._provenance(
+                        bbox,
+                        "compact closed-outline rectangle candidate",
+                    ),
+                ),
+            )
+            key = (bbox.x, bbox.y, bbox.width, bbox.height)
+            previous = found.get(key)
+            if previous is None or candidate.confidence.overall > previous.confidence.overall:
+                found[key] = candidate
+        return sorted(
+            found.values(),
+            key=lambda item: (
+                item.bbox.y,
+                item.bbox.x,
+                item.bbox.height,
+                item.bbox.width,
+            ),
+        )
+
+    def _circular_rectangle_candidates(
+        self,
+        binary: np.ndarray,
+        source: PageSource,
+    ) -> list[RectangleCandidate]:
+        """Represent isolated response circles and larger diagram heads by bounds."""
+
+        contours, raw_hierarchy = cv2.findContours(
+            binary,
+            cv2.RETR_TREE,
+            cv2.CHAIN_APPROX_SIMPLE,
+        )
+        if raw_hierarchy is None:
+            return []
+        hierarchy = raw_hierarchy[0]
+        shortest = min(source.pixel_width, source.pixel_height)
+        compact_minimum = max(8, int(round(shortest * 0.006)))
+        compact_maximum = max(
+            compact_minimum + 1,
+            int(round(shortest * 0.06)),
+        )
+        diagram_minimum = max(compact_minimum, int(round(shortest * 0.02)))
+        diagram_maximum = max(
+            diagram_minimum + 1,
+            int(round(shortest * 0.08)),
+        )
+        minimum_circularity = float(
+            _ALGORITHM_PARAMETERS["circular_outline_min_circularity"]
+        )
+        found: dict[tuple[int, int, int, int], RectangleCandidate] = {}
+        for index, contour in enumerate(contours):
+            x, y, width, height = cv2.boundingRect(contour)
+            aspect_ratio = width / height
+            if not 0.75 <= aspect_ratio <= 1.25:
+                continue
+            perimeter = cv2.arcLength(contour, True)
+            if perimeter <= 0:
+                continue
+            outer_area = abs(float(cv2.contourArea(contour)))
+            circularity = 4 * math.pi * outer_area / (perimeter * perimeter)
+            if circularity < minimum_circularity:
+                continue
+            vertices = len(cv2.approxPolyDP(contour, 0.04 * perimeter, True))
+            child_index = int(hierarchy[index][2])
+            compact_response_circle = False
+            if (
+                child_index >= 0
+                and compact_minimum <= width <= compact_maximum
+                and compact_minimum <= height <= compact_maximum
+                and vertices >= 5
+            ):
+                child_area = abs(float(cv2.contourArea(contours[child_index])))
+                compact_response_circle = child_area / max(1.0, outer_area) >= 0.30
+            diagram_circle = (
+                diagram_minimum <= width <= diagram_maximum
+                and diagram_minimum <= height <= diagram_maximum
+                and vertices >= 6
+            )
+            if not compact_response_circle and not diagram_circle:
+                continue
+            bbox = PixelBoundingBox(x=x, y=y, width=width, height=height)
+            score = _score(0.65 + 0.35 * min(1.0, circularity))
+            candidate = RectangleCandidate(
+                bbox=bbox,
+                confidence=Confidence(overall=score, detection=score),
+                provenance=(
+                    self._provenance(
+                        bbox,
+                        "circular closed-outline rectangle candidate",
+                    ),
+                ),
+            )
+            key = (bbox.x, bbox.y, bbox.width, bbox.height)
+            previous = found.get(key)
+            if previous is None or candidate.confidence.overall > previous.confidence.overall:
+                found[key] = candidate
+        return sorted(
+            found.values(),
+            key=lambda item: (
+                item.bbox.y,
+                item.bbox.x,
+                item.bbox.height,
+                item.bbox.width,
+            ),
+        )
+
+    def _filled_horizontal_band_candidates(
+        self,
+        gray: np.ndarray,
+        source: PageSource,
+    ) -> list[RectangleCandidate]:
+        """Recover broad filled section bands that contain no border lines."""
+
+        foreground = gray < 248
+        minimum_coverage = float(
+            _ALGORITHM_PARAMETERS["filled_band_min_row_coverage"]
+        )
+        selected_rows = np.flatnonzero(foreground.mean(axis=1) >= minimum_coverage)
+        if selected_rows.size == 0:
+            return []
+        row_groups = np.split(
+            selected_rows,
+            np.flatnonzero(np.diff(selected_rows) > 1) + 1,
+        )
+        minimum_height = max(8, int(round(source.pixel_height * 0.015)))
+        maximum_height = max(
+            minimum_height,
+            int(round(source.pixel_height * 0.10)),
+        )
+        candidates: list[RectangleCandidate] = []
+        for group in row_groups:
+            top = int(group[0])
+            bottom = int(group[-1]) + 1
+            height = bottom - top
+            if not minimum_height <= height <= maximum_height:
+                continue
+            column_coverage = foreground[top:bottom].mean(axis=0)
+            selected_columns = np.flatnonzero(column_coverage >= 0.80)
+            if selected_columns.size == 0:
+                continue
+            left = int(selected_columns[0])
+            right = int(selected_columns[-1]) + 1
+            width = right - left
+            if width < source.pixel_width * 0.65:
+                continue
+            bbox = PixelBoundingBox(
+                x=left,
+                y=top,
+                width=width,
+                height=height,
+            )
+            score = _score(0.70 + 0.30 * min(1.0, width / source.pixel_width))
+            candidates.append(
+                RectangleCandidate(
+                    bbox=bbox,
+                    confidence=Confidence(overall=score, detection=score),
+                    provenance=(
+                        self._provenance(
+                            bbox,
+                            "broad filled horizontal section-band candidate",
+                        ),
+                    ),
+                )
+            )
+        return candidates
+
+    def _diagram_line_candidates(
+        self,
+        binary: np.ndarray,
+        source: PageSource,
+        circular_rectangles: list[RectangleCandidate],
+    ) -> tuple[list[LineCandidate], np.ndarray]:
+        """Recover sparse stick-figure strokes below a detected diagram head."""
+
+        shortest = min(source.pixel_width, source.pixel_height)
+        minimum_head_size = max(8, int(round(shortest * 0.02)))
+        heads = [
+            candidate
+            for candidate in circular_rectangles
+            if candidate.bbox.width >= minimum_head_size
+            and candidate.bbox.height >= minimum_head_size
+        ]
+        detected: list[LineCandidate] = []
+        detected_mask = np.zeros_like(binary)
+        minimum_length = max(20, int(round(shortest * 0.024)))
+        maximum_length = shortest * 0.21
+        search_half_width = max(60, int(round(shortest * 0.075)))
+        search_depth = max(120, int(round(source.pixel_height * 0.25)))
+        role_split_offset = source.pixel_height * 0.10
+
+        for head in heads:
+            center_x = head.bbox.x + head.bbox.width // 2
+            left = max(0, center_x - search_half_width)
+            right = min(source.pixel_width, center_x + search_half_width)
+            top = max(0, head.bbox.y + head.bbox.height - 3)
+            bottom = min(source.pixel_height, top + search_depth)
+            region = binary[top:bottom, left:right]
+            raw = cv2.HoughLinesP(
+                region,
+                1,
+                math.pi / 180,
+                threshold=15,
+                minLineLength=minimum_length,
+                maxLineGap=5,
+            )
+            if raw is None:
+                continue
+            horizontal: dict[str, list[tuple[int, int, int, int, float]]] = {
+                "upper": [],
+                "lower": [],
+            }
+            diagonal: dict[str, list[tuple[int, int, int, int, float]]] = {
+                "upper_left": [],
+                "upper_right": [],
+                "lower_left": [],
+                "lower_right": [],
+            }
+            split_y = head.bbox.y + head.bbox.height + role_split_offset
+            for local_x1, local_y1, local_x2, local_y2 in raw.reshape(-1, 4):
+                x1 = int(local_x1) + left
+                y1 = int(local_y1) + top
+                x2 = int(local_x2) + left
+                y2 = int(local_y2) + top
+                if x1 > x2:
+                    x1, x2 = x2, x1
+                    y1, y2 = y2, y1
+                delta_x = x2 - x1
+                delta_y = y2 - y1
+                length = math.hypot(delta_x, delta_y)
+                if not minimum_length <= length <= maximum_length:
+                    continue
+                upper = min(y1, y2) < split_y
+                if abs(delta_y) <= 3:
+                    horizontal["upper" if upper else "lower"].append(
+                        (x1, y1, x2, y2, length)
+                    )
+                    continue
+                if abs(delta_x) < 8 or abs(delta_y) < 20:
+                    continue
+                slope = abs(delta_y / delta_x)
+                if not 2.0 <= slope <= 10.0:
+                    continue
+                side = "left" if (x1 + x2) / 2 < center_x else "right"
+                level = "upper" if upper else "lower"
+                diagonal[f"{level}_{side}"].append((x1, y1, x2, y2, length))
+
+            selected = [
+                max(values, key=lambda item: item[4])
+                for values in (*horizontal.values(), *diagonal.values())
+                if values
+            ]
+            for x1, y1, x2, y2, length in selected:
+                is_horizontal = abs(y2 - y1) <= 3
+                if is_horizontal:
+                    y = round((y1 + y2) / 2)
+                    start = PixelPoint(x=x1, y=y)
+                    end = PixelPoint(x=x2, y=y)
+                    orientation = LineOrientation.HORIZONTAL
+                else:
+                    start = PixelPoint(x=x1, y=y1)
+                    end = PixelPoint(x=x2, y=y2)
+                    orientation = LineOrientation.DIAGONAL
+                bbox = PixelBoundingBox(
+                    x=min(start.x, end.x),
+                    y=(
+                        max(0, min(start.y, end.y) - 1)
+                        if is_horizontal
+                        else min(start.y, end.y)
+                    ),
+                    width=abs(end.x - start.x) + 1,
+                    height=(
+                        min(3, source.pixel_height - max(0, start.y - 1))
+                        if is_horizontal
+                        else abs(end.y - start.y) + 1
+                    ),
+                )
+                score = _score(0.72 + 0.20 * min(1.0, length / maximum_length))
+                detected.append(
+                    LineCandidate(
+                        orientation=orientation,
+                        start=start,
+                        end=end,
+                        bbox=bbox,
+                        confidence=Confidence(overall=score, detection=score),
+                        provenance=(
+                            self._provenance(
+                                bbox,
+                                "diagram stroke candidate below circular head",
+                            ),
+                        ),
+                    )
+                )
+                cv2.line(
+                    detected_mask,
+                    (start.x, start.y),
+                    (end.x, end.y),
+                    255,
+                    3,
+                )
+        return detected, detected_mask
 
     def _image_candidates(
         self,
@@ -652,6 +1057,139 @@ def _detect_raw_lines(binary: np.ndarray) -> tuple[list[_RawLine], np.ndarray]:
             )
             accepted_mask[labels == label] = 255
     return detected, accepted_mask
+
+
+def _detect_short_axis_ticks(
+    binary: np.ndarray,
+    long_lines: list[LineCandidate],
+) -> tuple[list[_RawLine], np.ndarray]:
+    """Recover repeated short vertical ticks crossing a detected horizontal axis."""
+
+    height, width = binary.shape
+    kernel_length = max(7, int(round(height * 0.007)))
+    vertical_mask = cv2.morphologyEx(
+        binary,
+        cv2.MORPH_OPEN,
+        cv2.getStructuringElement(cv2.MORPH_RECT, (1, kernel_length)),
+        iterations=1,
+    )
+    count, labels, stats, _ = cv2.connectedComponentsWithStats(vertical_mask, 8)
+    minimum_height = max(8, int(round(height * 0.008)))
+    maximum_height = max(
+        minimum_height,
+        int(
+            round(
+                height
+                * float(_ALGORITHM_PARAMETERS["short_tick_max_height_fraction"])
+            )
+        ),
+    )
+    maximum_width = max(4, int(round(min(width, height) * 0.005)))
+    supporting_lines = tuple(
+        line
+        for line in long_lines
+        if line.orientation is LineOrientation.HORIZONTAL
+        and line.end.x - line.start.x + 1 >= width * 0.20
+    )
+    by_support: dict[int, list[tuple[int, _RawLine]]] = {}
+    for label in range(1, count):
+        x = int(stats[label, cv2.CC_STAT_LEFT])
+        y = int(stats[label, cv2.CC_STAT_TOP])
+        box_width = int(stats[label, cv2.CC_STAT_WIDTH])
+        box_height = int(stats[label, cv2.CC_STAT_HEIGHT])
+        area = int(stats[label, cv2.CC_STAT_AREA])
+        if (
+            box_width > maximum_width
+            or not minimum_height <= box_height <= maximum_height
+            or box_height < box_width * 3
+        ):
+            continue
+        matches = [
+            (index, line)
+            for index, line in enumerate(supporting_lines)
+            if x + box_width >= line.start.x
+            and x <= line.end.x
+            and y - 2 <= line.start.y <= y + box_height + 2
+        ]
+        if not matches:
+            continue
+        support_index, _support = min(
+            matches,
+            key=lambda value: (
+                abs(value[1].start.y - (y + box_height / 2)),
+                value[0],
+            ),
+        )
+        bbox = PixelBoundingBox(
+            x=x,
+            y=y,
+            width=box_width,
+            height=box_height,
+        )
+        by_support.setdefault(support_index, []).append(
+            (
+                label,
+                _RawLine(
+                    orientation=LineOrientation.VERTICAL,
+                    bbox=bbox,
+                    occupancy=min(1.0, area / max(1, box_width * box_height)),
+                ),
+            )
+        )
+
+    accepted: list[_RawLine] = []
+    accepted_mask = np.zeros_like(binary)
+    minimum_group_size = int(_ALGORITHM_PARAMETERS["short_tick_min_group_size"])
+    for values in by_support.values():
+        if len(values) < minimum_group_size:
+            continue
+        for label, raw in values:
+            accepted.append(raw)
+            accepted_mask[labels == label] = 255
+    return accepted, accepted_mask
+
+
+def _merge_rectangle_candidates(
+    primary: list[RectangleCandidate],
+    supplemental: list[RectangleCandidate],
+) -> list[RectangleCandidate]:
+    ordered = sorted(
+        [*primary, *supplemental],
+        key=lambda item: (
+            -item.confidence.overall,
+            -(item.bbox.width * item.bbox.height),
+            item.bbox.y,
+            item.bbox.x,
+        ),
+    )
+    kept: list[RectangleCandidate] = []
+    for candidate in ordered:
+        if any(_rectangle_duplicate(candidate.bbox, item.bbox) for item in kept):
+            continue
+        kept.append(candidate)
+    return sorted(
+        kept,
+        key=lambda item: (
+            item.bbox.y,
+            item.bbox.x,
+            item.bbox.height,
+            item.bbox.width,
+        ),
+    )
+
+
+def _rectangle_duplicate(first: PixelBoundingBox, second: PixelBoundingBox) -> bool:
+    left = max(first.x, second.x)
+    top = max(first.y, second.y)
+    right = min(first.x + first.width, second.x + second.width)
+    bottom = min(first.y + first.height, second.y + second.height)
+    intersection = max(0, right - left) * max(0, bottom - top)
+    if intersection == 0:
+        return False
+    first_area = first.width * first.height
+    second_area = second.width * second.height
+    union = first_area + second_area - intersection
+    return intersection / union >= 0.75
 
 
 def _merge_raw_lines(

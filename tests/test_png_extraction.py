@@ -43,6 +43,13 @@ from aiteqno.ports import (
 
 
 FIXTURE_ROOT = Path(__file__).resolve().parent / "fixtures" / "structure"
+QUESTIONNAIRE_FIXTURE = (
+    Path(__file__).resolve().parent
+    / "fixtures"
+    / "generalization"
+    / "japanese-questionnaires-v1"
+    / "questionnaire-04-orthopedics.png"
+)
 
 
 class PngExtractionPipelineTest(unittest.TestCase):
@@ -366,6 +373,54 @@ class PngExtractionPipelineTest(unittest.TestCase):
             (("p001-text-line-group-0000",),) * 2,
         )
 
+    def test_landscape_columns_use_full_page_psm3_and_column_reading_order(self):
+        png_data = QUESTIONNAIRE_FIXTURE.read_bytes()
+        observations = (
+            FakeOcrObservation(
+                text="BOTTOM",
+                bbox=PixelBoundingBox(x=900, y=1100, width=80, height=20),
+            ),
+            FakeOcrObservation(
+                text="RIGHT",
+                bbox=PixelBoundingBox(x=1000, y=400, width=70, height=20),
+            ),
+            FakeOcrObservation(
+                text="LEFT",
+                bbox=PixelBoundingBox(x=180, y=400, width=60, height=20),
+            ),
+            FakeOcrObservation(
+                text="TOP",
+                bbox=PixelBoundingBox(x=100, y=60, width=50, height=20),
+            ),
+        )
+        backend = _RecordingOcrBackend(observations)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = extract_png(
+                png_data,
+                Path(temp_dir) / "landscape-bundle",
+                decoder=PillowPngDecoder(),
+                structure_extractor=OpenCvStructureExtractor(),
+                ocr_backend=backend,
+                asset_encoder=PillowPngAssetEncoder(),
+                validator=JsonSchemaDocumentIRValidator(),
+                bundle_writer=FilesystemDocumentBundleWriter(),
+                languages=("eng",),
+                ocr_options=OcrOptions(page_segmentation_mode=6),
+            )
+
+        self.assertEqual(backend.regions, ())
+        self.assertEqual(backend.options.page_segmentation_mode, 3)
+        self.assertIn(
+            "ocr_landscape_column_profile_applied",
+            {diagnostic.code for diagnostic in result.diagnostics},
+        )
+        texts = tuple(
+            element.text
+            for element in result.document.pages[0].elements
+            if isinstance(element, TextElement)
+        )
+        self.assertEqual(texts, ("TOP", "LEFT", "RIGHT", "BOTTOM"))
+
     def _extract(
         self,
         output,
@@ -463,6 +518,23 @@ class _StaticStructureExtractor:
 
     def detect(self, image):
         return self._result
+
+
+class _RecordingOcrBackend:
+    def __init__(self, observations):
+        self._delegate = FakeOcrBackend(observations)
+        self.regions = None
+        self.options = None
+
+    def recognize(self, image, regions=(), languages=("jpn", "eng"), options=OcrOptions()):
+        self.regions = tuple(regions)
+        self.options = options
+        return self._delegate.recognize(
+            image,
+            regions=regions,
+            languages=languages,
+            options=options,
+        )
 
 
 class _FailingAssetEncoder:

@@ -24,6 +24,12 @@ from aiteqno.ports import (
 
 
 FIXTURE_ROOT = Path(__file__).resolve().parent / "fixtures" / "structure"
+QUESTIONNAIRE_FIXTURE_ROOT = (
+    Path(__file__).resolve().parent
+    / "fixtures"
+    / "generalization"
+    / "japanese-questionnaires-v1"
+)
 
 
 class StructureExtractorTest(unittest.TestCase):
@@ -179,6 +185,49 @@ class StructureExtractorTest(unittest.TestCase):
 
         self.assertTrue(all(region.bbox.width >= 4 for region in self.result.text_regions))
         self.assertTrue(all(region.bbox.height >= 4 for region in self.result.text_regions))
+
+    def test_landscape_detail_profile_recovers_diagram_and_response_outlines(self):
+        image = PillowPngDecoder().decode(
+            (QUESTIONNAIRE_FIXTURE_ROOT / "questionnaire-04-orthopedics.png").read_bytes()
+        )
+        result = OpenCvStructureExtractor().detect(image)
+
+        diagram_lines = tuple(
+            line
+            for line in result.lines
+            if "diagram stroke" in (line.provenance[0].notes or "")
+        )
+        circular_outlines = tuple(
+            rectangle
+            for rectangle in result.rectangles
+            if "circular closed-outline" in (rectangle.provenance[0].notes or "")
+        )
+        filled_bands = tuple(
+            rectangle
+            for rectangle in result.rectangles
+            if "filled horizontal section-band"
+            in (rectangle.provenance[0].notes or "")
+        )
+
+        self.assertEqual(len(diagram_lines), 12)
+        self.assertEqual(
+            sum(
+                line.orientation is LineOrientation.DIAGONAL
+                for line in diagram_lines
+            ),
+            8,
+        )
+        self.assertEqual(len(circular_outlines), 5)
+        self.assertEqual(len(filled_bands), 1)
+        self.assertEqual(
+            (
+                filled_bands[0].bbox.x,
+                filled_bands[0].bbox.y,
+                filled_bands[0].bbox.width,
+                filled_bands[0].bbox.height,
+            ),
+            (67, 286, 1621, 38),
+        )
 
     def test_decoder_infers_dpi_and_composites_transparency_on_white(self):
         transparent = Image.new("RGBA", (2, 1), (255, 0, 0, 0))
