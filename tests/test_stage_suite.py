@@ -37,11 +37,18 @@ Q03_MANIFEST = Q01_DIRECTORY / "questionnaire-03-gastroenterology.manifest.json"
 Q03_ID = "questionnaire-03-gastroenterology"
 Q03_SOURCE_SHA256 = "825bddca8853986288cb5762bb26e80143762120ffe5859793f4ec5a171f83a7"
 Q03_REFERENCE_SHA256 = "d358c1b7f92ef52ca1b59b3667f3d7922e81538fdd3429ac02e964a229baf1df"
+Q04_MANIFEST = Q01_DIRECTORY / "questionnaire-04-orthopedics.manifest.json"
+Q04_ID = "questionnaire-04-orthopedics"
+Q04_SOURCE_SHA256 = "0e322bc9b5e8593d5a0fda959bd314cb6dc2c46de79fc3c07467527dba6dc4cd"
+Q04_REFERENCE_SHA256 = "21d5279d9da146f4170f3adc197fd0d0927d6a50c920e7896d4eb6e4d9ce09c2"
 STAGE_TWO_SUITE_PATH = (
     Path(__file__).parent / "fixtures" / "stages" / "questionnaire-stage-2.json"
 )
 STAGE_THREE_SUITE_PATH = (
     Path(__file__).parent / "fixtures" / "stages" / "questionnaire-stage-3.json"
+)
+STAGE_FOUR_SUITE_PATH = (
+    Path(__file__).parent / "fixtures" / "stages" / "questionnaire-stage-4.json"
 )
 
 
@@ -94,6 +101,42 @@ class StageSuiteContractTest(unittest.TestCase):
         self.assertEqual(
             [item.source_dpi for item in suite.fixtures],
             [96, 150, 200, 150],
+        )
+        self.assertEqual(suite.threshold, 70)
+        self.assertEqual(suite.production_languages, ("jpn",))
+        self.assertEqual(suite.visible_languages, suite.production_languages)
+        self.assertEqual(suite.snapshot_dpi, 300)
+
+    def test_stage_four_adds_only_q04_in_the_pinned_order(self):
+        suite = _load_suite(STAGE_FOUR_SUITE_PATH)
+
+        self.assertEqual(
+            [item.fixture_id for item in suite.fixtures],
+            [
+                "synthetic-dense-japanese-form-v1",
+                Q01_ID,
+                Q02_ID,
+                Q03_ID,
+                Q04_ID,
+            ],
+        )
+        self.assertEqual(
+            [item.source_encoding for item in suite.fixtures],
+            ["base64", "raw", "raw", "raw", "raw"],
+        )
+        self.assertEqual(
+            [item.source_dpi for item in suite.fixtures],
+            [96, 150, 200, 150, 150],
+        )
+        self.assertEqual(
+            [(item.source_width, item.source_height) for item in suite.fixtures],
+            [
+                (700, 991),
+                (1240, 1754),
+                (1654, 2339),
+                (1240, 1754),
+                (1754, 1240),
+            ],
         )
         self.assertEqual(suite.threshold, 70)
         self.assertEqual(suite.production_languages, ("jpn",))
@@ -189,6 +232,58 @@ class StageSuiteContractTest(unittest.TestCase):
             self.assertIn(phrase, expected_text)
         reference_json = json.loads(fixture.reference_path.read_text(encoding="utf-8"))
         self.assertEqual(reference_json["review"]["exclusions"], [])
+        self.assertTrue(fixture.manifest["redistribution_allowed"])
+        self.assertFalse(fixture.manifest["contains_personal_data"])
+
+    def test_q04_reference_is_reviewed_source_grounded_and_complete(self):
+        fixture = _read_fixture(Q04_MANIFEST, Q04_ID)
+        reference = fixture.reference
+
+        self.assertEqual(fixture.source_sha256, Q04_SOURCE_SHA256)
+        self.assertEqual(fixture.reference_sha256, Q04_REFERENCE_SHA256)
+        self.assertEqual((fixture.source_width, fixture.source_height), (1754, 1240))
+        self.assertEqual(fixture.source_dpi, 150)
+        self.assertTrue(reference.reviewed)
+        self.assertGreaterEqual(len(reference.text_regions), 33)
+        self.assertGreaterEqual(len(reference.structural_items), 64)
+        self.assertGreaterEqual(len(reference.relationships), 42)
+        self.assertGreaterEqual(
+            sum("checkbox" in item.id for item in reference.structural_items),
+            10,
+        )
+        self.assertEqual(
+            sum("pain-scale-tick" in item.id for item in reference.structural_items),
+            11,
+        )
+        self.assertGreaterEqual(
+            sum(
+                item.id.startswith(("front-", "back-"))
+                for item in reference.structural_items
+            ),
+            16,
+        )
+        expected_text = "".join(item.text for item in reference.text_regions)
+        for phrase in (
+            "整形外科 初診問診票",
+            "症状の場所と経過",
+            "痛みやしびれのある場所を図に記してください。",
+            "前面",
+            "背面",
+            "現在の痛みを0から10で表すと、どの程度ですか。",
+            "歩行、階段、着替えなどで困っている動作はありますか。",
+            "痛みの尺度",
+            "0　1　2　3　4　5　6　7　8　9　10",
+            "今回の症状について、ほかの医療機関で治療を受けましたか。",
+            "医療機関・治療内容",
+            "ご記入後、受付へお渡しください。",
+        ):
+            self.assertIn(phrase, expected_text)
+        reference_json = json.loads(fixture.reference_path.read_text(encoding="utf-8"))
+        self.assertEqual(reference_json["review"]["exclusions"], [])
+        self.assertEqual(
+            reference_json["source_dimensions"]["orientation"],
+            "landscape",
+        )
         self.assertTrue(fixture.manifest["redistribution_allowed"])
         self.assertFalse(fixture.manifest["contains_personal_data"])
 
