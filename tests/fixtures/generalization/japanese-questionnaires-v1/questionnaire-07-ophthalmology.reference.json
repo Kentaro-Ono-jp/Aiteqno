@@ -1,0 +1,1587 @@
+{
+  "reference_version": 1,
+  "reference_id": "questionnaire-07-ophthalmology",
+  "source_sha256": "670ec15d9df677482b7122af306e7f6cedc0d3f2befea50a02b1907dcc0d6b66",
+  "source_dimensions": {
+    "pixel_width": 2339,
+    "pixel_height": 1654,
+    "dpi": 200,
+    "color_mode": "RGB",
+    "orientation": "landscape",
+    "sha256": "670ec15d9df677482b7122af306e7f6cedc0d3f2befea50a02b1907dcc0d6b66"
+  },
+  "normalization": "NFKC then remove every Unicode whitespace character",
+  "reviewed": true,
+  "review": {
+    "status": "reviewed",
+    "reviewer": "Kentaro Ono (blanket approval); transcription and 100% visual cross-check by Noel",
+    "reviewed_at": "2026-08-24",
+    "reference_revision": 1,
+    "authorization": "User explicitly authorized implementation through Issue #87 closure on 2026-08-24.",
+    "method": "Source PNG inspected at 100%; every visible printed string and every material patient-information boundary, eye-symptom comparison grid, glasses/contact-lens grid, ophthalmic-history grid, section band, checkbox, response line, footer rule, reading order, containment, and adjacency relation was cross-checked against source pixels. The four independent tables are the patient-information, current-eye-symptom, glasses/contact-lens, and ophthalmic-history grids; stand-alone response and footer lines remain material structures but are not counted as tables. OCR and pixel measurements were used only to locate source pixels, never as transcription truth.",
+    "exclusions": []
+  },
+  "text_regions": [
+    {
+      "id": "title",
+      "text": "眼科 初診問診票",
+      "bbox": {
+        "x": 0.03976058,
+        "y": 0.03929867,
+        "width": 0.15006413,
+        "height": 0.0362757
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "specialty",
+      "text": "眼科",
+      "bbox": {
+        "x": 0.94271056,
+        "y": 0.05018138,
+        "width": 0.01838392,
+        "height": 0.01330109
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "name-label",
+      "text": "氏名",
+      "bbox": {
+        "x": 0.04831124,
+        "y": 0.11668682,
+        "width": 0.01667379,
+        "height": 0.02055623
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "furigana-label",
+      "text": "ふりがな",
+      "bbox": {
+        "x": 0.11970928,
+        "y": 0.11668682,
+        "width": 0.03591278,
+        "height": 0.02055623
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "birth-date-label",
+      "text": "生年月日",
+      "bbox": {
+        "x": 0.38435229,
+        "y": 0.11668682,
+        "width": 0.03463018,
+        "height": 0.02055623
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "age-label",
+      "text": "年齢",
+      "bbox": {
+        "x": 0.47327918,
+        "y": 0.11668682,
+        "width": 0.01966652,
+        "height": 0.02116082
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "gender-label",
+      "text": "性別（任意）",
+      "bbox": {
+        "x": 0.60966225,
+        "y": 0.11608222,
+        "width": 0.05087644,
+        "height": 0.02176542
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "entry-date-label",
+      "text": "記入日",
+      "bbox": {
+        "x": 0.69345874,
+        "y": 0.11729141,
+        "width": 0.02650705,
+        "height": 0.01995163
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "visit-category-label",
+      "text": "受診区分",
+      "bbox": {
+        "x": 0.80034203,
+        "y": 0.11668682,
+        "width": 0.03634032,
+        "height": 0.02055623
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "contact-label",
+      "text": "連絡先",
+      "bbox": {
+        "x": 0.04788371,
+        "y": 0.16868198,
+        "width": 0.02864472,
+        "height": 0.02055623
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "occupation-label",
+      "text": "職業",
+      "bbox": {
+        "x": 0.38392475,
+        "y": 0.16868198,
+        "width": 0.01795639,
+        "height": 0.02055623
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "driving-label",
+      "text": "運転の有無",
+      "bbox": {
+        "x": 0.60966225,
+        "y": 0.16747279,
+        "width": 0.04617358,
+        "height": 0.02055623
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "driving-options",
+      "text": "□ あり　□ なし",
+      "bbox": {
+        "x": 0.69901667,
+        "y": 0.16868198,
+        "width": 0.06028217,
+        "height": 0.01813785
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "referral-label",
+      "text": "紹介状",
+      "bbox": {
+        "x": 0.79991449,
+        "y": 0.16868198,
+        "width": 0.02864472,
+        "height": 0.02055623
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "referral-options",
+      "text": "□ あり　□ なし",
+      "bbox": {
+        "x": 0.87601539,
+        "y": 0.16868198,
+        "width": 0.06028217,
+        "height": 0.01813785
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-symptoms-section-title",
+      "text": "現在の眼の症状",
+      "bbox": {
+        "x": 0.04574605,
+        "y": 0.23397823,
+        "width": 0.08336896,
+        "height": 0.02478839
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "eye-side-prompt",
+      "text": "症状がある眼をお選びください。 右眼・左眼・両眼",
+      "bbox": {
+        "x": 0.05002138,
+        "y": 0.28415961,
+        "width": 0.22915776,
+        "height": 0.02237001
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "right-eye-header",
+      "text": "右眼",
+      "bbox": {
+        "x": 0.33304831,
+        "y": 0.28899637,
+        "width": 0.02009406,
+        "height": 0.02176542
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "left-eye-header",
+      "text": "左眼",
+      "bbox": {
+        "x": 0.54638735,
+        "y": 0.28899637,
+        "width": 0.02009406,
+        "height": 0.02176542
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "both-unknown-header",
+      "text": "両眼・不明",
+      "bbox": {
+        "x": 0.76015391,
+        "y": 0.28960097,
+        "width": 0.04831124,
+        "height": 0.02116082
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "blurred-vision-label",
+      "text": "見えにくい・かすむ",
+      "bbox": {
+        "x": 0.05173151,
+        "y": 0.3452237,
+        "width": 0.08294143,
+        "height": 0.01995163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "glare-double-vision-label",
+      "text": "まぶしい・二重に見える",
+      "bbox": {
+        "x": 0.05258658,
+        "y": 0.39480048,
+        "width": 0.10004275,
+        "height": 0.01995163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-itch-label",
+      "text": "痛み・かゆみ",
+      "bbox": {
+        "x": 0.05130398,
+        "y": 0.44558646,
+        "width": 0.05515177,
+        "height": 0.02055623
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "redness-discharge-label",
+      "text": "充血・目やに",
+      "bbox": {
+        "x": 0.05173151,
+        "y": 0.49637243,
+        "width": 0.05429671,
+        "height": 0.01995163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "vision-confirmation",
+      "text": "見えにくい、かすむ、まぶしい、物が二重に見える症状はありますか。",
+      "bbox": {
+        "x": 0.05087644,
+        "y": 0.53808948,
+        "width": 0.30910646,
+        "height": 0.02116082
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "discomfort-confirmation",
+      "text": "目の痛み、かゆみ、充血、目やにはありますか。",
+      "bbox": {
+        "x": 0.51261223,
+        "y": 0.53808948,
+        "width": 0.20949124,
+        "height": 0.02116082
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "lens-section-title",
+      "text": "眼鏡・コンタクトレンズ",
+      "bbox": {
+        "x": 0.04617358,
+        "y": 0.59371221,
+        "width": 0.13253527,
+        "height": 0.0241838
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "lens-question",
+      "text": "眼鏡またはコンタクトレンズを使用していますか。",
+      "bbox": {
+        "x": 0.05044891,
+        "y": 0.64147521,
+        "width": 0.20863617,
+        "height": 0.02176542
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "lens-options",
+      "text": "□ 眼鏡　□ コンタクト　□ 使用なし",
+      "bbox": {
+        "x": 0.30953399,
+        "y": 0.64570738,
+        "width": 0.14920906,
+        "height": 0.01934704
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "contact-type-label",
+      "text": "コンタクトの種類",
+      "bbox": {
+        "x": 0.05130398,
+        "y": 0.69951632,
+        "width": 0.07396323,
+        "height": 0.02176542
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "contact-type-options",
+      "text": "□ ソフト　□ ハード　□ 不明",
+      "bbox": {
+        "x": 0.30953399,
+        "y": 0.69951632,
+        "width": 0.12141941,
+        "height": 0.01934704
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "replacement-period-label",
+      "text": "最終交換・作成時期",
+      "bbox": {
+        "x": 0.6412997,
+        "y": 0.64510278,
+        "width": 0.08550663,
+        "height": 0.02237001
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "wear-time-label",
+      "text": "装用時間",
+      "bbox": {
+        "x": 0.6412997,
+        "y": 0.69891173,
+        "width": 0.03805045,
+        "height": 0.02237001
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-section-title",
+      "text": "眼科の治療歴・全身状態",
+      "bbox": {
+        "x": 0.04617358,
+        "y": 0.76481258,
+        "width": 0.13039761,
+        "height": 0.02781137
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "surgery-question",
+      "text": "これまでに眼の手術やレーザー治療を受けたことがありますか。",
+      "bbox": {
+        "x": 0.05002138,
+        "y": 0.81438936,
+        "width": 0.25395468,
+        "height": 0.0362757
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "surgery-options",
+      "text": "□ ない　□ ある",
+      "bbox": {
+        "x": 0.33604104,
+        "y": 0.82708585,
+        "width": 0.07182557,
+        "height": 0.01088271
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "treatment-label",
+      "text": "治療中の病気・使用中の薬",
+      "bbox": {
+        "x": 0.05002138,
+        "y": 0.88573156,
+        "width": 0.11286875,
+        "height": 0.02176542
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "footer-instruction",
+      "text": "ご記入後、受付へお渡しください。",
+      "bbox": {
+        "x": 0.03976058,
+        "y": 0.95767836,
+        "width": 0.12911501,
+        "height": 0.01934704
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "page-number",
+      "text": "1 / 1",
+      "bbox": {
+        "x": 0.94442069,
+        "y": 0.96009674,
+        "width": 0.01667379,
+        "height": 0.0114873
+      },
+      "page_number": 1,
+      "essential": false
+    }
+  ],
+  "structural_items": [
+    {
+      "id": "header-rule",
+      "type": "line",
+      "bbox": {
+        "x": 0.03805045,
+        "y": 0.07980653,
+        "width": 0.92432664,
+        "height": 0.00181378
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "identity-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.03805045,
+        "y": 0.10278114,
+        "width": 0.92432664,
+        "height": 0.10459492
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.03805045,
+        "y": 0.1547763,
+        "width": 0.92432664,
+        "height": 0.00120919
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.10944848,
+        "y": 0.10278114,
+        "width": 0.00085507,
+        "height": 0.10459492
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.37409149,
+        "y": 0.10278114,
+        "width": 0.00085507,
+        "height": 0.10459492
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-3",
+      "type": "line",
+      "bbox": {
+        "x": 0.46301838,
+        "y": 0.10278114,
+        "width": 0.00085507,
+        "height": 0.10459492
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-4",
+      "type": "line",
+      "bbox": {
+        "x": 0.59982899,
+        "y": 0.10278114,
+        "width": 0.00085507,
+        "height": 0.10459492
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-5",
+      "type": "line",
+      "bbox": {
+        "x": 0.68277041,
+        "y": 0.10278114,
+        "width": 0.00085507,
+        "height": 0.10459492
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-6",
+      "type": "line",
+      "bbox": {
+        "x": 0.7896537,
+        "y": 0.10278114,
+        "width": 0.00085507,
+        "height": 0.10459492
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-7",
+      "type": "line",
+      "bbox": {
+        "x": 0.8670372,
+        "y": 0.10278114,
+        "width": 0.00085507,
+        "height": 0.10459492
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "driving-yes-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.69901667,
+        "y": 0.17170496,
+        "width": 0.00684053,
+        "height": 0.00906892
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "driving-no-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.73236426,
+        "y": 0.17170496,
+        "width": 0.00684053,
+        "height": 0.00906892
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "referral-yes-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.87601539,
+        "y": 0.17170496,
+        "width": 0.00684053,
+        "height": 0.00906892
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "referral-no-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.90893544,
+        "y": 0.17170496,
+        "width": 0.00684053,
+        "height": 0.00906892
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-symptoms-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.03805045,
+        "y": 0.23035067,
+        "width": 0.92432664,
+        "height": 0.03083434
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "symptom-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.03805045,
+        "y": 0.27085852,
+        "width": 0.92432664,
+        "height": 0.25937122
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "symptom-grid-row-header",
+      "type": "line",
+      "bbox": {
+        "x": 0.03805045,
+        "y": 0.33131802,
+        "width": 0.92432664,
+        "height": 0.00120919
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "symptom-grid-row-vision",
+      "type": "line",
+      "bbox": {
+        "x": 0.03805045,
+        "y": 0.3814994,
+        "width": 0.92432664,
+        "height": 0.00120919
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "symptom-grid-row-glare",
+      "type": "line",
+      "bbox": {
+        "x": 0.03805045,
+        "y": 0.43168077,
+        "width": 0.92432664,
+        "height": 0.00120919
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "symptom-grid-row-pain",
+      "type": "line",
+      "bbox": {
+        "x": 0.03805045,
+        "y": 0.48246675,
+        "width": 0.92432664,
+        "height": 0.00120919
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "symptom-grid-column-right",
+      "type": "line",
+      "bbox": {
+        "x": 0.32064985,
+        "y": 0.27085852,
+        "width": 0.00085507,
+        "height": 0.25937122
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "symptom-grid-column-left",
+      "type": "line",
+      "bbox": {
+        "x": 0.53441642,
+        "y": 0.27085852,
+        "width": 0.00085507,
+        "height": 0.25937122
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "symptom-grid-column-both",
+      "type": "line",
+      "bbox": {
+        "x": 0.74818298,
+        "y": 0.27085852,
+        "width": 0.00085507,
+        "height": 0.25937122
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "blurred-right-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.39333048,
+        "y": 0.34885127,
+        "width": 0.00726806,
+        "height": 0.01027811
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "blurred-left-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.60709705,
+        "y": 0.34885127,
+        "width": 0.00726806,
+        "height": 0.01027811
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "blurred-both-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.82086362,
+        "y": 0.34885127,
+        "width": 0.00726806,
+        "height": 0.01027811
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "glare-right-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.39333048,
+        "y": 0.39903265,
+        "width": 0.00726806,
+        "height": 0.01027811
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "glare-left-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.60709705,
+        "y": 0.39903265,
+        "width": 0.00726806,
+        "height": 0.01027811
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "glare-both-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.82086362,
+        "y": 0.39903265,
+        "width": 0.00726806,
+        "height": 0.01027811
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-right-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.39333048,
+        "y": 0.44921403,
+        "width": 0.00726806,
+        "height": 0.01027811
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-left-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.60709705,
+        "y": 0.44921403,
+        "width": 0.00726806,
+        "height": 0.01027811
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pain-both-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.82086362,
+        "y": 0.44921403,
+        "width": 0.00726806,
+        "height": 0.01027811
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "redness-right-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.39333048,
+        "y": 0.5,
+        "width": 0.00726806,
+        "height": 0.01027811
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "redness-left-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.60709705,
+        "y": 0.5,
+        "width": 0.00726806,
+        "height": 0.01027811
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "redness-both-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.82086362,
+        "y": 0.5,
+        "width": 0.00726806,
+        "height": 0.01027811
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "lens-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.03805045,
+        "y": 0.59008464,
+        "width": 0.92432664,
+        "height": 0.03083434
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "lens-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.03805045,
+        "y": 0.62998791,
+        "width": 0.92432664,
+        "height": 0.11185006
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "lens-grid-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.03805045,
+        "y": 0.68561064,
+        "width": 0.92432664,
+        "height": 0.00120919
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "lens-grid-column-left",
+      "type": "line",
+      "bbox": {
+        "x": 0.29670799,
+        "y": 0.62998791,
+        "width": 0.00085507,
+        "height": 0.11185006
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "lens-grid-column-middle",
+      "type": "line",
+      "bbox": {
+        "x": 0.62932877,
+        "y": 0.62998791,
+        "width": 0.00085507,
+        "height": 0.11185006
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "glasses-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.30953399,
+        "y": 0.64873035,
+        "width": 0.00726806,
+        "height": 0.00967352
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "contact-lens-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.34758444,
+        "y": 0.64873035,
+        "width": 0.00726806,
+        "height": 0.00967352
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "no-correction-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.41214194,
+        "y": 0.64873035,
+        "width": 0.00726806,
+        "height": 0.00967352
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "soft-lens-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.30953399,
+        "y": 0.7025393,
+        "width": 0.00726806,
+        "height": 0.00967352
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "hard-lens-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.35656263,
+        "y": 0.7025393,
+        "width": 0.00726806,
+        "height": 0.00967352
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "unknown-lens-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.40316375,
+        "y": 0.7025393,
+        "width": 0.00726806,
+        "height": 0.00967352
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.03805045,
+        "y": 0.76118501,
+        "width": 0.92432664,
+        "height": 0.03083434
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.03805045,
+        "y": 0.80169287,
+        "width": 0.92432664,
+        "height": 0.13482467
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-grid-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.03805045,
+        "y": 0.8688029,
+        "width": 0.92432664,
+        "height": 0.00120919
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-grid-column",
+      "type": "line",
+      "bbox": {
+        "x": 0.32064985,
+        "y": 0.80169287,
+        "width": 0.00085507,
+        "height": 0.13482467
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "surgery-no-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.33604104,
+        "y": 0.82708585,
+        "width": 0.00684053,
+        "height": 0.01027811
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "surgery-yes-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.38007696,
+        "y": 0.82708585,
+        "width": 0.00684053,
+        "height": 0.01027811
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "surgery-detail-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.48696024,
+        "y": 0.85066505,
+        "width": 0.45746045,
+        "height": 0.00120919
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "treatment-detail-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.33475844,
+        "y": 0.91596131,
+        "width": 0.60966225,
+        "height": 0.00120919
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "footer-rule",
+      "type": "line",
+      "bbox": {
+        "x": 0.03805045,
+        "y": 0.94619105,
+        "width": 0.92432664,
+        "height": 0.00060459
+      },
+      "page_number": 1,
+      "essential": false
+    }
+  ],
+  "relationships": [
+    {
+      "kind": "reading_order",
+      "source": "title",
+      "target": "current-symptoms-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "current-symptoms-section-title",
+      "target": "eye-side-prompt",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "eye-side-prompt",
+      "target": "right-eye-header",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "right-eye-header",
+      "target": "left-eye-header",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "left-eye-header",
+      "target": "both-unknown-header",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "both-unknown-header",
+      "target": "blurred-vision-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "blurred-vision-label",
+      "target": "glare-double-vision-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "glare-double-vision-label",
+      "target": "pain-itch-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "pain-itch-label",
+      "target": "redness-discharge-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "redness-discharge-label",
+      "target": "vision-confirmation",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "vision-confirmation",
+      "target": "discomfort-confirmation",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "discomfort-confirmation",
+      "target": "lens-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "lens-section-title",
+      "target": "lens-question",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "lens-question",
+      "target": "lens-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "lens-options",
+      "target": "replacement-period-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "replacement-period-label",
+      "target": "contact-type-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "contact-type-label",
+      "target": "contact-type-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "contact-type-options",
+      "target": "wear-time-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "wear-time-label",
+      "target": "history-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "history-section-title",
+      "target": "surgery-question",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "surgery-question",
+      "target": "surgery-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "surgery-options",
+      "target": "treatment-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "treatment-label",
+      "target": "footer-instruction",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "name-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "furigana-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "birth-date-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "age-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "gender-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "entry-date-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "visit-category-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "contact-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "occupation-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "driving-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "driving-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "referral-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "referral-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "symptom-grid-outer",
+      "target": "eye-side-prompt",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "symptom-grid-outer",
+      "target": "right-eye-header",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "symptom-grid-outer",
+      "target": "left-eye-header",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "symptom-grid-outer",
+      "target": "both-unknown-header",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "symptom-grid-outer",
+      "target": "blurred-vision-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "symptom-grid-outer",
+      "target": "glare-double-vision-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "symptom-grid-outer",
+      "target": "pain-itch-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "symptom-grid-outer",
+      "target": "redness-discharge-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "lens-grid-outer",
+      "target": "lens-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "lens-grid-outer",
+      "target": "lens-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "lens-grid-outer",
+      "target": "contact-type-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "lens-grid-outer",
+      "target": "contact-type-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "lens-grid-outer",
+      "target": "replacement-period-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "lens-grid-outer",
+      "target": "wear-time-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "history-grid-outer",
+      "target": "surgery-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "history-grid-outer",
+      "target": "surgery-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "history-grid-outer",
+      "target": "treatment-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "current-symptoms-section-band",
+      "target": "current-symptoms-section-title",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "lens-section-band",
+      "target": "lens-section-title",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "history-section-band",
+      "target": "history-section-title",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "name-label",
+      "target": "furigana-label",
+      "essential": false
+    },
+    {
+      "kind": "adjacency",
+      "source": "birth-date-label",
+      "target": "age-label",
+      "essential": false
+    },
+    {
+      "kind": "adjacency",
+      "source": "age-label",
+      "target": "gender-label",
+      "essential": false
+    },
+    {
+      "kind": "adjacency",
+      "source": "entry-date-label",
+      "target": "visit-category-label",
+      "essential": false
+    },
+    {
+      "kind": "adjacency",
+      "source": "driving-options",
+      "target": "referral-label",
+      "essential": false
+    },
+    {
+      "kind": "adjacency",
+      "source": "eye-side-prompt",
+      "target": "right-eye-header",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "right-eye-header",
+      "target": "left-eye-header",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "left-eye-header",
+      "target": "both-unknown-header",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "vision-confirmation",
+      "target": "discomfort-confirmation",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "lens-question",
+      "target": "lens-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "contact-type-label",
+      "target": "contact-type-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "surgery-question",
+      "target": "surgery-options",
+      "essential": true
+    }
+  ],
+  "essential_text_anchors": [
+    "眼科 初診問診票",
+    "現在の眼の症状",
+    "症状がある眼をお選びください。 右眼・左眼・両眼",
+    "見えにくい・かすむ",
+    "まぶしい・二重に見える",
+    "痛み・かゆみ",
+    "充血・目やに",
+    "眼鏡・コンタクトレンズ",
+    "眼鏡またはコンタクトレンズを使用していますか。",
+    "眼科の治療歴・全身状態",
+    "これまでに眼の手術やレーザー治療を受けたことがありますか。",
+    "治療中の病気・使用中の薬"
+  ],
+  "expected_page_count": 1,
+  "required_manual_checks": [
+    "no_fatal_text_overlap",
+    "no_text_clipping",
+    "layout_human_usable",
+    "word_open_edit_save"
+  ]
+}
