@@ -29,6 +29,7 @@ class StageGateTest(unittest.TestCase):
                 measurement("q03", 70),
                 measurement("q04", 70),
                 measurement("q05", 70),
+                measurement("q06", 70),
             )
         )
 
@@ -36,23 +37,7 @@ class StageGateTest(unittest.TestCase):
         self.assertEqual(result.minimum_overall, 70)
         self.assertEqual(result.state, "pass")
 
-    def test_average_70_cannot_compensate_for_low_fixtures(self):
-        result = evaluate_stage_gate(
-            (
-                measurement("baseline", 100),
-                measurement("q01", 100),
-                measurement("q02", 100),
-                measurement("q03", 100),
-                measurement("q04", 10),
-                measurement("q05", 10),
-            )
-        )
-
-        self.assertFalse(result.passed)
-        self.assertEqual(result.average_overall_diagnostic, 70)
-        self.assertFalse(result.to_dict()["average_used_for_decision"])
-
-    def test_69_99_fails_even_when_the_other_fixture_is_100(self):
+    def test_high_average_cannot_compensate_for_low_fixtures(self):
         result = evaluate_stage_gate(
             (
                 measurement("baseline", 100),
@@ -60,7 +45,25 @@ class StageGateTest(unittest.TestCase):
                 measurement("q02", 100),
                 measurement("q03", 100),
                 measurement("q04", 100),
-                measurement("q05", 69.99),
+                measurement("q05", 10),
+                measurement("q06", 10),
+            )
+        )
+
+        self.assertFalse(result.passed)
+        self.assertEqual(result.average_overall_diagnostic, 74.285714)
+        self.assertFalse(result.to_dict()["average_used_for_decision"])
+
+    def test_69_99_fails_even_when_every_other_fixture_is_100(self):
+        result = evaluate_stage_gate(
+            (
+                measurement("baseline", 100),
+                measurement("q01", 100),
+                measurement("q02", 100),
+                measurement("q03", 100),
+                measurement("q04", 100),
+                measurement("q05", 100),
+                measurement("q06", 69.99),
             )
         )
 
@@ -76,6 +79,7 @@ class StageGateTest(unittest.TestCase):
                 measurement("q03", 85, previous=85),
                 measurement("q04", 90, previous=90),
                 measurement("q05", 95, previous=95),
+                measurement("q06", 100, previous=100),
             )
         )
 
@@ -110,6 +114,7 @@ class StageGateTest(unittest.TestCase):
             measurement("q03", 79),
             measurement("q04", 74),
             measurement("q05", 78),
+            measurement("q06", 83),
         )
 
         forward = evaluate_stage_gate(values).to_dict()
@@ -118,7 +123,7 @@ class StageGateTest(unittest.TestCase):
         self.assertEqual(forward, reverse)
         self.assertEqual(
             len({item["artifact_path"] for item in forward["fixtures"]}),
-            6,
+            7,
         )
 
     def test_duplicate_fixture_ids_are_rejected(self):
