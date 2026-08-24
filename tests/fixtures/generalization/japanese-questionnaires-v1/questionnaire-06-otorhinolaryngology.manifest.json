@@ -1,0 +1,50 @@
+{
+  "manifest_version": 1,
+  "fixture_id": "questionnaire-06-otorhinolaryngology",
+  "role": "generalization_stage_fixture",
+  "source": {
+    "path": "questionnaire-06-otorhinolaryngology.png",
+    "encoding": "raw",
+    "sha256": "2825b68275a631574eb9616e136e45bc0ee2f1739195eab4ca16c4d572e9f4b1",
+    "pixel_width": 1240,
+    "pixel_height": 1754,
+    "dpi": 150,
+    "color_mode": "RGB",
+    "orientation": "portrait"
+  },
+  "reference": {
+    "path": "questionnaire-06-otorhinolaryngology.reference.json",
+    "sha256": "a826e86eff13172f823a0f70d6f1599165aab717a341b90bc3b73c0eb3562afa"
+  },
+  "license": "MIT",
+  "provenance": "Project-original Japanese otorhinolaryngology intake questionnaire authored and rasterized for Aiteqno fixture corpus Issue #73.",
+  "redistribution_allowed": true,
+  "contains_personal_data": false,
+  "review": {
+    "status": "reviewed",
+    "reviewer": "Kentaro Ono (blanket approval); transcription and 100% visual cross-check by Noel",
+    "reviewed_at": "2026-08-24",
+    "reference_revision": 1,
+    "authorization": "User explicitly authorized implementation through Issue #85 closure on 2026-08-24.",
+    "excluded_items": []
+  },
+  "ocr_contract": {
+    "provider": "tesseract",
+    "minimum_major_version": 5,
+    "production_languages": [
+      "jpn"
+    ],
+    "visible_evidence_languages": [
+      "jpn"
+    ],
+    "page_segmentation_mode": 6,
+    "engine_mode": 3,
+    "source_dpi": 150
+  },
+  "quality_contract": {
+    "normalization": "NFKC then remove every Unicode whitespace character",
+    "overall_minimum": 70.0,
+    "stage_gate": "each active fixture independently meets overall_minimum; averages never compensate",
+    "expected_page_count_is_diagnostic": true
+  }
+}

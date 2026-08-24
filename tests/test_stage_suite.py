@@ -45,6 +45,10 @@ Q05_MANIFEST = Q01_DIRECTORY / "questionnaire-05-dermatology.manifest.json"
 Q05_ID = "questionnaire-05-dermatology"
 Q05_SOURCE_SHA256 = "7db96f0118193e93685f4a80472bb64f4656bebe77ccc55d34fbfe447d158e01"
 Q05_REFERENCE_SHA256 = "00813b3ee0d1a35ba4a572821cff6fa123ff281bb189e52e9370949b6d1bd852"
+Q06_MANIFEST = Q01_DIRECTORY / "questionnaire-06-otorhinolaryngology.manifest.json"
+Q06_ID = "questionnaire-06-otorhinolaryngology"
+Q06_SOURCE_SHA256 = "2825b68275a631574eb9616e136e45bc0ee2f1739195eab4ca16c4d572e9f4b1"
+Q06_REFERENCE_SHA256 = "a826e86eff13172f823a0f70d6f1599165aab717a341b90bc3b73c0eb3562afa"
 STAGE_TWO_SUITE_PATH = (
     Path(__file__).parent / "fixtures" / "stages" / "questionnaire-stage-2.json"
 )
@@ -56,6 +60,9 @@ STAGE_FOUR_SUITE_PATH = (
 )
 STAGE_FIVE_SUITE_PATH = (
     Path(__file__).parent / "fixtures" / "stages" / "questionnaire-stage-5.json"
+)
+STAGE_SIX_SUITE_PATH = (
+    Path(__file__).parent / "fixtures" / "stages" / "questionnaire-stage-6.json"
 )
 
 
@@ -181,6 +188,46 @@ class StageSuiteContractTest(unittest.TestCase):
                 (1240, 1754),
                 (1754, 1240),
                 (1654, 2339),
+            ],
+        )
+        self.assertEqual(suite.threshold, 70)
+        self.assertEqual(suite.production_languages, ("jpn",))
+        self.assertEqual(suite.visible_languages, suite.production_languages)
+        self.assertEqual(suite.snapshot_dpi, 300)
+
+    def test_stage_six_adds_only_q06_in_the_pinned_order(self):
+        suite = _load_suite(STAGE_SIX_SUITE_PATH)
+
+        self.assertEqual(
+            [item.fixture_id for item in suite.fixtures],
+            [
+                "synthetic-dense-japanese-form-v1",
+                Q01_ID,
+                Q02_ID,
+                Q03_ID,
+                Q04_ID,
+                Q05_ID,
+                Q06_ID,
+            ],
+        )
+        self.assertEqual(
+            [item.source_encoding for item in suite.fixtures],
+            ["base64", "raw", "raw", "raw", "raw", "raw", "raw"],
+        )
+        self.assertEqual(
+            [item.source_dpi for item in suite.fixtures],
+            [96, 150, 200, 150, 150, 200, 150],
+        )
+        self.assertEqual(
+            [(item.source_width, item.source_height) for item in suite.fixtures],
+            [
+                (700, 991),
+                (1240, 1754),
+                (1654, 2339),
+                (1240, 1754),
+                (1754, 1240),
+                (1654, 2339),
+                (1240, 1754),
             ],
         )
         self.assertEqual(suite.threshold, 70)
@@ -371,6 +418,67 @@ class StageSuiteContractTest(unittest.TestCase):
             "現在使用中の塗り薬・飲み薬",
             "薬・食べ物などのアレルギー",
             "診察時に伝えておきたいこと",
+            "ご記入後、受付へお渡しください。",
+        ):
+            self.assertIn(phrase, expected_text)
+        reference_json = json.loads(fixture.reference_path.read_text(encoding="utf-8"))
+        self.assertEqual(reference_json["review"]["exclusions"], [])
+        self.assertEqual(
+            reference_json["source_dimensions"]["orientation"],
+            "portrait",
+        )
+        self.assertTrue(fixture.manifest["redistribution_allowed"])
+        self.assertFalse(fixture.manifest["contains_personal_data"])
+
+    def test_q06_reference_is_reviewed_source_grounded_and_complete(self):
+        fixture = _read_fixture(Q06_MANIFEST, Q06_ID)
+        reference = fixture.reference
+
+        self.assertEqual(fixture.source_sha256, Q06_SOURCE_SHA256)
+        self.assertEqual(fixture.reference_sha256, Q06_REFERENCE_SHA256)
+        self.assertEqual((fixture.source_width, fixture.source_height), (1240, 1754))
+        self.assertEqual(fixture.source_dpi, 150)
+        self.assertTrue(reference.reviewed)
+        self.assertGreaterEqual(len(reference.text_regions), 38)
+        self.assertGreaterEqual(len(reference.structural_items), 58)
+        self.assertGreaterEqual(len(reference.relationships), 67)
+        self.assertEqual(
+            sum("checkbox" in item.id for item in reference.structural_items),
+            28,
+        )
+        structure_ids = {item.id for item in reference.structural_items}
+        self.assertEqual(
+            {
+                item_id
+                for item_id in structure_ids
+                if item_id.endswith("grid-outer")
+            },
+            {
+                "identity-grid-outer",
+                "ear-grid-outer",
+                "nose-grid-outer",
+                "throat-grid-outer",
+            },
+        )
+        self.assertIn("notes-box", structure_ids)
+        self.assertIn("notes-writing-line", structure_ids)
+        expected_text = "".join(item.text for item in reference.text_regions)
+        for phrase in (
+            "耳鼻咽喉科 問診票",
+            "症状がある側をお選びください。 右・左・両方",
+            "症状",
+            "右耳",
+            "左耳",
+            "両方・不明",
+            "耳の痛み、耳鳴り、聞こえにくさ、耳だれはありますか。",
+            "鼻の症状",
+            "鼻づまり、鼻水、くしゃみ、においの分かりにくさはありますか。",
+            "鼻水の状態",
+            "のど・声の症状",
+            "のどの痛み、声のかすれ、飲み込みにくさはありますか。",
+            "めまいやふらつきを感じることはありますか。",
+            "治療中の病気・薬",
+            "症状の経過や気になること",
             "ご記入後、受付へお渡しください。",
         ):
             self.assertIn(phrase, expected_text)
