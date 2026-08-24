@@ -1,0 +1,1770 @@
+{
+  "reference_version": 1,
+  "reference_id": "questionnaire-08-pediatrics",
+  "source_sha256": "9c5679915a4e479a6fc806918832df8f0db23f325a228bec9d16fd76ba948bb9",
+  "source_dimensions": {
+    "pixel_width": 1240,
+    "pixel_height": 1754,
+    "dpi": 150,
+    "color_mode": "RGB",
+    "orientation": "portrait",
+    "sha256": "9c5679915a4e479a6fc806918832df8f0db23f325a228bec9d16fd76ba948bb9"
+  },
+  "normalization": "NFKC then remove every Unicode whitespace character",
+  "reviewed": true,
+  "review": {
+    "status": "reviewed",
+    "reviewer": "Kentaro Ono (blanket approval); transcription and 100% visual cross-check by Noel",
+    "reviewed_at": "2026-08-25",
+    "reference_revision": 1,
+    "authorization": "User explicitly authorized implementation through Issue #89 closure on 2026-08-25.",
+    "method": "Source PNG inspected at 100%; every visible printed string and every material patient-information boundary, current-symptom grid, birth-information grid, vaccination/maternal-handbook grid, medical-history/allergy/medicine grid, section band, checkbox, response line, footer rule, reading order, containment, and adjacency relation was cross-checked against source pixels. The five independent tables are the patient-information, current-symptom, birth-information, vaccination/maternal-handbook, and medical-history/allergy/medicine grids; the stand-alone guardian-message box is not counted as a table. OCR and pixel measurements were used only to locate source pixels, never as transcription truth.",
+    "exclusions": []
+  },
+  "text_regions": [
+    {
+      "id": "title",
+      "text": "小児科 初診問診票",
+      "bbox": {
+        "x": 0.05483871,
+        "y": 0.0267959,
+        "width": 0.24032258,
+        "height": 0.03078677
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "specialty",
+      "text": "小児科",
+      "bbox": {
+        "x": 0.90322581,
+        "y": 0.03477765,
+        "width": 0.04193548,
+        "height": 0.00912201
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "child-name-label",
+      "text": "お子さまの氏名",
+      "bbox": {
+        "x": 0.07016129,
+        "y": 0.08551881,
+        "width": 0.08709677,
+        "height": 0.01539339
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "furigana-label",
+      "text": "ふりがな",
+      "bbox": {
+        "x": 0.19274194,
+        "y": 0.08551881,
+        "width": 0.04919355,
+        "height": 0.01539339
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "birth-date-label",
+      "text": "生年月日",
+      "bbox": {
+        "x": 0.53870968,
+        "y": 0.08494869,
+        "width": 0.0483871,
+        "height": 0.01653364
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "age-label",
+      "text": "年齢",
+      "bbox": {
+        "x": 0.68145161,
+        "y": 0.08494869,
+        "width": 0.02741935,
+        "height": 0.01653364
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "gender-label",
+      "text": "性別（任意）",
+      "bbox": {
+        "x": 0.82580645,
+        "y": 0.08494869,
+        "width": 0.06935484,
+        "height": 0.01710376
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "guardian-name-label",
+      "text": "保護者氏名",
+      "bbox": {
+        "x": 0.06935484,
+        "y": 0.1277081,
+        "width": 0.06209677,
+        "height": 0.01653364
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "relationship-label",
+      "text": "続柄",
+      "bbox": {
+        "x": 0.19274194,
+        "y": 0.1277081,
+        "width": 0.02419355,
+        "height": 0.01653364
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "entry-date-label",
+      "text": "記入日",
+      "bbox": {
+        "x": 0.53870968,
+        "y": 0.1277081,
+        "width": 0.03870968,
+        "height": 0.01653364
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "contact-label",
+      "text": "連絡先",
+      "bbox": {
+        "x": 0.68145161,
+        "y": 0.1277081,
+        "width": 0.04032258,
+        "height": 0.01653364
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "height-label",
+      "text": "身長",
+      "bbox": {
+        "x": 0.07016129,
+        "y": 0.17331813,
+        "width": 0.0233871,
+        "height": 0.00912201
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "height-unit",
+      "text": "cm",
+      "bbox": {
+        "x": 0.19274194,
+        "y": 0.17388826,
+        "width": 0.01612903,
+        "height": 0.00855188
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "weight-label",
+      "text": "体重",
+      "bbox": {
+        "x": 0.53870968,
+        "y": 0.17331813,
+        "width": 0.02419355,
+        "height": 0.00912201
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "weight-unit",
+      "text": "kg",
+      "bbox": {
+        "x": 0.68145161,
+        "y": 0.17388826,
+        "width": 0.01209677,
+        "height": 0.00855188
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "temperature-label",
+      "text": "体温",
+      "bbox": {
+        "x": 0.82419355,
+        "y": 0.17331813,
+        "width": 0.02419355,
+        "height": 0.00912201
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "temperature-unit",
+      "text": "°C",
+      "bbox": {
+        "x": 0.88548387,
+        "y": 0.172748,
+        "width": 0.01612903,
+        "height": 0.01026226
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "current-symptoms-section-title",
+      "text": "現在の症状",
+      "bbox": {
+        "x": 0.06370968,
+        "y": 0.22006842,
+        "width": 0.08467742,
+        "height": 0.02109464
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "symptom-prompt",
+      "text": "お子さまの症状と、いつから始まったかをご記入ください。",
+      "bbox": {
+        "x": 0.07177419,
+        "y": 0.25598632,
+        "width": 0.38225806,
+        "height": 0.01881414
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "food-water-label",
+      "text": "食事・水分",
+      "bbox": {
+        "x": 0.07016129,
+        "y": 0.33124287,
+        "width": 0.07258065,
+        "height": 0.01767389
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "food-water-question",
+      "text": "食事や水分は普段どおり取れていますか。",
+      "bbox": {
+        "x": 0.2733871,
+        "y": 0.32668187,
+        "width": 0.25241935,
+        "height": 0.01653364
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "food-water-options",
+      "text": "□ 普段どおり　□ 少ない　□ ほとんど取れない",
+      "bbox": {
+        "x": 0.27419355,
+        "y": 0.34777651,
+        "width": 0.25483871,
+        "height": 0.01767389
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "urine-stool-label",
+      "text": "尿・便",
+      "bbox": {
+        "x": 0.07096774,
+        "y": 0.38255416,
+        "width": 0.04516129,
+        "height": 0.01767389
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "urine-stool-question",
+      "text": "尿や便の回数に変化はありますか。",
+      "bbox": {
+        "x": 0.2733871,
+        "y": 0.37856328,
+        "width": 0.21370968,
+        "height": 0.01596351
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "urine-stool-options",
+      "text": "□ 変化なし　□ 減った　□ 増えた",
+      "bbox": {
+        "x": 0.27419355,
+        "y": 0.40250855,
+        "width": 0.20322581,
+        "height": 0.01482326
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "birth-section-title",
+      "text": "出生時の情報",
+      "bbox": {
+        "x": 0.06532258,
+        "y": 0.44868871,
+        "width": 0.1,
+        "height": 0.01995439
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "birth-prompt",
+      "text": "出生時の週数と体重をご記入ください。",
+      "bbox": {
+        "x": 0.07177419,
+        "y": 0.48289624,
+        "width": 0.17983871,
+        "height": 0.0313569
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "gestation-field",
+      "text": "妊娠　　　週　　　日",
+      "bbox": {
+        "x": 0.30645161,
+        "y": 0.48688712,
+        "width": 0.13387097,
+        "height": 0.01140251
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "birth-weight-field",
+      "text": "出生体重　　　　g",
+      "bbox": {
+        "x": 0.6266129,
+        "y": 0.48688712,
+        "width": 0.12016129,
+        "height": 0.01140251
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "birth-course-label",
+      "text": "出生時の経過",
+      "bbox": {
+        "x": 0.07177419,
+        "y": 0.53705815,
+        "width": 0.08145161,
+        "height": 0.01767389
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "birth-course-options",
+      "text": "□ 問題なし　□ 入院した　□ その他",
+      "bbox": {
+        "x": 0.30725806,
+        "y": 0.5381984,
+        "width": 0.21370968,
+        "height": 0.01653364
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "vaccination-section-title",
+      "text": "予防接種・母子健康手帳",
+      "bbox": {
+        "x": 0.06451613,
+        "y": 0.59350057,
+        "width": 0.18548387,
+        "height": 0.02052452
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "handbook-label",
+      "text": "母子健康手帳",
+      "bbox": {
+        "x": 0.06774194,
+        "y": 0.6277081,
+        "width": 0.08790323,
+        "height": 0.02052452
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "handbook-question",
+      "text": "母子健康手帳をお持ちですか。",
+      "bbox": {
+        "x": 0.30645161,
+        "y": 0.6277081,
+        "width": 0.18145161,
+        "height": 0.01596351
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "handbook-options",
+      "text": "□ 持参　□ 後日　□ なし",
+      "bbox": {
+        "x": 0.65725806,
+        "y": 0.63169897,
+        "width": 0.14354839,
+        "height": 0.01482326
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "vaccination-history-label",
+      "text": "予防接種歴",
+      "bbox": {
+        "x": 0.07096774,
+        "y": 0.68529076,
+        "width": 0.07177419,
+        "height": 0.01767389
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "vaccination-options",
+      "text": "□ 年齢相当　□ 未接種あり　□ 不明",
+      "bbox": {
+        "x": 0.30725806,
+        "y": 0.68586089,
+        "width": 0.21290323,
+        "height": 0.01596351
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-section-title",
+      "text": "病歴・アレルギー・薬",
+      "bbox": {
+        "x": 0.06370968,
+        "y": 0.74629418,
+        "width": 0.17096774,
+        "height": 0.02052452
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "treatment-label",
+      "text": "治療中の病気",
+      "bbox": {
+        "x": 0.07096774,
+        "y": 0.78278221,
+        "width": 0.08225806,
+        "height": 0.01767389
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "treatment-options",
+      "text": "□ ない　□ ある",
+      "bbox": {
+        "x": 0.27419355,
+        "y": 0.78278221,
+        "width": 0.1,
+        "height": 0.01767389
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "allergy-label",
+      "text": "アレルギー",
+      "bbox": {
+        "x": 0.07177419,
+        "y": 0.82440137,
+        "width": 0.06612903,
+        "height": 0.01425314
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "allergy-options",
+      "text": "□ ない　□ ある",
+      "bbox": {
+        "x": 0.27419355,
+        "y": 0.82440137,
+        "width": 0.1,
+        "height": 0.01767389
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "medication-label",
+      "text": "使用中の薬",
+      "bbox": {
+        "x": 0.07096774,
+        "y": 0.86602052,
+        "width": 0.07258065,
+        "height": 0.01767389
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "guardian-message-label",
+      "text": "保護者の方から医師へ伝えておきたいこと",
+      "bbox": {
+        "x": 0.06290323,
+        "y": 0.91790194,
+        "width": 0.25645161,
+        "height": 0.01596351
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "footer-instruction",
+      "text": "ご記入後、受付へお渡しください。",
+      "bbox": {
+        "x": 0.05645161,
+        "y": 0.97035348,
+        "width": 0.18306452,
+        "height": 0.01425314
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "page-number",
+      "text": "1 / 1",
+      "bbox": {
+        "x": 0.92096774,
+        "y": 0.9732041,
+        "width": 0.0233871,
+        "height": 0.00627138
+      },
+      "page_number": 1,
+      "essential": false
+    }
+  ],
+  "structural_items": [
+    {
+      "id": "header-rule",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.05701254,
+        "width": 0.89193548,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "identity-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.07354618,
+        "width": 0.89193548,
+        "height": 0.12827822
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-row-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.11630559,
+        "width": 0.89193548,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-row-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.15906499,
+        "width": 0.89193548,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.1766129,
+        "y": 0.07354618,
+        "width": 0.0016129,
+        "height": 0.12827822
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.52096774,
+        "y": 0.07354618,
+        "width": 0.0016129,
+        "height": 0.12827822
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-3",
+      "type": "line",
+      "bbox": {
+        "x": 0.66370968,
+        "y": 0.07354618,
+        "width": 0.0016129,
+        "height": 0.12827822
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-4",
+      "type": "line",
+      "bbox": {
+        "x": 0.80645161,
+        "y": 0.07354618,
+        "width": 0.0016129,
+        "height": 0.12827822
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-symptoms-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.21835804,
+        "width": 0.89193548,
+        "height": 0.02223489
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-symptoms-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.24686431,
+        "width": 0.89193548,
+        "height": 0.18301026
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-symptoms-grid-row-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.31927024,
+        "width": 0.89193548,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-symptoms-grid-row-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.37058153,
+        "width": 0.89193548,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-symptoms-grid-column",
+      "type": "line",
+      "bbox": {
+        "x": 0.25241935,
+        "y": 0.31927024,
+        "width": 0.0016129,
+        "height": 0.11060433
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "food-usual-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.27419355,
+        "y": 0.35347777,
+        "width": 0.00887097,
+        "height": 0.00627138
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "food-less-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.35806452,
+        "y": 0.35347777,
+        "width": 0.00887097,
+        "height": 0.00627138
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "food-almost-none-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.41774194,
+        "y": 0.35347777,
+        "width": 0.00887097,
+        "height": 0.00627138
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "urine-unchanged-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.27419355,
+        "y": 0.40535918,
+        "width": 0.00967742,
+        "height": 0.00684151
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "urine-decreased-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.35403226,
+        "y": 0.40535918,
+        "width": 0.00967742,
+        "height": 0.00684151
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "urine-increased-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.42177419,
+        "y": 0.40535918,
+        "width": 0.00967742,
+        "height": 0.00684151
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "birth-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.44640821,
+        "width": 0.89193548,
+        "height": 0.02223489
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "birth-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.47491448,
+        "width": 0.89193548,
+        "height": 0.09977195
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "birth-grid-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.52508552,
+        "width": 0.89193548,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "birth-grid-column-label",
+      "type": "line",
+      "bbox": {
+        "x": 0.28548387,
+        "y": 0.47491448,
+        "width": 0.0016129,
+        "height": 0.09977195
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "birth-grid-column-weight",
+      "type": "line",
+      "bbox": {
+        "x": 0.60483871,
+        "y": 0.47491448,
+        "width": 0.0016129,
+        "height": 0.05074116
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "birth-normal-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.30725806,
+        "y": 0.54104903,
+        "width": 0.00967742,
+        "height": 0.00684151
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "birth-hospitalized-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.38790323,
+        "y": 0.54104903,
+        "width": 0.00967742,
+        "height": 0.00684151
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "birth-other-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.46774194,
+        "y": 0.54104903,
+        "width": 0.00967742,
+        "height": 0.00684151
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "vaccination-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.59122007,
+        "width": 0.89193548,
+        "height": 0.02223489
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "vaccination-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.61972634,
+        "width": 0.89193548,
+        "height": 0.10832383
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "vaccination-grid-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.67331813,
+        "width": 0.89193548,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "vaccination-grid-column",
+      "type": "line",
+      "bbox": {
+        "x": 0.28548387,
+        "y": 0.61972634,
+        "width": 0.0016129,
+        "height": 0.10832383
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "handbook-brought-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.65725806,
+        "y": 0.6345496,
+        "width": 0.00967742,
+        "height": 0.00684151
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "handbook-later-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.70806452,
+        "y": 0.6345496,
+        "width": 0.00967742,
+        "height": 0.00684151
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "handbook-none-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.75967742,
+        "y": 0.6345496,
+        "width": 0.00967742,
+        "height": 0.00684151
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "vaccination-age-appropriate-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.30725806,
+        "y": 0.68928164,
+        "width": 0.00967742,
+        "height": 0.00684151
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "vaccination-missing-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.38790323,
+        "y": 0.68928164,
+        "width": 0.00967742,
+        "height": 0.00684151
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "vaccination-unknown-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.48064516,
+        "y": 0.68928164,
+        "width": 0.00967742,
+        "height": 0.00684151
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.74458381,
+        "width": 0.89193548,
+        "height": 0.02223489
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.77309008,
+        "width": 0.89193548,
+        "height": 0.12599772
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-grid-row-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.81470924,
+        "width": 0.89193548,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-grid-row-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.85632839,
+        "width": 0.89193548,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "history-grid-column",
+      "type": "line",
+      "bbox": {
+        "x": 0.25241935,
+        "y": 0.77309008,
+        "width": 0.0016129,
+        "height": 0.12599772
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "treatment-no-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.27419355,
+        "y": 0.78677309,
+        "width": 0.00967742,
+        "height": 0.00684151
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "treatment-yes-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.33548387,
+        "y": 0.78677309,
+        "width": 0.00967742,
+        "height": 0.00684151
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "allergy-no-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.27419355,
+        "y": 0.82839225,
+        "width": 0.00967742,
+        "height": 0.00684151
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "allergy-yes-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.33548387,
+        "y": 0.82839225,
+        "width": 0.00967742,
+        "height": 0.00684151
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "treatment-detail-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.44516129,
+        "y": 0.80387685,
+        "width": 0.47903226,
+        "height": 0.00057013
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "allergy-detail-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.44516129,
+        "y": 0.84549601,
+        "width": 0.47903226,
+        "height": 0.00057013
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "medication-detail-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.27258065,
+        "y": 0.88711517,
+        "width": 0.6516129,
+        "height": 0.00057013
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "guardian-message-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.91334094,
+        "width": 0.89193548,
+        "height": 0.03933865
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "guardian-message-response-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.06370968,
+        "y": 0.94754846,
+        "width": 0.87258065,
+        "height": 0.00057013
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "footer-rule",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.9618016,
+        "width": 0.89193548,
+        "height": 0.00057013
+      },
+      "page_number": 1,
+      "essential": false
+    }
+  ],
+  "relationships": [
+    {
+      "kind": "reading_order",
+      "source": "title",
+      "target": "current-symptoms-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "current-symptoms-section-title",
+      "target": "symptom-prompt",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "symptom-prompt",
+      "target": "food-water-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "food-water-label",
+      "target": "food-water-question",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "food-water-question",
+      "target": "food-water-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "food-water-options",
+      "target": "urine-stool-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "urine-stool-label",
+      "target": "urine-stool-question",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "urine-stool-question",
+      "target": "urine-stool-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "urine-stool-options",
+      "target": "birth-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "birth-section-title",
+      "target": "birth-prompt",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "birth-prompt",
+      "target": "gestation-field",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "gestation-field",
+      "target": "birth-weight-field",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "birth-weight-field",
+      "target": "birth-course-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "birth-course-label",
+      "target": "birth-course-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "birth-course-options",
+      "target": "vaccination-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "vaccination-section-title",
+      "target": "handbook-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "handbook-label",
+      "target": "handbook-question",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "handbook-question",
+      "target": "handbook-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "handbook-options",
+      "target": "vaccination-history-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "vaccination-history-label",
+      "target": "vaccination-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "vaccination-options",
+      "target": "history-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "history-section-title",
+      "target": "treatment-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "treatment-label",
+      "target": "treatment-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "treatment-options",
+      "target": "allergy-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "allergy-label",
+      "target": "allergy-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "allergy-options",
+      "target": "medication-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "medication-label",
+      "target": "guardian-message-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "guardian-message-label",
+      "target": "footer-instruction",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "child-name-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "furigana-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "birth-date-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "age-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "gender-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "guardian-name-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "relationship-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "entry-date-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "contact-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "height-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "height-unit",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "weight-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "weight-unit",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "temperature-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "temperature-unit",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "current-symptoms-section-band",
+      "target": "current-symptoms-section-title",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "current-symptoms-grid-outer",
+      "target": "symptom-prompt",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "current-symptoms-grid-outer",
+      "target": "food-water-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "current-symptoms-grid-outer",
+      "target": "food-water-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "current-symptoms-grid-outer",
+      "target": "food-water-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "current-symptoms-grid-outer",
+      "target": "urine-stool-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "current-symptoms-grid-outer",
+      "target": "urine-stool-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "current-symptoms-grid-outer",
+      "target": "urine-stool-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "birth-section-band",
+      "target": "birth-section-title",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "birth-grid-outer",
+      "target": "birth-prompt",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "birth-grid-outer",
+      "target": "gestation-field",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "birth-grid-outer",
+      "target": "birth-weight-field",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "birth-grid-outer",
+      "target": "birth-course-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "birth-grid-outer",
+      "target": "birth-course-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "vaccination-section-band",
+      "target": "vaccination-section-title",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "vaccination-grid-outer",
+      "target": "handbook-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "vaccination-grid-outer",
+      "target": "handbook-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "vaccination-grid-outer",
+      "target": "handbook-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "vaccination-grid-outer",
+      "target": "vaccination-history-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "vaccination-grid-outer",
+      "target": "vaccination-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "history-section-band",
+      "target": "history-section-title",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "history-grid-outer",
+      "target": "treatment-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "history-grid-outer",
+      "target": "treatment-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "history-grid-outer",
+      "target": "allergy-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "history-grid-outer",
+      "target": "allergy-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "history-grid-outer",
+      "target": "medication-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "guardian-message-outer",
+      "target": "guardian-message-label",
+      "essential": false
+    },
+    {
+      "kind": "adjacency",
+      "source": "child-name-label",
+      "target": "furigana-label",
+      "essential": false
+    },
+    {
+      "kind": "adjacency",
+      "source": "birth-date-label",
+      "target": "age-label",
+      "essential": false
+    },
+    {
+      "kind": "adjacency",
+      "source": "age-label",
+      "target": "gender-label",
+      "essential": false
+    },
+    {
+      "kind": "adjacency",
+      "source": "guardian-name-label",
+      "target": "relationship-label",
+      "essential": false
+    },
+    {
+      "kind": "adjacency",
+      "source": "entry-date-label",
+      "target": "contact-label",
+      "essential": false
+    },
+    {
+      "kind": "adjacency",
+      "source": "height-label",
+      "target": "height-unit",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "weight-label",
+      "target": "weight-unit",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "temperature-label",
+      "target": "temperature-unit",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "food-water-label",
+      "target": "food-water-question",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "food-water-question",
+      "target": "food-water-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "urine-stool-label",
+      "target": "urine-stool-question",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "urine-stool-question",
+      "target": "urine-stool-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "birth-prompt",
+      "target": "gestation-field",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "gestation-field",
+      "target": "birth-weight-field",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "birth-course-label",
+      "target": "birth-course-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "handbook-label",
+      "target": "handbook-question",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "handbook-question",
+      "target": "handbook-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "vaccination-history-label",
+      "target": "vaccination-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "treatment-label",
+      "target": "treatment-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "allergy-label",
+      "target": "allergy-options",
+      "essential": true
+    }
+  ],
+  "essential_text_anchors": [
+    "小児科 初診問診票",
+    "現在の症状",
+    "お子さまの症状と、いつから始まったかをご記入ください。",
+    "食事や水分は普段どおり取れていますか。",
+    "尿や便の回数に変化はありますか。",
+    "出生時の情報",
+    "出生時の週数と体重をご記入ください。",
+    "□ 問題なし　□ 入院した　□ その他",
+    "予防接種・母子健康手帳",
+    "母子健康手帳をお持ちですか。",
+    "□ 年齢相当　□ 未接種あり　□ 不明",
+    "病歴・アレルギー・薬",
+    "治療中の病気",
+    "アレルギー",
+    "使用中の薬"
+  ],
+  "expected_page_count": 1,
+  "required_manual_checks": [
+    "no_fatal_text_overlap",
+    "no_text_clipping",
+    "layout_human_usable",
+    "word_open_edit_save"
+  ]
+}
