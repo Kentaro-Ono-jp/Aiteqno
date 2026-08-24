@@ -30,6 +30,7 @@ class StageGateTest(unittest.TestCase):
                 measurement("q04", 70),
                 measurement("q05", 70),
                 measurement("q06", 70),
+                measurement("q07", 70),
             )
         )
 
@@ -45,13 +46,14 @@ class StageGateTest(unittest.TestCase):
                 measurement("q02", 100),
                 measurement("q03", 100),
                 measurement("q04", 100),
-                measurement("q05", 10),
+                measurement("q05", 100),
                 measurement("q06", 10),
+                measurement("q07", 10),
             )
         )
 
         self.assertFalse(result.passed)
-        self.assertEqual(result.average_overall_diagnostic, 74.285714)
+        self.assertEqual(result.average_overall_diagnostic, 77.5)
         self.assertFalse(result.to_dict()["average_used_for_decision"])
 
     def test_69_99_fails_even_when_every_other_fixture_is_100(self):
@@ -63,7 +65,8 @@ class StageGateTest(unittest.TestCase):
                 measurement("q03", 100),
                 measurement("q04", 100),
                 measurement("q05", 100),
-                measurement("q06", 69.99),
+                measurement("q06", 100),
+                measurement("q07", 69.99),
             )
         )
 
@@ -80,6 +83,7 @@ class StageGateTest(unittest.TestCase):
                 measurement("q04", 90, previous=90),
                 measurement("q05", 95, previous=95),
                 measurement("q06", 100, previous=100),
+                measurement("q07", 100, previous=100),
             )
         )
 
@@ -115,6 +119,7 @@ class StageGateTest(unittest.TestCase):
             measurement("q04", 74),
             measurement("q05", 78),
             measurement("q06", 83),
+            measurement("q07", 88),
         )
 
         forward = evaluate_stage_gate(values).to_dict()
@@ -123,7 +128,7 @@ class StageGateTest(unittest.TestCase):
         self.assertEqual(forward, reverse)
         self.assertEqual(
             len({item["artifact_path"] for item in forward["fixtures"]}),
-            7,
+            8,
         )
 
     def test_duplicate_fixture_ids_are_rejected(self):

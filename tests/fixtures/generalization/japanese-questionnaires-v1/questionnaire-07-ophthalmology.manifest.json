@@ -1,0 +1,50 @@
+{
+  "manifest_version": 1,
+  "fixture_id": "questionnaire-07-ophthalmology",
+  "role": "generalization_stage_fixture",
+  "source": {
+    "path": "questionnaire-07-ophthalmology.png",
+    "encoding": "raw",
+    "sha256": "670ec15d9df677482b7122af306e7f6cedc0d3f2befea50a02b1907dcc0d6b66",
+    "pixel_width": 2339,
+    "pixel_height": 1654,
+    "dpi": 200,
+    "color_mode": "RGB",
+    "orientation": "landscape"
+  },
+  "reference": {
+    "path": "questionnaire-07-ophthalmology.reference.json",
+    "sha256": "6efc969985c532cb6f2ddfbb9a4f29724ae18c7d2e1fdc9e12433ff051dd8f15"
+  },
+  "license": "MIT",
+  "provenance": "Project-original Japanese ophthalmology initial intake questionnaire authored and rasterized for Aiteqno fixture corpus Issue #73.",
+  "redistribution_allowed": true,
+  "contains_personal_data": false,
+  "review": {
+    "status": "reviewed",
+    "reviewer": "Kentaro Ono (blanket approval); transcription and 100% visual cross-check by Noel",
+    "reviewed_at": "2026-08-24",
+    "reference_revision": 1,
+    "authorization": "User explicitly authorized implementation through Issue #87 closure on 2026-08-24.",
+    "excluded_items": []
+  },
+  "ocr_contract": {
+    "provider": "tesseract",
+    "minimum_major_version": 5,
+    "production_languages": [
+      "jpn"
+    ],
+    "visible_evidence_languages": [
+      "jpn"
+    ],
+    "page_segmentation_mode": 6,
+    "engine_mode": 3,
+    "source_dpi": 200
+  },
+  "quality_contract": {
+    "normalization": "NFKC then remove every Unicode whitespace character",
+    "overall_minimum": 70,
+    "stage_gate": "each active fixture independently meets overall_minimum; averages never compensate",
+    "expected_page_count_is_diagnostic": true
+  }
+}
