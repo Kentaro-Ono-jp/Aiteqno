@@ -14,7 +14,7 @@
   },
   "reference": {
     "path": "questionnaire-08-pediatrics.reference.json",
-    "sha256": "9ca26e4c03135746f09d8690cbda848f6561a824777665cf0818520e5bcf8a70"
+    "sha256": "f2109a1cd0c8be2ff5556e3f9431a3efa4bb52bf4f5e0fc663de5307e6ec2095"
   },
   "license": "MIT",
   "provenance": "Project-original Japanese pediatrics initial intake questionnaire authored and rasterized for Aiteqno fixture corpus Issue #73.",

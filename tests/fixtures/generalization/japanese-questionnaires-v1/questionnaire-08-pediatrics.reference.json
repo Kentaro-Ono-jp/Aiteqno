@@ -1205,6 +1205,96 @@
     {
       "kind": "reading_order",
       "source": "title",
+      "target": "child-name-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "child-name-label",
+      "target": "furigana-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "furigana-label",
+      "target": "birth-date-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "birth-date-label",
+      "target": "age-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "age-label",
+      "target": "gender-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "gender-label",
+      "target": "guardian-name-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "guardian-name-label",
+      "target": "relationship-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "relationship-label",
+      "target": "entry-date-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "entry-date-label",
+      "target": "contact-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "contact-label",
+      "target": "height-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "height-label",
+      "target": "height-unit",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "height-unit",
+      "target": "weight-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "weight-label",
+      "target": "weight-unit",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "weight-unit",
+      "target": "temperature-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "temperature-label",
+      "target": "temperature-unit",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "temperature-unit",
       "target": "current-symptoms-section-title",
       "essential": true
     },
