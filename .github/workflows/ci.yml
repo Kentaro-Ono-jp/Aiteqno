@@ -64,6 +64,7 @@ jobs:
       AITEQNO_STAGE_FOUR_OUTPUT: build/questionnaire-stage-4
       AITEQNO_STAGE_FIVE_OUTPUT: build/questionnaire-stage-5
       AITEQNO_STAGE_SIX_OUTPUT: build/questionnaire-stage-6
+      AITEQNO_STAGE_SEVEN_OUTPUT: build/questionnaire-stage-7
       AITEQNO_TESSERACT_EXECUTABLE: /usr/bin/tesseract
       AITEQNO_TESSDATA_PREFIX: /usr/share/tesseract-ocr/5/tessdata
       AITEQNO_LIBREOFFICE_EXECUTABLE: /usr/bin/libreoffice
@@ -142,6 +143,12 @@ jobs:
           --suite tests/fixtures/stages/questionnaire-stage-6.json
           --output "$AITEQNO_STAGE_SIX_OUTPUT"
           --expect-state pass
+      - name: Run cumulative questionnaire Stage 7 gate
+        run: >-
+          python scripts/run_stage_suite.py
+          --suite tests/fixtures/stages/questionnaire-stage-7.json
+          --output "$AITEQNO_STAGE_SEVEN_OUTPUT"
+          --expect-state pass
       - name: Upload baseline evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -196,5 +203,13 @@ jobs:
         with:
           name: questionnaire-stage-6-${{ github.sha }}
           path: build/questionnaire-stage-6
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload questionnaire Stage 7 evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: questionnaire-stage-7-${{ github.sha }}
+          path: build/questionnaire-stage-7
           if-no-files-found: error
           retention-days: 14
