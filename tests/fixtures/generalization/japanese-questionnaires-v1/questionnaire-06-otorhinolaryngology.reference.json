@@ -1,0 +1,1615 @@
+{
+  "reference_version": 1,
+  "reference_id": "questionnaire-06-otorhinolaryngology",
+  "source_sha256": "2825b68275a631574eb9616e136e45bc0ee2f1739195eab4ca16c4d572e9f4b1",
+  "source_dimensions": {
+    "pixel_width": 1240,
+    "pixel_height": 1754,
+    "dpi": 150,
+    "color_mode": "RGB",
+    "orientation": "portrait",
+    "sha256": "2825b68275a631574eb9616e136e45bc0ee2f1739195eab4ca16c4d572e9f4b1"
+  },
+  "normalization": "NFKC then remove every Unicode whitespace character",
+  "reviewed": true,
+  "review": {
+    "status": "reviewed",
+    "reviewer": "Kentaro Ono (blanket approval); transcription and 100% visual cross-check by Noel",
+    "reviewed_at": "2026-08-24",
+    "reference_revision": 1,
+    "authorization": "User explicitly authorized implementation through Issue #85 closure on 2026-08-24.",
+    "method": "Source PNG inspected at 100%; every visible printed string and every material identity-grid boundary, ear comparison grid, nose grid, throat/voice grid, section band, checkbox, response line, note box, footer rule, reading order, containment, and adjacency relation was cross-checked against source pixels. The four independent tables are the identity, ear, nose, and throat/voice grids; the free-note box and stand-alone writing lines remain material structures but are not counted as tables. OCR and OpenCV measurements were used only to locate source pixels, never as transcription truth.",
+    "exclusions": []
+  },
+  "text_regions": [
+    {
+      "id": "title",
+      "text": "耳鼻咽喉科 問診票",
+      "bbox": {
+        "x": 0.05241935,
+        "y": 0.02793615,
+        "width": 0.24354839,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "specialty",
+      "text": "耳鼻咽喉科",
+      "bbox": {
+        "x": 0.87258065,
+        "y": 0.0336374,
+        "width": 0.075,
+        "height": 0.01140251
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "name-label",
+      "text": "氏名",
+      "bbox": {
+        "x": 0.06370968,
+        "y": 0.08551881,
+        "width": 0.02822581,
+        "height": 0.01026226
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "furigana-label",
+      "text": "ふりがな",
+      "bbox": {
+        "x": 0.16129032,
+        "y": 0.08551881,
+        "width": 0.05322581,
+        "height": 0.01026226
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "entry-date-label",
+      "text": "記入日",
+      "bbox": {
+        "x": 0.58225806,
+        "y": 0.08437856,
+        "width": 0.04032258,
+        "height": 0.01254276
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "birth-date-label",
+      "text": "生年月日",
+      "bbox": {
+        "x": 0.06370968,
+        "y": 0.11858609,
+        "width": 0.05322581,
+        "height": 0.01254276
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "age-label",
+      "text": "年齢",
+      "bbox": {
+        "x": 0.2266129,
+        "y": 0.11972634,
+        "width": 0.02903226,
+        "height": 0.01026226
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "age-unit",
+      "text": "歳",
+      "bbox": {
+        "x": 0.40725806,
+        "y": 0.11972634,
+        "width": 0.01451613,
+        "height": 0.01026226
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "gender-label",
+      "text": "性別（任意）",
+      "bbox": {
+        "x": 0.52741935,
+        "y": 0.11858609,
+        "width": 0.07096774,
+        "height": 0.01254276
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "gender-options",
+      "text": "□ 女性　□ 男性　□ 回答しない",
+      "bbox": {
+        "x": 0.67822581,
+        "y": 0.11858609,
+        "width": 0.17580645,
+        "height": 0.01140251
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "ear-section-title",
+      "text": "耳の症状",
+      "bbox": {
+        "x": 0.06209677,
+        "y": 0.16020525,
+        "width": 0.07096774,
+        "height": 0.01596351
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "ear-side-prompt",
+      "text": "症状がある側をお選びください。 右・左・両方",
+      "bbox": {
+        "x": 0.06854839,
+        "y": 0.19441277,
+        "width": 0.31290323,
+        "height": 0.01482326
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "ear-symptom-header",
+      "text": "症状",
+      "bbox": {
+        "x": 0.06854839,
+        "y": 0.24230331,
+        "width": 0.03225806,
+        "height": 0.01254276
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "right-ear-header",
+      "text": "右耳",
+      "bbox": {
+        "x": 0.27741935,
+        "y": 0.24230331,
+        "width": 0.03064516,
+        "height": 0.01254276
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "left-ear-header",
+      "text": "左耳",
+      "bbox": {
+        "x": 0.61935484,
+        "y": 0.24230331,
+        "width": 0.03145161,
+        "height": 0.01254276
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "both-unknown-header",
+      "text": "両方・不明",
+      "bbox": {
+        "x": 0.79112903,
+        "y": 0.24230331,
+        "width": 0.0733871,
+        "height": 0.01254276
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "ear-pain-label",
+      "text": "耳の痛み",
+      "bbox": {
+        "x": 0.07177419,
+        "y": 0.27194983,
+        "width": 0.05322581,
+        "height": 0.01026226
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "tinnitus-label",
+      "text": "耳鳴り",
+      "bbox": {
+        "x": 0.07177419,
+        "y": 0.29133409,
+        "width": 0.03709677,
+        "height": 0.01140251
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "hearing-difficulty-label",
+      "text": "聞こえにくさ",
+      "bbox": {
+        "x": 0.07177419,
+        "y": 0.31128848,
+        "width": 0.07741935,
+        "height": 0.01254276
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "ear-discharge-label",
+      "text": "耳だれ",
+      "bbox": {
+        "x": 0.07177419,
+        "y": 0.33238312,
+        "width": 0.04112903,
+        "height": 0.01026226
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "ear-confirmation",
+      "text": "耳の痛み、耳鳴り、聞こえにくさ、耳だれはありますか。",
+      "bbox": {
+        "x": 0.07016129,
+        "y": 0.35746864,
+        "width": 0.35,
+        "height": 0.01254276
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "nose-section-title",
+      "text": "鼻の症状",
+      "bbox": {
+        "x": 0.06209677,
+        "y": 0.40706956,
+        "width": 0.07096774,
+        "height": 0.01482326
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "nose-question",
+      "text": "鼻づまり、鼻水、くしゃみ、においの分かりにくさはありますか。",
+      "bbox": {
+        "x": 0.06854839,
+        "y": 0.44184721,
+        "width": 0.43225806,
+        "height": 0.01425314
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "nose-symptom-label",
+      "text": "当てはまる症状",
+      "bbox": {
+        "x": 0.07016129,
+        "y": 0.49600912,
+        "width": 0.09919355,
+        "height": 0.01311288
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "nose-symptom-options",
+      "text": "□ 鼻づまり　□ 鼻水　□ くしゃみ　□ 嗅覚低下",
+      "bbox": {
+        "x": 0.30564516,
+        "y": 0.4977195,
+        "width": 0.28467742,
+        "height": 0.01140251
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "nasal-discharge-label",
+      "text": "鼻水の状態",
+      "bbox": {
+        "x": 0.06854839,
+        "y": 0.5336374,
+        "width": 0.07258065,
+        "height": 0.01311288
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "nasal-discharge-options",
+      "text": "□ 透明　□ 黄色・緑色　□ 血が混じる",
+      "bbox": {
+        "x": 0.30564516,
+        "y": 0.53420753,
+        "width": 0.22822581,
+        "height": 0.01254276
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "throat-section-title",
+      "text": "のど・声の症状",
+      "bbox": {
+        "x": 0.06370968,
+        "y": 0.58551881,
+        "width": 0.12016129,
+        "height": 0.01539339
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "throat-question",
+      "text": "のどの痛み、声のかすれ、飲み込みにくさはありますか。",
+      "bbox": {
+        "x": 0.07016129,
+        "y": 0.61858609,
+        "width": 0.37177419,
+        "height": 0.01539339
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "throat-symptom-label",
+      "text": "当てはまる症状",
+      "bbox": {
+        "x": 0.07016129,
+        "y": 0.67616876,
+        "width": 0.09919355,
+        "height": 0.01254276
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "throat-symptom-options",
+      "text": "□ 痛み　□ 声のかすれ　□ 飲み込みにくい",
+      "bbox": {
+        "x": 0.30564516,
+        "y": 0.67730901,
+        "width": 0.25887097,
+        "height": 0.01140251
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "onset-label",
+      "text": "いつから",
+      "bbox": {
+        "x": 0.07016129,
+        "y": 0.71436716,
+        "width": 0.05645161,
+        "height": 0.01311288
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "dizziness-question",
+      "text": "めまいやふらつきを感じることはありますか。",
+      "bbox": {
+        "x": 0.07016129,
+        "y": 0.74458381,
+        "width": 0.19112903,
+        "height": 0.02622577
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "dizziness-options",
+      "text": "□ ない　□ 回る感じ　□ ふわふわする",
+      "bbox": {
+        "x": 0.30564516,
+        "y": 0.75484607,
+        "width": 0.23145161,
+        "height": 0.01140251
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "treatment-label",
+      "text": "治療中の病気・薬",
+      "bbox": {
+        "x": 0.06854839,
+        "y": 0.78506271,
+        "width": 0.11370968,
+        "height": 0.01197263
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "notes-label",
+      "text": "症状の経過や気になること",
+      "bbox": {
+        "x": 0.06048387,
+        "y": 0.83010262,
+        "width": 0.16451613,
+        "height": 0.01254276
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "footer-instruction",
+      "text": "ご記入後、受付へお渡しください。",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.97035348,
+        "width": 0.18709677,
+        "height": 0.01140251
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "page-number",
+      "text": "1 / 1",
+      "bbox": {
+        "x": 0.91935484,
+        "y": 0.97035348,
+        "width": 0.0266129,
+        "height": 0.01140251
+      },
+      "page_number": 1,
+      "essential": false
+    }
+  ],
+  "structural_items": [
+    {
+      "id": "header-rule",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.05644242,
+        "width": 0.89435484,
+        "height": 0.0022805
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "identity-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.07354618,
+        "width": 0.89274194,
+        "height": 0.06898518
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.10775371,
+        "width": 0.89435484,
+        "height": 0.0022805
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-name",
+      "type": "line",
+      "bbox": {
+        "x": 0.1516129,
+        "y": 0.07354618,
+        "width": 0.0016129,
+        "height": 0.0695553
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-entry-date",
+      "type": "line",
+      "bbox": {
+        "x": 0.57177419,
+        "y": 0.07354618,
+        "width": 0.0016129,
+        "height": 0.0695553
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-entry-value",
+      "type": "line",
+      "bbox": {
+        "x": 0.67258065,
+        "y": 0.07354618,
+        "width": 0.0016129,
+        "height": 0.0359179
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-birth-value",
+      "type": "line",
+      "bbox": {
+        "x": 0.21854839,
+        "y": 0.10832383,
+        "width": 0.0016129,
+        "height": 0.03477765
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-age",
+      "type": "line",
+      "bbox": {
+        "x": 0.3983871,
+        "y": 0.10832383,
+        "width": 0.0016129,
+        "height": 0.03477765
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-age-unit",
+      "type": "line",
+      "bbox": {
+        "x": 0.51612903,
+        "y": 0.10832383,
+        "width": 0.0016129,
+        "height": 0.03477765
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-gender",
+      "type": "line",
+      "bbox": {
+        "x": 0.66693548,
+        "y": 0.10832383,
+        "width": 0.0016129,
+        "height": 0.03477765
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-no-answer",
+      "type": "line",
+      "bbox": {
+        "x": 0.7766129,
+        "y": 0.10832383,
+        "width": 0.0016129,
+        "height": 0.03477765
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "gender-female-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.67983871,
+        "y": 0.12086659,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "gender-male-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.72903226,
+        "y": 0.12086659,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "gender-no-answer-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.77903226,
+        "y": 0.12086659,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "ear-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.15678449,
+        "width": 0.89274194,
+        "height": 0.02166477
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "ear-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.18529076,
+        "width": 0.89274194,
+        "height": 0.16875713
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "ear-grid-prompt-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.22976055,
+        "width": 0.89435484,
+        "height": 0.0022805
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "ear-grid-column-symptom",
+      "type": "line",
+      "bbox": {
+        "x": 0.25967742,
+        "y": 0.23033067,
+        "width": 0.00322581,
+        "height": 0.12542759
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "ear-grid-column-right",
+      "type": "line",
+      "bbox": {
+        "x": 0.60241935,
+        "y": 0.23033067,
+        "width": 0.00322581,
+        "height": 0.12542759
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "ear-grid-column-left",
+      "type": "line",
+      "bbox": {
+        "x": 0.77419355,
+        "y": 0.23033067,
+        "width": 0.00322581,
+        "height": 0.12542759
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "ear-pain-right-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.3266129,
+        "y": 0.27251995,
+        "width": 0.01209677,
+        "height": 0.00855188
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "ear-pain-left-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.67177419,
+        "y": 0.27251995,
+        "width": 0.01209677,
+        "height": 0.00855188
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "ear-pain-both-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.85806452,
+        "y": 0.27251995,
+        "width": 0.01209677,
+        "height": 0.00855188
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "tinnitus-right-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.3266129,
+        "y": 0.29247434,
+        "width": 0.01209677,
+        "height": 0.00855188
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "tinnitus-left-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.67177419,
+        "y": 0.29247434,
+        "width": 0.01209677,
+        "height": 0.00855188
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "tinnitus-both-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.85806452,
+        "y": 0.29247434,
+        "width": 0.01209677,
+        "height": 0.00855188
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "hearing-right-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.3266129,
+        "y": 0.31299886,
+        "width": 0.01209677,
+        "height": 0.00855188
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "hearing-left-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.67177419,
+        "y": 0.31299886,
+        "width": 0.01209677,
+        "height": 0.00855188
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "hearing-both-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.85806452,
+        "y": 0.31299886,
+        "width": 0.01209677,
+        "height": 0.00855188
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "discharge-right-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.3266129,
+        "y": 0.33295325,
+        "width": 0.01209677,
+        "height": 0.00855188
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "discharge-left-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.67177419,
+        "y": 0.33295325,
+        "width": 0.01209677,
+        "height": 0.00855188
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "discharge-both-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.85806452,
+        "y": 0.33295325,
+        "width": 0.01209677,
+        "height": 0.00855188
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "nose-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.4036488,
+        "width": 0.89274194,
+        "height": 0.02223489
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "nose-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.43215507,
+        "width": 0.89274194,
+        "height": 0.13340935
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "nose-grid-question-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.48175599,
+        "width": 0.89435484,
+        "height": 0.0022805
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "nose-grid-label-column",
+      "type": "line",
+      "bbox": {
+        "x": 0.28467742,
+        "y": 0.43215507,
+        "width": 0.00322581,
+        "height": 0.13511973
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "nose-blockage-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.30645161,
+        "y": 0.49885975,
+        "width": 0.01129032,
+        "height": 0.00798176
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "runny-nose-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.38709677,
+        "y": 0.49885975,
+        "width": 0.01129032,
+        "height": 0.00798176
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "sneeze-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.44112903,
+        "y": 0.49885975,
+        "width": 0.01129032,
+        "height": 0.00798176
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "smell-loss-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.52177419,
+        "y": 0.49885975,
+        "width": 0.01129032,
+        "height": 0.00798176
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "clear-discharge-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.30645161,
+        "y": 0.53648803,
+        "width": 0.01129032,
+        "height": 0.00798176
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "yellow-green-discharge-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.36129032,
+        "y": 0.53648803,
+        "width": 0.01129032,
+        "height": 0.00798176
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "bloody-discharge-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.45403226,
+        "y": 0.53648803,
+        "width": 0.01129032,
+        "height": 0.00798176
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "throat-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.58209806,
+        "width": 0.89274194,
+        "height": 0.02166477
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "throat-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.61060433,
+        "width": 0.89274194,
+        "height": 0.1972634
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "throat-grid-question-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.66191562,
+        "width": 0.89435484,
+        "height": 0.0022805
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "throat-grid-label-column",
+      "type": "line",
+      "bbox": {
+        "x": 0.28467742,
+        "y": 0.66248575,
+        "width": 0.00322581,
+        "height": 0.14709236
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "throat-grid-onset-writing-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.73261117,
+        "width": 0.89435484,
+        "height": 0.00285063
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "throat-pain-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.30645161,
+        "y": 0.67901938,
+        "width": 0.01129032,
+        "height": 0.00798176
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "hoarseness-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.36290323,
+        "y": 0.67901938,
+        "width": 0.01129032,
+        "height": 0.00798176
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "swallowing-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.45806452,
+        "y": 0.67901938,
+        "width": 0.01129032,
+        "height": 0.00798176
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "dizziness-none-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.30645161,
+        "y": 0.75655644,
+        "width": 0.01129032,
+        "height": 0.00798176
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "dizziness-spinning-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.36290323,
+        "y": 0.75655644,
+        "width": 0.01129032,
+        "height": 0.00798176
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "dizziness-floating-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.44516129,
+        "y": 0.75655644,
+        "width": 0.01129032,
+        "height": 0.00798176
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "treatment-writing-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.30645161,
+        "y": 0.79760547,
+        "width": 0.61935484,
+        "height": 0.00171038
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "notes-box",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.82440137,
+        "width": 0.89193548,
+        "height": 0.06556442
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "notes-writing-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.06451613,
+        "y": 0.88483466,
+        "width": 0.8733871,
+        "height": 0.00057013
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "footer-rule",
+      "type": "line",
+      "bbox": {
+        "x": 0.05483871,
+        "y": 0.96123147,
+        "width": 0.89274194,
+        "height": 0.00171038
+      },
+      "page_number": 1,
+      "essential": false
+    }
+  ],
+  "relationships": [
+    {
+      "kind": "reading_order",
+      "source": "title",
+      "target": "ear-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "ear-section-title",
+      "target": "ear-side-prompt",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "ear-side-prompt",
+      "target": "ear-symptom-header",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "ear-symptom-header",
+      "target": "right-ear-header",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "right-ear-header",
+      "target": "left-ear-header",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "left-ear-header",
+      "target": "both-unknown-header",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "both-unknown-header",
+      "target": "ear-pain-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "ear-pain-label",
+      "target": "tinnitus-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "tinnitus-label",
+      "target": "hearing-difficulty-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "hearing-difficulty-label",
+      "target": "ear-discharge-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "ear-discharge-label",
+      "target": "ear-confirmation",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "ear-confirmation",
+      "target": "nose-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "nose-section-title",
+      "target": "nose-question",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "nose-question",
+      "target": "nose-symptom-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "nose-symptom-label",
+      "target": "nose-symptom-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "nose-symptom-options",
+      "target": "nasal-discharge-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "nasal-discharge-label",
+      "target": "nasal-discharge-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "nasal-discharge-options",
+      "target": "throat-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "throat-section-title",
+      "target": "throat-question",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "throat-question",
+      "target": "throat-symptom-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "throat-symptom-label",
+      "target": "throat-symptom-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "throat-symptom-options",
+      "target": "onset-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "onset-label",
+      "target": "dizziness-question",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "dizziness-question",
+      "target": "dizziness-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "dizziness-options",
+      "target": "treatment-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "treatment-label",
+      "target": "notes-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "notes-label",
+      "target": "footer-instruction",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "name-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "furigana-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "entry-date-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "birth-date-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "age-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "age-unit",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "gender-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "gender-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "ear-section-band",
+      "target": "ear-section-title",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "ear-grid-outer",
+      "target": "ear-side-prompt",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "ear-grid-outer",
+      "target": "ear-symptom-header",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "ear-grid-outer",
+      "target": "right-ear-header",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "ear-grid-outer",
+      "target": "left-ear-header",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "ear-grid-outer",
+      "target": "both-unknown-header",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "ear-grid-outer",
+      "target": "ear-pain-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "ear-grid-outer",
+      "target": "tinnitus-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "ear-grid-outer",
+      "target": "hearing-difficulty-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "ear-grid-outer",
+      "target": "ear-discharge-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "nose-section-band",
+      "target": "nose-section-title",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "nose-grid-outer",
+      "target": "nose-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "nose-grid-outer",
+      "target": "nose-symptom-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "nose-grid-outer",
+      "target": "nose-symptom-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "nose-grid-outer",
+      "target": "nasal-discharge-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "nose-grid-outer",
+      "target": "nasal-discharge-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "throat-section-band",
+      "target": "throat-section-title",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "throat-grid-outer",
+      "target": "throat-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "throat-grid-outer",
+      "target": "throat-symptom-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "throat-grid-outer",
+      "target": "throat-symptom-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "throat-grid-outer",
+      "target": "onset-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "throat-grid-outer",
+      "target": "dizziness-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "throat-grid-outer",
+      "target": "dizziness-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "throat-grid-outer",
+      "target": "treatment-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "notes-box",
+      "target": "notes-label",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "ear-symptom-header",
+      "target": "right-ear-header",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "right-ear-header",
+      "target": "left-ear-header",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "left-ear-header",
+      "target": "both-unknown-header",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "nose-symptom-label",
+      "target": "nose-symptom-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "nasal-discharge-label",
+      "target": "nasal-discharge-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "throat-symptom-label",
+      "target": "throat-symptom-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "dizziness-question",
+      "target": "dizziness-options",
+      "essential": true
+    }
+  ],
+  "essential_text_anchors": [
+    "耳鼻咽喉科問診票",
+    "氏名",
+    "耳の症状",
+    "症状がある側をお選びください。右・左・両方",
+    "症状",
+    "右耳",
+    "左耳",
+    "両方・不明",
+    "耳の痛み",
+    "耳鳴り",
+    "聞こえにくさ",
+    "耳だれ",
+    "耳の痛み、耳鳴り、聞こえにくさ、耳だれはありますか。",
+    "鼻の症状",
+    "鼻づまり、鼻水、くしゃみ、においの分かりにくさはありますか。",
+    "鼻水の状態",
+    "のど・声の症状",
+    "のどの痛み、声のかすれ、飲み込みにくさはありますか。",
+    "いつから",
+    "めまいやふらつきを感じることはありますか。",
+    "治療中の病気・薬",
+    "症状の経過や気になること"
+  ],
+  "expected_page_count": 1,
+  "required_manual_checks": [
+    "no_fatal_text_overlap",
+    "no_text_clipping",
+    "layout_human_usable",
+    "word_open_edit_save"
+  ]
+}
