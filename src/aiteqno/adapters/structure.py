@@ -51,8 +51,10 @@ _ALGORITHM_PARAMETERS = {
     "compact_outline_max_fraction": 0.06,
     "compact_outline_min_rectangularity": 0.82,
     "circular_outline_min_circularity": 0.82,
+    "detail_dense_compact_min_count": 18,
     "filled_band_min_row_coverage": 0.65,
-    "landscape_detail_min_shortest_px": 600,
+    "detail_min_dpi": 140,
+    "detail_min_shortest_px": 600,
     "min_image_area_fraction": 0.0025,
     "min_line_fraction": 0.06,
     "short_tick_max_height_fraction": 0.04,
@@ -261,14 +263,16 @@ class OpenCvStructureExtractor:
         raw_lines, line_mask = _detect_raw_lines(binary)
         long_lines = self._line_candidates(raw_lines, source)
         rectangles = self._rectangle_candidates(line_mask, long_lines)
-        landscape_detail_profile = (
-            source.pixel_width > source.pixel_height
+        detail_profile = (
+            min(source.dpi_x, source.dpi_y)
+            >= float(_ALGORITHM_PARAMETERS["detail_min_dpi"])
             and min(source.pixel_width, source.pixel_height)
-            >= int(_ALGORITHM_PARAMETERS["landscape_detail_min_shortest_px"])
+            >= int(_ALGORITHM_PARAMETERS["detail_min_shortest_px"])
         )
-        if landscape_detail_profile:
+        if detail_profile:
             raw_ticks, tick_mask = _detect_short_axis_ticks(binary, long_lines)
             axis_lines = self._line_candidates([*raw_lines, *raw_ticks], source)
+            compact_rectangles = self._compact_rectangle_candidates(binary, source)
             circular_rectangles = self._circular_rectangle_candidates(
                 binary,
                 source,
@@ -281,10 +285,13 @@ class OpenCvStructureExtractor:
             lines = [*axis_lines, *diagram_lines]
             line_mask = cv2.bitwise_or(line_mask, tick_mask)
             line_mask = cv2.bitwise_or(line_mask, diagram_mask)
+            dense_compact_controls = len(compact_rectangles) >= int(
+                _ALGORITHM_PARAMETERS["detail_dense_compact_min_count"]
+            )
             rectangles = _merge_rectangle_candidates(
                 rectangles,
                 [
-                    *self._compact_rectangle_candidates(binary, source),
+                    *(compact_rectangles if dense_compact_controls or diagram_lines else ()),
                     *circular_rectangles,
                     *self._filled_horizontal_band_candidates(gray, source),
                 ],

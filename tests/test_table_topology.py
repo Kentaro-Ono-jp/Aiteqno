@@ -341,6 +341,72 @@ class TableTopologyInferenceTest(unittest.TestCase):
             7,
         )
 
+    def test_embedded_closed_control_does_not_invalidate_parent_grid(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            raw, _ = self._extract(Path(temporary_directory) / "raw")
+        valid_topology = read_page_table_topology(infer_table_topology(raw).pages[0])
+        assert valid_topology is not None
+        cell_assignment = next(
+            assignment
+            for assignment in valid_topology.primitive_roles
+            if assignment.role is TablePrimitiveRole.CELL_RECTANGLE
+        )
+        source_cell = next(
+            element
+            for element in raw.pages[0].elements
+            if element.id == cell_assignment.element_id
+        )
+        embedded_control = replace(
+            source_cell,
+            id="embedded-closed-control",
+            bbox=BoundingBox(
+                x=source_cell.bbox.x + 2.0,
+                y=source_cell.bbox.y + 2.0,
+                width=4.0,
+                height=4.0,
+            ),
+        )
+        page = raw.pages[0]
+        with_control = DocumentIR(
+            ir_version=raw.ir_version,
+            document_id=raw.document_id,
+            generator=raw.generator,
+            pages=(
+                Page(
+                    id=page.id,
+                    number=page.number,
+                    size=page.size,
+                    source=page.source,
+                    elements=(*page.elements, embedded_control),
+                    extensions=page.extensions,
+                ),
+            ),
+            assets=raw.assets,
+            metadata=raw.metadata,
+            extensions=raw.extensions,
+        )
+
+        topology = read_page_table_topology(
+            infer_table_topology(with_control).pages[0]
+        )
+
+        self.assertIsNotNone(topology)
+        assert topology is not None
+        self.assertEqual(
+            tuple(
+                (table.logical_rows, table.logical_columns, len(table.cells))
+                for table in topology.tables
+            ),
+            tuple(
+                (table.logical_rows, table.logical_columns, len(table.cells))
+                for table in valid_topology.tables
+            ),
+        )
+        self.assertIn(
+            embedded_control.id,
+            topology.diagnostics.unassigned_primitive_element_ids,
+        )
+
     def test_text_center_on_overlapping_cell_borders_is_explicitly_ambiguous(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             raw, _ = self._extract(Path(temporary_directory) / "raw")
