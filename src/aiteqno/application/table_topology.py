@@ -37,9 +37,10 @@ TABLE_TOPOLOGY_MINIMUM_TILING_AREA_FRACTION = 0.8
 TABLE_TOPOLOGY_MAXIMUM_TILING_AREA_FRACTION = 1.2
 
 _PARAMETERS = {
-    "algorithm": "closed-rectangle-grid-v1",
+    "algorithm": "closed-rectangle-direct-child-grid-v2",
     "boundary_tolerance_pt": TABLE_TOPOLOGY_BOUNDARY_TOLERANCE_PT,
     "cell_assignment": "text-bbox-center-in-one-physical-cell",
+    "cell_selection": "maximal-direct-child-rectangles",
     "maximum_tiling_area_fraction": TABLE_TOPOLOGY_MAXIMUM_TILING_AREA_FRACTION,
     "minimum_cell_count": TABLE_TOPOLOGY_MINIMUM_CELL_COUNT,
     "minimum_tiling_area_fraction": TABLE_TOPOLOGY_MINIMUM_TILING_AREA_FRACTION,
@@ -428,9 +429,23 @@ def _build_grid(
     outer: RectangleElement,
     cells: tuple[RectangleElement, ...],
 ) -> _DetectedTable | None:
-    if len(cells) < TABLE_TOPOLOGY_MINIMUM_CELL_COUNT:
+    # A physical table cell can contain other closed rectangles such as
+    # checkboxes, response circles, or nested writing boxes.  Those embedded
+    # controls are not peer cells and must not invalidate an otherwise complete
+    # tiling.  Keep only the maximal rectangles directly below the outer border;
+    # nested rectangles remain in the IR and are reported as unassigned
+    # primitives by the topology layer.
+    direct_cells = tuple(
+        cell
+        for cell in cells
+        if not any(
+            other is not cell and _strictly_contains(other.bbox, cell.bbox)
+            for other in cells
+        )
+    )
+    if len(direct_cells) < TABLE_TOPOLOGY_MINIMUM_CELL_COUNT:
         return None
-    area_fraction = sum(_area(cell.bbox) for cell in cells) / _area(outer.bbox)
+    area_fraction = sum(_area(cell.bbox) for cell in direct_cells) / _area(outer.bbox)
     if not (
         TABLE_TOPOLOGY_MINIMUM_TILING_AREA_FRACTION
         <= area_fraction
@@ -440,7 +455,7 @@ def _build_grid(
 
     x_values = [outer.bbox.x, outer.bbox.right]
     y_values = [outer.bbox.y, outer.bbox.bottom]
-    for cell in cells:
+    for cell in direct_cells:
         x_values.extend((cell.bbox.x, cell.bbox.right))
         y_values.extend((cell.bbox.y, cell.bbox.bottom))
     columns = _cluster_boundaries(x_values, outer.bbox.x, outer.bbox.right)
@@ -450,7 +465,7 @@ def _build_grid(
 
     detected_cells: list[_DetectedCell] = []
     occupied: set[tuple[int, int]] = set()
-    for rectangle in sorted(cells, key=_element_key):
+    for rectangle in sorted(direct_cells, key=_element_key):
         column_start = _nearest_boundary(columns, rectangle.bbox.x)
         column_end = _nearest_boundary(columns, rectangle.bbox.right)
         row_start = _nearest_boundary(rows, rectangle.bbox.y)

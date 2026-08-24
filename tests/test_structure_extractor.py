@@ -229,6 +229,63 @@ class StructureExtractorTest(unittest.TestCase):
             (67, 286, 1621, 38),
         )
 
+    def test_portrait_detail_profile_recovers_body_map_and_response_outlines(self):
+        image = PillowPngDecoder().decode(
+            (QUESTIONNAIRE_FIXTURE_ROOT / "questionnaire-05-dermatology.png").read_bytes()
+        )
+        result = OpenCvStructureExtractor().detect(image)
+
+        compact_outlines = tuple(
+            rectangle
+            for rectangle in result.rectangles
+            if "compact closed-outline" in (rectangle.provenance[0].notes or "")
+        )
+        circular_outlines = tuple(
+            rectangle
+            for rectangle in result.rectangles
+            if "circular closed-outline" in (rectangle.provenance[0].notes or "")
+        )
+        diagram_lines = tuple(
+            line
+            for line in result.lines
+            if "diagram stroke" in (line.provenance[0].notes or "")
+        )
+        filled_bands = tuple(
+            rectangle
+            for rectangle in result.rectangles
+            if "filled horizontal section-band"
+            in (rectangle.provenance[0].notes or "")
+        )
+
+        self.assertGreaterEqual(len(compact_outlines), 18)
+        self.assertEqual(len(circular_outlines), 2)
+        self.assertEqual(len(diagram_lines), 10)
+        self.assertEqual(len(filled_bands), 3)
+
+    def test_sparse_compact_controls_do_not_overwhelm_form_structure(self):
+        image = PillowPngDecoder().decode(
+            (
+                QUESTIONNAIRE_FIXTURE_ROOT
+                / "questionnaire-01-general-medicine.png"
+            ).read_bytes()
+        )
+        result = OpenCvStructureExtractor().detect(image)
+
+        compact_outlines = tuple(
+            rectangle
+            for rectangle in result.rectangles
+            if "compact closed-outline" in (rectangle.provenance[0].notes or "")
+        )
+        filled_bands = tuple(
+            rectangle
+            for rectangle in result.rectangles
+            if "filled horizontal section-band"
+            in (rectangle.provenance[0].notes or "")
+        )
+
+        self.assertEqual(compact_outlines, ())
+        self.assertEqual(len(filled_bands), 3)
+
     def test_decoder_infers_dpi_and_composites_transparency_on_white(self):
         transparent = Image.new("RGBA", (2, 1), (255, 0, 0, 0))
         transparent.putpixel((1, 0), (0, 0, 0, 255))
