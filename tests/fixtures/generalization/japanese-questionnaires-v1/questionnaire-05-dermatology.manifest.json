@@ -1,0 +1,50 @@
+{
+  "manifest_version": 1,
+  "fixture_id": "questionnaire-05-dermatology",
+  "role": "generalization_stage_fixture",
+  "source": {
+    "path": "questionnaire-05-dermatology.png",
+    "encoding": "raw",
+    "sha256": "7db96f0118193e93685f4a80472bb64f4656bebe77ccc55d34fbfe447d158e01",
+    "pixel_width": 1654,
+    "pixel_height": 2339,
+    "dpi": 200,
+    "color_mode": "RGB",
+    "orientation": "portrait"
+  },
+  "reference": {
+    "path": "questionnaire-05-dermatology.reference.json",
+    "sha256": "00813b3ee0d1a35ba4a572821cff6fa123ff281bb189e52e9370949b6d1bd852"
+  },
+  "license": "MIT",
+  "provenance": "Project-original Japanese dermatology intake questionnaire authored and rasterized for Aiteqno fixture corpus Issue #73.",
+  "redistribution_allowed": true,
+  "contains_personal_data": false,
+  "review": {
+    "status": "reviewed",
+    "reviewer": "Kentaro Ono (blanket approval); transcription and 100% visual cross-check by Noel",
+    "reviewed_at": "2026-08-24",
+    "reference_revision": 1,
+    "authorization": "User explicitly authorized implementation through Issue #83 closure on 2026-08-24.",
+    "excluded_items": []
+  },
+  "ocr_contract": {
+    "provider": "tesseract",
+    "minimum_major_version": 5,
+    "production_languages": [
+      "jpn"
+    ],
+    "visible_evidence_languages": [
+      "jpn"
+    ],
+    "page_segmentation_mode": 6,
+    "engine_mode": 3,
+    "source_dpi": 200
+  },
+  "quality_contract": {
+    "normalization": "NFKC then remove every Unicode whitespace character",
+    "overall_minimum": 70.0,
+    "stage_gate": "each active fixture independently meets overall_minimum; averages never compensate",
+    "expected_page_count_is_diagnostic": true
+  }
+}
