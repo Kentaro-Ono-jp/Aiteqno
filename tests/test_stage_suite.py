@@ -53,6 +53,10 @@ Q07_MANIFEST = Q01_DIRECTORY / "questionnaire-07-ophthalmology.manifest.json"
 Q07_ID = "questionnaire-07-ophthalmology"
 Q07_SOURCE_SHA256 = "670ec15d9df677482b7122af306e7f6cedc0d3f2befea50a02b1907dcc0d6b66"
 Q07_REFERENCE_SHA256 = "6efc969985c532cb6f2ddfbb9a4f29724ae18c7d2e1fdc9e12433ff051dd8f15"
+Q08_MANIFEST = Q01_DIRECTORY / "questionnaire-08-pediatrics.manifest.json"
+Q08_ID = "questionnaire-08-pediatrics"
+Q08_SOURCE_SHA256 = "9c5679915a4e479a6fc806918832df8f0db23f325a228bec9d16fd76ba948bb9"
+Q08_REFERENCE_SHA256 = "f2109a1cd0c8be2ff5556e3f9431a3efa4bb52bf4f5e0fc663de5307e6ec2095"
 STAGE_TWO_SUITE_PATH = (
     Path(__file__).parent / "fixtures" / "stages" / "questionnaire-stage-2.json"
 )
@@ -70,6 +74,9 @@ STAGE_SIX_SUITE_PATH = (
 )
 STAGE_SEVEN_SUITE_PATH = (
     Path(__file__).parent / "fixtures" / "stages" / "questionnaire-stage-7.json"
+)
+STAGE_EIGHT_SUITE_PATH = (
+    Path(__file__).parent / "fixtures" / "stages" / "questionnaire-stage-8.json"
 )
 
 
@@ -277,6 +284,50 @@ class StageSuiteContractTest(unittest.TestCase):
                 (1654, 2339),
                 (1240, 1754),
                 (2339, 1654),
+            ],
+        )
+        self.assertEqual(suite.threshold, 70)
+        self.assertEqual(suite.production_languages, ("jpn",))
+        self.assertEqual(suite.visible_languages, suite.production_languages)
+        self.assertEqual(suite.snapshot_dpi, 300)
+
+    def test_stage_eight_adds_only_q08_in_the_pinned_order(self):
+        suite = _load_suite(STAGE_EIGHT_SUITE_PATH)
+
+        self.assertEqual(
+            [item.fixture_id for item in suite.fixtures],
+            [
+                "synthetic-dense-japanese-form-v1",
+                Q01_ID,
+                Q02_ID,
+                Q03_ID,
+                Q04_ID,
+                Q05_ID,
+                Q06_ID,
+                Q07_ID,
+                Q08_ID,
+            ],
+        )
+        self.assertEqual(
+            [item.source_encoding for item in suite.fixtures],
+            ["base64", "raw", "raw", "raw", "raw", "raw", "raw", "raw", "raw"],
+        )
+        self.assertEqual(
+            [item.source_dpi for item in suite.fixtures],
+            [96, 150, 200, 150, 150, 200, 150, 200, 150],
+        )
+        self.assertEqual(
+            [(item.source_width, item.source_height) for item in suite.fixtures],
+            [
+                (700, 991),
+                (1240, 1754),
+                (1654, 2339),
+                (1240, 1754),
+                (1754, 1240),
+                (1654, 2339),
+                (1240, 1754),
+                (2339, 1654),
+                (1240, 1754),
             ],
         )
         self.assertEqual(suite.threshold, 70)
@@ -601,6 +652,91 @@ class StageSuiteContractTest(unittest.TestCase):
         self.assertEqual(
             reference_json["source_dimensions"]["orientation"],
             "landscape",
+        )
+        self.assertTrue(fixture.manifest["redistribution_allowed"])
+        self.assertFalse(fixture.manifest["contains_personal_data"])
+
+    def test_q08_reference_is_reviewed_source_grounded_and_complete(self):
+        fixture = _read_fixture(Q08_MANIFEST, Q08_ID)
+        reference = fixture.reference
+
+        self.assertEqual(fixture.source_sha256, Q08_SOURCE_SHA256)
+        self.assertEqual(fixture.reference_sha256, Q08_REFERENCE_SHA256)
+        self.assertEqual((fixture.source_width, fixture.source_height), (1240, 1754))
+        self.assertEqual(fixture.source_dpi, 150)
+        self.assertTrue(reference.reviewed)
+        self.assertEqual(len(reference.text_regions), 46)
+        self.assertEqual(len(reference.structural_items), 52)
+        self.assertEqual(len(reference.relationships), 105)
+        self.assertEqual(
+            sum("checkbox" in item.id for item in reference.structural_items),
+            19,
+        )
+        structure_ids = {item.id for item in reference.structural_items}
+        self.assertEqual(
+            {
+                item_id
+                for item_id in structure_ids
+                if item_id.endswith("grid-outer")
+            },
+            {
+                "identity-grid-outer",
+                "current-symptoms-grid-outer",
+                "birth-grid-outer",
+                "vaccination-grid-outer",
+                "history-grid-outer",
+            },
+        )
+        self.assertIn("guardian-message-outer", structure_ids)
+        self.assertNotIn("guardian-message-grid-outer", structure_ids)
+        expected_text = "".join(item.text for item in reference.text_regions)
+        for phrase in (
+            "小児科 初診問診票",
+            "お子さまの氏名",
+            "現在の症状",
+            "お子さまの症状と、いつから始まったかをご記入ください。",
+            "食事や水分は普段どおり取れていますか。",
+            "尿や便の回数に変化はありますか。",
+            "出生時の情報",
+            "出生時の週数と体重をご記入ください。",
+            "予防接種・母子健康手帳",
+            "母子健康手帳をお持ちですか。",
+            "病歴・アレルギー・薬",
+            "保護者の方から医師へ伝えておきたいこと",
+            "ご記入後、受付へお渡しください。",
+        ):
+            self.assertIn(phrase, expected_text)
+        reference_json = json.loads(fixture.reference_path.read_text(encoding="utf-8"))
+        self.assertEqual(reference_json["review"]["exclusions"], [])
+        identity_reading_order = [
+            (item["source"], item["target"])
+            for item in reference_json["relationships"]
+            if item["kind"] == "reading_order"
+        ][:16]
+        self.assertEqual(
+            identity_reading_order,
+            [
+                ("title", "child-name-label"),
+                ("child-name-label", "furigana-label"),
+                ("furigana-label", "birth-date-label"),
+                ("birth-date-label", "age-label"),
+                ("age-label", "gender-label"),
+                ("gender-label", "guardian-name-label"),
+                ("guardian-name-label", "relationship-label"),
+                ("relationship-label", "entry-date-label"),
+                ("entry-date-label", "contact-label"),
+                ("contact-label", "height-label"),
+                ("height-label", "height-unit"),
+                ("height-unit", "weight-label"),
+                ("weight-label", "weight-unit"),
+                ("weight-unit", "temperature-label"),
+                ("temperature-label", "temperature-unit"),
+                ("temperature-unit", "current-symptoms-section-title"),
+            ],
+        )
+        self.assertEqual(
+            reference_json["source_dimensions"]["orientation"],
+            "portrait",
         )
         self.assertTrue(fixture.manifest["redistribution_allowed"])
         self.assertFalse(fixture.manifest["contains_personal_data"])
