@@ -1,0 +1,1399 @@
+{
+  "reference_version": 1,
+  "reference_id": "questionnaire-09-gynecology",
+  "source_sha256": "b68368e751d971cd9869f4a47009c98d57e569bc6881f43a6853761931fa7089",
+  "source_dimensions": {
+    "pixel_width": 1654,
+    "pixel_height": 2339,
+    "dpi": 200,
+    "color_mode": "RGB",
+    "orientation": "portrait",
+    "sha256": "b68368e751d971cd9869f4a47009c98d57e569bc6881f43a6853761931fa7089"
+  },
+  "normalization": "NFKC then remove every Unicode whitespace character",
+  "reviewed": true,
+  "review": {
+    "status": "reviewed",
+    "reviewer": "Kentaro Ono (blanket approval); transcription and 100% visual cross-check by Noel",
+    "reviewed_at": "2026-08-28",
+    "reference_revision": 1,
+    "authorization": "User explicitly authorized implementation through Issue #91 closure on 2026-08-28.",
+    "method": "Source PNG inspected at 100%; every visible printed string and every material patient-information boundary, menstruation grid, visit-reason/pregnancy-history grid, section band, checkbox, response line, stand-alone doctor-message box, footer rule, reading order, containment, and adjacency relation was cross-checked against source pixels. The three independent tables are the patient-information, menstruation, and visit-reason/pregnancy-history grids; the stand-alone doctor-message box is not counted as a table. Exactly 15 source checkboxes were verified. OCR and pixel measurements were used only to locate source pixels, never as transcription truth.",
+    "exclusions": []
+  },
+  "text_regions": [
+    {
+      "id": "title",
+      "text": "婦人科 初診問診票",
+      "bbox": {
+        "x": 0.05441354,
+        "y": 0.02778965,
+        "width": 0.24486094,
+        "height": 0.02949979
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "specialty",
+      "text": "婦人科",
+      "bbox": {
+        "x": 0.90326481,
+        "y": 0.03377512,
+        "width": 0.04474002,
+        "height": 0.01581873
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "name-label",
+      "text": "氏名",
+      "bbox": {
+        "x": 0.06650544,
+        "y": 0.08636169,
+        "width": 0.0235792,
+        "height": 0.00855066
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "furigana-label",
+      "text": "ふりがな",
+      "bbox": {
+        "x": 0.16444982,
+        "y": 0.08678923,
+        "width": 0.05078597,
+        "height": 0.0076956
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "entry-date-label",
+      "text": "記入日",
+      "bbox": {
+        "x": 0.58464329,
+        "y": 0.08678923,
+        "width": 0.0356711,
+        "height": 0.00812313
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "birth-date-label",
+      "text": "生年月日",
+      "bbox": {
+        "x": 0.06590085,
+        "y": 0.11928174,
+        "width": 0.04957678,
+        "height": 0.01496366
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "age-label",
+      "text": "年齢",
+      "bbox": {
+        "x": 0.22914148,
+        "y": 0.11928174,
+        "width": 0.02781137,
+        "height": 0.01496366
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "age-unit",
+      "text": "歳",
+      "bbox": {
+        "x": 0.40870617,
+        "y": 0.12099188,
+        "width": 0.0120919,
+        "height": 0.00812313
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "gender-label",
+      "text": "性別（任意）",
+      "bbox": {
+        "x": 0.52841596,
+        "y": 0.11885421,
+        "width": 0.07255139,
+        "height": 0.01496366
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "gender-options",
+      "text": "□ 女性　□ 男性　□ 回答しない",
+      "bbox": {
+        "x": 0.68016929,
+        "y": 0.11928174,
+        "width": 0.18077388,
+        "height": 0.01368106
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "optional-note",
+      "text": "回答しにくい項目は空欄でもかまいません。",
+      "bbox": {
+        "x": 0.05441354,
+        "y": 0.15134673,
+        "width": 0.24788392,
+        "height": 0.01325353
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "menstruation-section-title",
+      "text": "月経について",
+      "bbox": {
+        "x": 0.06469166,
+        "y": 0.17229585,
+        "width": 0.10278114,
+        "height": 0.02137666
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "last-menstruation-prompt",
+      "text": "最終月経の開始日をご記入ください。",
+      "bbox": {
+        "x": 0.07073761,
+        "y": 0.20991877,
+        "width": 0.20858525,
+        "height": 0.02565199
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "last-menstruation-date-field",
+      "text": "年　月　日",
+      "bbox": {
+        "x": 0.36517533,
+        "y": 0.21590423,
+        "width": 0.12152358,
+        "height": 0.0089782
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "cycle-regularity-question",
+      "text": "月経周期はおおむね規則的ですか。",
+      "bbox": {
+        "x": 0.0713422,
+        "y": 0.26250534,
+        "width": 0.20737606,
+        "height": 0.01752886
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "cycle-regularity-options",
+      "text": "□ 規則的　□ 不規則　□ 閉経",
+      "bbox": {
+        "x": 0.32466747,
+        "y": 0.26635314,
+        "width": 0.18137848,
+        "height": 0.01453613
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "cycle-length-label",
+      "text": "おおよその周期",
+      "bbox": {
+        "x": 0.0713422,
+        "y": 0.31680205,
+        "width": 0.09613059,
+        "height": 0.01581873
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "cycle-length-field",
+      "text": "約　　　日間　　持続　　　日間",
+      "bbox": {
+        "x": 0.32345828,
+        "y": 0.31680205,
+        "width": 0.20556227,
+        "height": 0.01624626
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pregnancy-possibility-question",
+      "text": "現在、妊娠している可能性はありますか。",
+      "bbox": {
+        "x": 0.07073761,
+        "y": 0.36682343,
+        "width": 0.19467956,
+        "height": 0.02907225
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pregnancy-possibility-options",
+      "text": "□ ない　□ ある　□ 分からない",
+      "bbox": {
+        "x": 0.32466747,
+        "y": 0.37067123,
+        "width": 0.19588875,
+        "height": 0.01410859
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "menstruation-symptoms-label",
+      "text": "月経に伴う症状",
+      "bbox": {
+        "x": 0.0713422,
+        "y": 0.4181274,
+        "width": 0.09673519,
+        "height": 0.01624626
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "menstruation-symptoms-options",
+      "text": "□ 強い痛み　□ 出血が多い　□ 不正出血　□ 特になし",
+      "bbox": {
+        "x": 0.32406288,
+        "y": 0.4181274,
+        "width": 0.29322854,
+        "height": 0.01325353
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "visit-history-section-title",
+      "text": "受診理由・妊娠出産歴",
+      "bbox": {
+        "x": 0.06469166,
+        "y": 0.47926464,
+        "width": 0.16928658,
+        "height": 0.01838392
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "visit-reason-prompt",
+      "text": "本日はどのような症状やご相談で来院されましたか。",
+      "bbox": {
+        "x": 0.07073761,
+        "y": 0.51474989,
+        "width": 0.33857316,
+        "height": 0.01752886
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pregnancy-history-prompt",
+      "text": "妊娠・出産・流産の経験について、差し支えない範囲でご記入ください。",
+      "bbox": {
+        "x": 0.07073761,
+        "y": 0.60666952,
+        "width": 0.2261185,
+        "height": 0.02821719
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pregnancy-history-counts",
+      "text": "妊娠　　回　　出産　　回　　流産　　回",
+      "bbox": {
+        "x": 0.34038694,
+        "y": 0.61008978,
+        "width": 0.25937122,
+        "height": 0.01068833
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "treatment-history-label",
+      "text": "治療・手術歴",
+      "bbox": {
+        "x": 0.0713422,
+        "y": 0.68576315,
+        "width": 0.0828295,
+        "height": 0.00940573
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "treatment-history-options",
+      "text": "□ ない　□ ある",
+      "bbox": {
+        "x": 0.34159613,
+        "y": 0.68490808,
+        "width": 0.10278114,
+        "height": 0.01368106
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "medication-allergy-label",
+      "text": "服薬・アレルギー",
+      "bbox": {
+        "x": 0.07073761,
+        "y": 0.72338606,
+        "width": 0.10943168,
+        "height": 0.01539119
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "doctor-message-label",
+      "text": "医師へ伝えておきたいこと",
+      "bbox": {
+        "x": 0.06469166,
+        "y": 0.78409577,
+        "width": 0.16021765,
+        "height": 0.01453613
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "footer-instruction",
+      "text": "ご記入後、受付へお渡しください。",
+      "bbox": {
+        "x": 0.05622733,
+        "y": 0.97007268,
+        "width": 0.18258767,
+        "height": 0.01368106
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "page-number",
+      "text": "1 / 1",
+      "bbox": {
+        "x": 0.92140266,
+        "y": 0.97178281,
+        "width": 0.0235792,
+        "height": 0.00812313
+      },
+      "page_number": 1,
+      "essential": false
+    }
+  ],
+  "structural_items": [
+    {
+      "id": "header-rule",
+      "type": "line",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.05643437,
+        "width": 0.8929867,
+        "height": 0.0012826
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "identity-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.0735357,
+        "width": 0.8929867,
+        "height": 0.06926037
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.10816588,
+        "width": 0.8929867,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-name",
+      "type": "line",
+      "bbox": {
+        "x": 0.15114873,
+        "y": 0.0735357,
+        "width": 0.00120919,
+        "height": 0.06926037
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-top-entry",
+      "type": "line",
+      "bbox": {
+        "x": 0.5719468,
+        "y": 0.0735357,
+        "width": 0.00120919,
+        "height": 0.06926037
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-top-date",
+      "type": "line",
+      "bbox": {
+        "x": 0.67291415,
+        "y": 0.0735357,
+        "width": 0.00120919,
+        "height": 0.03548525
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-birth-field",
+      "type": "line",
+      "bbox": {
+        "x": 0.21886336,
+        "y": 0.10816588,
+        "width": 0.00120919,
+        "height": 0.03463018
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-age-unit",
+      "type": "line",
+      "bbox": {
+        "x": 0.39903265,
+        "y": 0.10816588,
+        "width": 0.00120919,
+        "height": 0.03463018
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-gender-label",
+      "type": "line",
+      "bbox": {
+        "x": 0.51632406,
+        "y": 0.10816588,
+        "width": 0.00120919,
+        "height": 0.03463018
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-gender-option-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.66807739,
+        "y": 0.10816588,
+        "width": 0.00120919,
+        "height": 0.03463018
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-gender-option-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.77690447,
+        "y": 0.10816588,
+        "width": 0.00120919,
+        "height": 0.03463018
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "gender-female-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.68016929,
+        "y": 0.12141941,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "gender-male-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.73216445,
+        "y": 0.12141941,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "gender-no-answer-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.78355502,
+        "y": 0.12141941,
+        "width": 0.01027811,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "menstruation-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.17229585,
+        "width": 0.8929867,
+        "height": 0.02180419
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "menstruation-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.20051304,
+        "width": 0.8929867,
+        "height": 0.25951261
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "menstruation-grid-row-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.25309962,
+        "width": 0.8929867,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "menstruation-grid-row-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.30525866,
+        "width": 0.8929867,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "menstruation-grid-row-3",
+      "type": "line",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.3574177,
+        "width": 0.8929867,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "menstruation-grid-row-4",
+      "type": "line",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.40743908,
+        "width": 0.8929867,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "menstruation-grid-column",
+      "type": "line",
+      "bbox": {
+        "x": 0.30229746,
+        "y": 0.20051304,
+        "width": 0.00120919,
+        "height": 0.25951261
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "cycle-regular-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.32466747,
+        "y": 0.26849081,
+        "width": 0.00967352,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "cycle-irregular-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.39480048,
+        "y": 0.26849081,
+        "width": 0.00967352,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "cycle-menopause-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.46493349,
+        "y": 0.26849081,
+        "width": 0.00967352,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pregnancy-no-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.32466747,
+        "y": 0.37280889,
+        "width": 0.00967352,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pregnancy-yes-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.3814994,
+        "y": 0.37280889,
+        "width": 0.00967352,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pregnancy-unknown-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.43833132,
+        "y": 0.37280889,
+        "width": 0.00967352,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "symptom-severe-pain-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.32406288,
+        "y": 0.4206926,
+        "width": 0.00967352,
+        "height": 0.00684053
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "symptom-heavy-bleeding-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.39661427,
+        "y": 0.4206926,
+        "width": 0.00967352,
+        "height": 0.00684053
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "symptom-irregular-bleeding-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.48125756,
+        "y": 0.4206926,
+        "width": 0.00967352,
+        "height": 0.00684053
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "symptom-none-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.55320435,
+        "y": 0.4206926,
+        "width": 0.00967352,
+        "height": 0.00684053
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "visit-history-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.47627191,
+        "width": 0.8929867,
+        "height": 0.02180419
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "visit-history-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.50491663,
+        "width": 0.8929867,
+        "height": 0.25694741
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "visit-history-grid-row-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.59512612,
+        "width": 0.8929867,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "visit-history-grid-row-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.67122702,
+        "width": 0.8929867,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "visit-history-grid-column",
+      "type": "line",
+      "bbox": {
+        "x": 0.31922612,
+        "y": 0.59512612,
+        "width": 0.00120919,
+        "height": 0.16673792
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "visit-reason-response-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.07073761,
+        "y": 0.56434374,
+        "width": 0.85429262,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "pregnancy-history-response-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.33978235,
+        "y": 0.64856776,
+        "width": 0.58524788,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "treatment-detail-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.52116082,
+        "y": 0.70671227,
+        "width": 0.40386941,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "medication-allergy-detail-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.33978235,
+        "y": 0.74476272,
+        "width": 0.58524788,
+        "height": 0.00085507
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "treatment-no-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.34159613,
+        "y": 0.68661821,
+        "width": 0.00967352,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "treatment-yes-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.40326481,
+        "y": 0.68661821,
+        "width": 0.00967352,
+        "height": 0.00726806
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "doctor-message-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.7781103,
+        "width": 0.8929867,
+        "height": 0.08080376
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "doctor-message-response-line-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.06408706,
+        "y": 0.82556648,
+        "width": 0.87243047,
+        "height": 0.00042753
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "doctor-message-response-line-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.06408706,
+        "y": 0.85378367,
+        "width": 0.87243047,
+        "height": 0.00042753
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "footer-rule",
+      "type": "line",
+      "bbox": {
+        "x": 0.05380895,
+        "y": 0.96194955,
+        "width": 0.8929867,
+        "height": 0.00042753
+      },
+      "page_number": 1,
+      "essential": false
+    }
+  ],
+  "relationships": [
+    {
+      "kind": "reading_order",
+      "source": "title",
+      "target": "name-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "name-label",
+      "target": "furigana-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "furigana-label",
+      "target": "entry-date-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "entry-date-label",
+      "target": "birth-date-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "birth-date-label",
+      "target": "age-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "age-label",
+      "target": "age-unit",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "age-unit",
+      "target": "gender-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "gender-label",
+      "target": "gender-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "gender-options",
+      "target": "optional-note",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "optional-note",
+      "target": "menstruation-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "menstruation-section-title",
+      "target": "last-menstruation-prompt",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "last-menstruation-prompt",
+      "target": "last-menstruation-date-field",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "last-menstruation-date-field",
+      "target": "cycle-regularity-question",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "cycle-regularity-question",
+      "target": "cycle-regularity-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "cycle-regularity-options",
+      "target": "cycle-length-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "cycle-length-label",
+      "target": "cycle-length-field",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "cycle-length-field",
+      "target": "pregnancy-possibility-question",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "pregnancy-possibility-question",
+      "target": "pregnancy-possibility-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "pregnancy-possibility-options",
+      "target": "menstruation-symptoms-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "menstruation-symptoms-label",
+      "target": "menstruation-symptoms-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "menstruation-symptoms-options",
+      "target": "visit-history-section-title",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "visit-history-section-title",
+      "target": "visit-reason-prompt",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "visit-reason-prompt",
+      "target": "pregnancy-history-prompt",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "pregnancy-history-prompt",
+      "target": "pregnancy-history-counts",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "pregnancy-history-counts",
+      "target": "treatment-history-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "treatment-history-label",
+      "target": "treatment-history-options",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "treatment-history-options",
+      "target": "medication-allergy-label",
+      "essential": true
+    },
+    {
+      "kind": "reading_order",
+      "source": "medication-allergy-label",
+      "target": "doctor-message-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "doctor-message-label",
+      "target": "footer-instruction",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "name-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "furigana-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "entry-date-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "birth-date-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "age-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "age-unit",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "gender-label",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "gender-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "menstruation-section-band",
+      "target": "menstruation-section-title",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "menstruation-grid-outer",
+      "target": "last-menstruation-prompt",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "menstruation-grid-outer",
+      "target": "last-menstruation-date-field",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "menstruation-grid-outer",
+      "target": "cycle-regularity-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "menstruation-grid-outer",
+      "target": "cycle-regularity-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "menstruation-grid-outer",
+      "target": "cycle-length-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "menstruation-grid-outer",
+      "target": "cycle-length-field",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "menstruation-grid-outer",
+      "target": "pregnancy-possibility-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "menstruation-grid-outer",
+      "target": "pregnancy-possibility-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "menstruation-grid-outer",
+      "target": "menstruation-symptoms-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "menstruation-grid-outer",
+      "target": "menstruation-symptoms-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "visit-history-section-band",
+      "target": "visit-history-section-title",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "visit-history-grid-outer",
+      "target": "visit-reason-prompt",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "visit-history-grid-outer",
+      "target": "pregnancy-history-prompt",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "visit-history-grid-outer",
+      "target": "pregnancy-history-counts",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "visit-history-grid-outer",
+      "target": "treatment-history-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "visit-history-grid-outer",
+      "target": "treatment-history-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "visit-history-grid-outer",
+      "target": "medication-allergy-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "doctor-message-outer",
+      "target": "doctor-message-label",
+      "essential": false
+    },
+    {
+      "kind": "adjacency",
+      "source": "name-label",
+      "target": "furigana-label",
+      "essential": false
+    },
+    {
+      "kind": "adjacency",
+      "source": "furigana-label",
+      "target": "entry-date-label",
+      "essential": false
+    },
+    {
+      "kind": "adjacency",
+      "source": "birth-date-label",
+      "target": "age-label",
+      "essential": false
+    },
+    {
+      "kind": "adjacency",
+      "source": "age-label",
+      "target": "age-unit",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "gender-label",
+      "target": "gender-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "last-menstruation-prompt",
+      "target": "last-menstruation-date-field",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "cycle-regularity-question",
+      "target": "cycle-regularity-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "cycle-length-label",
+      "target": "cycle-length-field",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "pregnancy-possibility-question",
+      "target": "pregnancy-possibility-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "menstruation-symptoms-label",
+      "target": "menstruation-symptoms-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "pregnancy-history-prompt",
+      "target": "pregnancy-history-counts",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "treatment-history-label",
+      "target": "treatment-history-options",
+      "essential": true
+    }
+  ],
+  "essential_text_anchors": [
+    "婦人科 初診問診票",
+    "月経について",
+    "最終月経の開始日をご記入ください。",
+    "月経周期はおおむね規則的ですか。",
+    "□ 規則的　□ 不規則　□ 閉経",
+    "現在、妊娠している可能性はありますか。",
+    "□ ない　□ ある　□ 分からない",
+    "月経に伴う症状",
+    "□ 強い痛み　□ 出血が多い　□ 不正出血　□ 特になし",
+    "受診理由・妊娠出産歴",
+    "本日はどのような症状やご相談で来院されましたか。",
+    "妊娠・出産・流産の経験について、差し支えない範囲でご記入ください。",
+    "妊娠　　回　　出産　　回　　流産　　回",
+    "治療・手術歴",
+    "服薬・アレルギー"
+  ],
+  "expected_page_count": 1,
+  "required_manual_checks": [
+    "no_fatal_text_overlap",
+    "no_text_clipping",
+    "layout_human_usable",
+    "word_open_edit_save"
+  ]
+}
+

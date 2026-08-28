@@ -57,6 +57,10 @@ Q08_MANIFEST = Q01_DIRECTORY / "questionnaire-08-pediatrics.manifest.json"
 Q08_ID = "questionnaire-08-pediatrics"
 Q08_SOURCE_SHA256 = "9c5679915a4e479a6fc806918832df8f0db23f325a228bec9d16fd76ba948bb9"
 Q08_REFERENCE_SHA256 = "f2109a1cd0c8be2ff5556e3f9431a3efa4bb52bf4f5e0fc663de5307e6ec2095"
+Q09_MANIFEST = Q01_DIRECTORY / "questionnaire-09-gynecology.manifest.json"
+Q09_ID = "questionnaire-09-gynecology"
+Q09_SOURCE_SHA256 = "b68368e751d971cd9869f4a47009c98d57e569bc6881f43a6853761931fa7089"
+Q09_REFERENCE_SHA256 = "e2101d144bfadfb7a77d9fb229b31d41a137f426e1afb72869d41a0935217462"
 STAGE_TWO_SUITE_PATH = (
     Path(__file__).parent / "fixtures" / "stages" / "questionnaire-stage-2.json"
 )
@@ -77,6 +81,9 @@ STAGE_SEVEN_SUITE_PATH = (
 )
 STAGE_EIGHT_SUITE_PATH = (
     Path(__file__).parent / "fixtures" / "stages" / "questionnaire-stage-8.json"
+)
+STAGE_NINE_SUITE_PATH = (
+    Path(__file__).parent / "fixtures" / "stages" / "questionnaire-stage-9.json"
 )
 
 
@@ -328,6 +335,63 @@ class StageSuiteContractTest(unittest.TestCase):
                 (1240, 1754),
                 (2339, 1654),
                 (1240, 1754),
+            ],
+        )
+        self.assertEqual(suite.threshold, 70)
+        self.assertEqual(suite.production_languages, ("jpn",))
+        self.assertEqual(suite.visible_languages, suite.production_languages)
+        self.assertEqual(suite.snapshot_dpi, 300)
+
+    def test_stage_nine_adds_only_q09_in_the_pinned_order(self):
+        suite = _load_suite(STAGE_NINE_SUITE_PATH)
+
+        self.assertEqual(
+            [item.fixture_id for item in suite.fixtures],
+            [
+                "synthetic-dense-japanese-form-v1",
+                Q01_ID,
+                Q02_ID,
+                Q03_ID,
+                Q04_ID,
+                Q05_ID,
+                Q06_ID,
+                Q07_ID,
+                Q08_ID,
+                Q09_ID,
+            ],
+        )
+        self.assertEqual(
+            [item.source_encoding for item in suite.fixtures],
+            [
+                "base64",
+                "raw",
+                "raw",
+                "raw",
+                "raw",
+                "raw",
+                "raw",
+                "raw",
+                "raw",
+                "raw",
+            ],
+        )
+        self.assertEqual(
+            [item.source_dpi for item in suite.fixtures],
+            [96, 150, 200, 150, 150, 200, 150, 200, 150, 200],
+        )
+        self.assertEqual(
+            [(item.source_width, item.source_height) for item in suite.fixtures],
+            [
+                (700, 991),
+                (1240, 1754),
+                (1654, 2339),
+                (1240, 1754),
+                (1754, 1240),
+                (1654, 2339),
+                (1240, 1754),
+                (2339, 1654),
+                (1240, 1754),
+                (1654, 2339),
             ],
         )
         self.assertEqual(suite.threshold, 70)
@@ -732,6 +796,84 @@ class StageSuiteContractTest(unittest.TestCase):
                 ("weight-unit", "temperature-label"),
                 ("temperature-label", "temperature-unit"),
                 ("temperature-unit", "current-symptoms-section-title"),
+            ],
+        )
+        self.assertEqual(
+            reference_json["source_dimensions"]["orientation"],
+            "portrait",
+        )
+        self.assertTrue(fixture.manifest["redistribution_allowed"])
+        self.assertFalse(fixture.manifest["contains_personal_data"])
+
+    def test_q09_reference_is_reviewed_source_grounded_and_complete(self):
+        fixture = _read_fixture(Q09_MANIFEST, Q09_ID)
+        reference = fixture.reference
+
+        self.assertEqual(fixture.source_sha256, Q09_SOURCE_SHA256)
+        self.assertEqual(fixture.reference_sha256, Q09_REFERENCE_SHA256)
+        self.assertEqual((fixture.source_width, fixture.source_height), (1654, 2339))
+        self.assertEqual(fixture.source_dpi, 200)
+        self.assertTrue(reference.reviewed)
+        self.assertEqual(len(reference.text_regions), 32)
+        self.assertEqual(len(reference.structural_items), 46)
+        self.assertEqual(len(reference.relationships), 68)
+        self.assertEqual(
+            sum("checkbox" in item.id for item in reference.structural_items),
+            15,
+        )
+        structure_ids = {item.id for item in reference.structural_items}
+        self.assertEqual(
+            {
+                item_id
+                for item_id in structure_ids
+                if item_id.endswith("grid-outer")
+            },
+            {
+                "identity-grid-outer",
+                "menstruation-grid-outer",
+                "visit-history-grid-outer",
+            },
+        )
+        self.assertIn("doctor-message-outer", structure_ids)
+        self.assertNotIn("doctor-message-grid-outer", structure_ids)
+        expected_text = "".join(item.text for item in reference.text_regions)
+        for phrase in (
+            "婦人科 初診問診票",
+            "回答しにくい項目は空欄でもかまいません。",
+            "月経について",
+            "最終月経の開始日をご記入ください。",
+            "月経周期はおおむね規則的ですか。",
+            "現在、妊娠している可能性はありますか。",
+            "月経に伴う症状",
+            "受診理由・妊娠出産歴",
+            "本日はどのような症状やご相談で来院されましたか。",
+            "妊娠・出産・流産の経験について、差し支えない範囲でご記入ください。",
+            "治療・手術歴",
+            "服薬・アレルギー",
+            "医師へ伝えておきたいこと",
+            "ご記入後、受付へお渡しください。",
+        ):
+            self.assertIn(phrase, expected_text)
+        reference_json = json.loads(fixture.reference_path.read_text(encoding="utf-8"))
+        self.assertEqual(reference_json["review"]["exclusions"], [])
+        identity_reading_order = [
+            (item["source"], item["target"])
+            for item in reference_json["relationships"]
+            if item["kind"] == "reading_order"
+        ][:10]
+        self.assertEqual(
+            identity_reading_order,
+            [
+                ("title", "name-label"),
+                ("name-label", "furigana-label"),
+                ("furigana-label", "entry-date-label"),
+                ("entry-date-label", "birth-date-label"),
+                ("birth-date-label", "age-label"),
+                ("age-label", "age-unit"),
+                ("age-unit", "gender-label"),
+                ("gender-label", "gender-options"),
+                ("gender-options", "optional-note"),
+                ("optional-note", "menstruation-section-title"),
             ],
         )
         self.assertEqual(

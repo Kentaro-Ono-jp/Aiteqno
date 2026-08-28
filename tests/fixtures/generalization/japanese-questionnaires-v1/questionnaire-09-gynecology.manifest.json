@@ -1,0 +1,51 @@
+{
+  "manifest_version": 1,
+  "fixture_id": "questionnaire-09-gynecology",
+  "role": "generalization_stage_fixture",
+  "source": {
+    "path": "questionnaire-09-gynecology.png",
+    "encoding": "raw",
+    "sha256": "b68368e751d971cd9869f4a47009c98d57e569bc6881f43a6853761931fa7089",
+    "pixel_width": 1654,
+    "pixel_height": 2339,
+    "dpi": 200,
+    "color_mode": "RGB",
+    "orientation": "portrait"
+  },
+  "reference": {
+    "path": "questionnaire-09-gynecology.reference.json",
+    "sha256": "e2101d144bfadfb7a77d9fb229b31d41a137f426e1afb72869d41a0935217462"
+  },
+  "license": "MIT",
+  "provenance": "Project-original Japanese gynecology initial intake questionnaire authored and rasterized for the Aiteqno fixture corpus Issue #91.",
+  "redistribution_allowed": true,
+  "contains_personal_data": false,
+  "review": {
+    "status": "reviewed",
+    "reviewer": "Kentaro Ono (blanket approval); transcription and 100% visual cross-check by Noel",
+    "reviewed_at": "2026-08-28",
+    "reference_revision": 1,
+    "authorization": "User explicitly authorized implementation through Issue #91 closure on 2026-08-28.",
+    "excluded_items": []
+  },
+  "ocr_contract": {
+    "provider": "tesseract",
+    "minimum_major_version": 5,
+    "production_languages": [
+      "jpn"
+    ],
+    "visible_evidence_languages": [
+      "jpn"
+    ],
+    "page_segmentation_mode": 6,
+    "engine_mode": 3,
+    "source_dpi": 200
+  },
+  "quality_contract": {
+    "normalization": "NFKC then remove every Unicode whitespace character",
+    "overall_minimum": 70,
+    "stage_gate": "each active fixture independently meets overall_minimum; averages never compensate",
+    "expected_page_count_is_diagnostic": true
+  }
+}
+
