@@ -1,0 +1,2171 @@
+{
+  "reference_version": 1,
+  "reference_id": "questionnaire-10-health-lifestyle",
+  "source_sha256": "502ce57a54c3fc9982994da1aa64c2c810f3aca1e16d8a13f379b79cbb96fc7d",
+  "source_dimensions": {
+    "pixel_width": 2480,
+    "pixel_height": 3508,
+    "dpi": 300,
+    "color_mode": "RGB",
+    "orientation": "portrait",
+    "sha256": "502ce57a54c3fc9982994da1aa64c2c810f3aca1e16d8a13f379b79cbb96fc7d"
+  },
+  "normalization": "NFKC then remove every Unicode whitespace character",
+  "reviewed": true,
+  "review": {
+    "status": "reviewed",
+    "reviewer": "Kentaro Ono (blanket approval); transcription and 100% visual cross-check by Noel",
+    "reviewed_at": "2026-08-30",
+    "reference_revision": 1,
+    "authorization": "User explicitly authorized implementation through Issue #93 closure on 2026-08-30.",
+    "method": "Source PNG inspected at 100%; every visible printed string and every material patient-information boundary, smoking grid, drinking grid, exercise/sleep grid, food grid, disease/family-history grid, section band, checkbox, response line, footer rule, reading order, containment, and adjacency relation was cross-checked against source pixels. The six independent tables are the patient-information, smoking, drinking, exercise/sleep, food, and disease/family-history grids. Exactly 37 source checkboxes were verified. OCR and pixel measurements were used only to locate source pixels, never as transcription truth.",
+    "exclusions": []
+  },
+  "text_regions": [
+    {
+      "id": "title",
+      "text": "健康診断・生活習慣 問診票",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.02793615,
+        "width": 0.30241935,
+        "height": 0.02850627
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "category",
+      "text": "健康診断",
+      "bbox": {
+        "x": 0.89032258,
+        "y": 0.0336374,
+        "width": 0.05846774,
+        "height": 0.01567845
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "name-label",
+      "text": "氏名",
+      "bbox": {
+        "x": 0.0625,
+        "y": 0.08124287,
+        "width": 0.04637097,
+        "height": 0.01995439
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "furigana-label",
+      "text": "ふりがな",
+      "bbox": {
+        "x": 0.15927419,
+        "y": 0.08124287,
+        "width": 0.06451613,
+        "height": 0.01995439
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "entry-date-label",
+      "text": "記入日",
+      "bbox": {
+        "x": 0.57862903,
+        "y": 0.08124287,
+        "width": 0.05846774,
+        "height": 0.01995439
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "birth-date-label",
+      "text": "生年月日",
+      "bbox": {
+        "x": 0.0625,
+        "y": 0.1154504,
+        "width": 0.06854839,
+        "height": 0.0213797
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "age-label",
+      "text": "年齢",
+      "bbox": {
+        "x": 0.22177419,
+        "y": 0.1154504,
+        "width": 0.04637097,
+        "height": 0.0213797
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "age-unit",
+      "text": "歳",
+      "bbox": {
+        "x": 0.40120968,
+        "y": 0.1154504,
+        "width": 0.03024194,
+        "height": 0.0213797
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "gender-label",
+      "text": "性別（任意）",
+      "bbox": {
+        "x": 0.51612903,
+        "y": 0.1154504,
+        "width": 0.08870968,
+        "height": 0.0213797
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "gender-options",
+      "text": "□ 女性　□ 男性　□ 回答しない",
+      "bbox": {
+        "x": 0.6733871,
+        "y": 0.1154504,
+        "width": 0.2016129,
+        "height": 0.0213797
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "smoking-section-title",
+      "text": "喫煙",
+      "bbox": {
+        "x": 0.05846774,
+        "y": 0.15393387,
+        "width": 0.0483871,
+        "height": 0.0213797
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "smoking-question",
+      "text": "たばこを吸いますか。吸う場合は本数と年数をご記入ください。",
+      "bbox": {
+        "x": 0.06451613,
+        "y": 0.18386545,
+        "width": 0.2016129,
+        "height": 0.03705815
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "smoking-options",
+      "text": "□ 吸わない　□ 以前　□ 現在",
+      "bbox": {
+        "x": 0.29435484,
+        "y": 0.18814139,
+        "width": 0.18145161,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "smoking-amount-field",
+      "text": "1日　　　本・　　　年間",
+      "bbox": {
+        "x": 0.64112903,
+        "y": 0.18814139,
+        "width": 0.18145161,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "passive-smoking-label",
+      "text": "受動喫煙",
+      "bbox": {
+        "x": 0.06451613,
+        "y": 0.23517674,
+        "width": 0.07258065,
+        "height": 0.02423033
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "passive-smoking-options",
+      "text": "□ ほぼない　□ 時々　□ 毎日",
+      "bbox": {
+        "x": 0.29435484,
+        "y": 0.23517674,
+        "width": 0.2016129,
+        "height": 0.02423033
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "quit-smoking-field",
+      "text": "禁煙希望　□ なし　□ あり",
+      "bbox": {
+        "x": 0.64112903,
+        "y": 0.23517674,
+        "width": 0.18951613,
+        "height": 0.02423033
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "drinking-section-title",
+      "text": "飲酒",
+      "bbox": {
+        "x": 0.05846774,
+        "y": 0.28791334,
+        "width": 0.0483871,
+        "height": 0.0213797
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "drinking-question",
+      "text": "お酒を飲む頻度と、1回あたりのおおよその量をご記入ください。",
+      "bbox": {
+        "x": 0.06451613,
+        "y": 0.31641961,
+        "width": 0.2016129,
+        "height": 0.03848347
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "drinking-frequency-options",
+      "text": "□ 飲まない　□ 月数回　□ 週数回　□ 毎日",
+      "bbox": {
+        "x": 0.29435484,
+        "y": 0.32212087,
+        "width": 0.24596774,
+        "height": 0.02565564
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "drinking-amount-field",
+      "text": "1回の量",
+      "bbox": {
+        "x": 0.64112903,
+        "y": 0.32212087,
+        "width": 0.12096774,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "alcohol-free-days-label",
+      "text": "休肝日",
+      "bbox": {
+        "x": 0.06451613,
+        "y": 0.36630559,
+        "width": 0.07258065,
+        "height": 0.02565564
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "alcohol-free-days-options",
+      "text": "□ 週0日　□ 週1〜2日　□ 週3日以上",
+      "bbox": {
+        "x": 0.29435484,
+        "y": 0.36488027,
+        "width": 0.23387097,
+        "height": 0.02708096
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "drinking-start-age-field",
+      "text": "飲酒開始年齢　　　歳",
+      "bbox": {
+        "x": 0.64112903,
+        "y": 0.36630559,
+        "width": 0.1733871,
+        "height": 0.02565564
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "exercise-sleep-section-title",
+      "text": "運動・睡眠",
+      "bbox": {
+        "x": 0.05846774,
+        "y": 0.4204675,
+        "width": 0.10483871,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "exercise-question",
+      "text": "週にどのくらい運動していますか。",
+      "bbox": {
+        "x": 0.06451613,
+        "y": 0.45039909,
+        "width": 0.20564516,
+        "height": 0.03705815
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "exercise-field",
+      "text": "週　　　日・1回　　　分　　内容",
+      "bbox": {
+        "x": 0.29233871,
+        "y": 0.4518244,
+        "width": 0.64516129,
+        "height": 0.02850627
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "sleep-question",
+      "text": "睡眠で十分に休養が取れていますか。",
+      "bbox": {
+        "x": 0.06451613,
+        "y": 0.50741163,
+        "width": 0.20564516,
+        "height": 0.03848347
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "sleep-options",
+      "text": "□ 十分　□ やや不足　□ 不足",
+      "bbox": {
+        "x": 0.29435484,
+        "y": 0.51311288,
+        "width": 0.20967742,
+        "height": 0.02708096
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "sleep-hours-field",
+      "text": "睡眠　　　時間",
+      "bbox": {
+        "x": 0.69556452,
+        "y": 0.51311288,
+        "width": 0.12096774,
+        "height": 0.02708096
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "food-section-title",
+      "text": "食事",
+      "bbox": {
+        "x": 0.05846774,
+        "y": 0.577252,
+        "width": 0.0483871,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "breakfast-label",
+      "text": "朝食",
+      "bbox": {
+        "x": 0.06451613,
+        "y": 0.60860889,
+        "width": 0.08064516,
+        "height": 0.02565564
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "breakfast-options",
+      "text": "□ 毎日　□ 時々抜く　□ ほぼ食べない",
+      "bbox": {
+        "x": 0.29435484,
+        "y": 0.60860889,
+        "width": 0.29032258,
+        "height": 0.02565564
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "dinner-time-label",
+      "text": "夕食の時間",
+      "bbox": {
+        "x": 0.06451613,
+        "y": 0.64851767,
+        "width": 0.09677419,
+        "height": 0.02708096
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "dinner-time-options",
+      "text": "□ 20時前　□ 20〜22時　□ 22時以降",
+      "bbox": {
+        "x": 0.29435484,
+        "y": 0.64851767,
+        "width": 0.27419355,
+        "height": 0.02708096
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "eating-tendency-label",
+      "text": "食事の傾向",
+      "bbox": {
+        "x": 0.06451613,
+        "y": 0.68842645,
+        "width": 0.09677419,
+        "height": 0.02708096
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "eating-tendency-options",
+      "text": "□ 野菜が多い　□ 塩分が多い　□ 間食が多い",
+      "bbox": {
+        "x": 0.29435484,
+        "y": 0.68842645,
+        "width": 0.30645161,
+        "height": 0.02708096
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "disease-history-section-title",
+      "text": "治療中の病気・家族歴",
+      "bbox": {
+        "x": 0.05846774,
+        "y": 0.74116306,
+        "width": 0.18951613,
+        "height": 0.02423033
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-disease-question",
+      "text": "現在、治療中または経過観察中の病気はありますか。",
+      "bbox": {
+        "x": 0.06451613,
+        "y": 0.76824401,
+        "width": 0.20564516,
+        "height": 0.04275941
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-disease-options",
+      "text": "□ ない　□ ある",
+      "bbox": {
+        "x": 0.29435484,
+        "y": 0.7767959,
+        "width": 0.13306452,
+        "height": 0.02565564
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "medication-label",
+      "text": "服薬・サプリメント",
+      "bbox": {
+        "x": 0.06451613,
+        "y": 0.8295325,
+        "width": 0.14112903,
+        "height": 0.02850627
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "family-history-label",
+      "text": "家族歴",
+      "bbox": {
+        "x": 0.06451613,
+        "y": 0.87656784,
+        "width": 0.08064516,
+        "height": 0.02850627
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "family-history-options",
+      "text": "□ 高血圧　□ 糖尿病　□ 心臓病　□ 脳卒中　□ がん",
+      "bbox": {
+        "x": 0.29435484,
+        "y": 0.87656784,
+        "width": 0.31451613,
+        "height": 0.02850627
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "consultation-label",
+      "text": "健診時に相談したいこと",
+      "bbox": {
+        "x": 0.05040323,
+        "y": 0.93215507,
+        "width": 0.16532258,
+        "height": 0.02565564
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "footer-instruction",
+      "text": "ご記入後、受付へお渡しください。",
+      "bbox": {
+        "x": 0.05040323,
+        "y": 0.96351197,
+        "width": 0.2016129,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "page-number",
+      "text": "1 / 1",
+      "bbox": {
+        "x": 0.91330645,
+        "y": 0.96351197,
+        "width": 0.04032258,
+        "height": 0.02280502
+      },
+      "page_number": 1,
+      "essential": false
+    }
+  ],
+  "structural_items": [
+    {
+      "id": "header-rule",
+      "type": "line",
+      "bbox": {
+        "x": 0.05362903,
+        "y": 0.05644242,
+        "width": 0.89395161,
+        "height": 0.00142531
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "identity-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.07383124,
+        "width": 0.89233871,
+        "height": 0.06870011
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.10746864,
+        "width": 0.89314516,
+        "height": 0.00142531
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-name",
+      "type": "line",
+      "bbox": {
+        "x": 0.15080645,
+        "y": 0.07354618,
+        "width": 0.00201613,
+        "height": 0.06927024
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-right",
+      "type": "line",
+      "bbox": {
+        "x": 0.57096774,
+        "y": 0.07354618,
+        "width": 0.00201613,
+        "height": 0.06927024
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-birth-field",
+      "type": "line",
+      "bbox": {
+        "x": 0.21774194,
+        "y": 0.10775371,
+        "width": 0.00201613,
+        "height": 0.03506271
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-age-unit",
+      "type": "line",
+      "bbox": {
+        "x": 0.39758065,
+        "y": 0.10775371,
+        "width": 0.00201613,
+        "height": 0.03506271
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-gender-label",
+      "type": "line",
+      "bbox": {
+        "x": 0.51532258,
+        "y": 0.10775371,
+        "width": 0.00201613,
+        "height": 0.03506271
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-gender-options",
+      "type": "line",
+      "bbox": {
+        "x": 0.66653226,
+        "y": 0.10775371,
+        "width": 0.00201613,
+        "height": 0.03506271
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "identity-grid-column-no-answer",
+      "type": "line",
+      "bbox": {
+        "x": 0.77580645,
+        "y": 0.10775371,
+        "width": 0.00201613,
+        "height": 0.03506271
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "gender-female-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.68024194,
+        "y": 0.12115165,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "gender-male-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.73145161,
+        "y": 0.12115165,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "gender-no-answer-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.78266129,
+        "y": 0.12115165,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "smoking-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05362903,
+        "y": 0.15450399,
+        "width": 0.89314516,
+        "height": 0.02166477
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "smoking-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.18329532,
+        "width": 0.89233871,
+        "height": 0.08979475
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "smoking-grid-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.22748005,
+        "width": 0.89314516,
+        "height": 0.00142531
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "smoking-grid-column-prompt",
+      "type": "line",
+      "bbox": {
+        "x": 0.27701613,
+        "y": 0.18301026,
+        "width": 0.00201613,
+        "height": 0.09036488
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "smoking-grid-column-detail",
+      "type": "line",
+      "bbox": {
+        "x": 0.62983871,
+        "y": 0.18301026,
+        "width": 0.00201613,
+        "height": 0.09036488
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "smoking-never-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.29879032,
+        "y": 0.19840365,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "smoking-former-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.3733871,
+        "y": 0.19840365,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "smoking-current-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.42258065,
+        "y": 0.19840365,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "passive-never-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.29879032,
+        "y": 0.24230331,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "passive-sometimes-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.37620968,
+        "y": 0.24230331,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "passive-daily-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.42903226,
+        "y": 0.24230331,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "quit-no-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.71612903,
+        "y": 0.24230331,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "quit-yes-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.77137097,
+        "y": 0.24230331,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "drinking-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05362903,
+        "y": 0.28734322,
+        "width": 0.89314516,
+        "height": 0.02166477
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "drinking-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.31613455,
+        "width": 0.89233871,
+        "height": 0.09007982
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "drinking-grid-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.36060433,
+        "width": 0.89314516,
+        "height": 0.00142531
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "drinking-grid-column-prompt",
+      "type": "line",
+      "bbox": {
+        "x": 0.27701613,
+        "y": 0.31584949,
+        "width": 0.00201613,
+        "height": 0.09064994
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "drinking-grid-column-detail",
+      "type": "line",
+      "bbox": {
+        "x": 0.62983871,
+        "y": 0.31584949,
+        "width": 0.00201613,
+        "height": 0.09064994
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "drinking-amount-response-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.74798387,
+        "y": 0.34749145,
+        "width": 0.17741935,
+        "height": 0.00142531
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "drinking-never-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.29879032,
+        "y": 0.33095781,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "drinking-monthly-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.36935484,
+        "y": 0.33095781,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "drinking-weekly-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.42822581,
+        "y": 0.33095781,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "drinking-daily-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.48709677,
+        "y": 0.33095781,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "alcohol-free-zero-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.29879032,
+        "y": 0.37514253,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "alcohol-free-one-two-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.35524194,
+        "y": 0.37514253,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "alcohol-free-three-plus-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.43064516,
+        "y": 0.37514253,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "exercise-sleep-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05362903,
+        "y": 0.4204675,
+        "width": 0.89314516,
+        "height": 0.02166477
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "exercise-sleep-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.44925884,
+        "width": 0.89233871,
+        "height": 0.11374002
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "exercise-sleep-grid-row",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.50541619,
+        "width": 0.89314516,
+        "height": 0.00142531
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "exercise-sleep-grid-column",
+      "type": "line",
+      "bbox": {
+        "x": 0.2766129,
+        "y": 0.44897377,
+        "width": 0.00201613,
+        "height": 0.11431015
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "exercise-content-response-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.65564516,
+        "y": 0.48175599,
+        "width": 0.26975806,
+        "height": 0.00142531
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "sleep-enough-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.29879032,
+        "y": 0.52251995,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "sleep-somewhat-short-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.35604839,
+        "y": 0.52251995,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "sleep-short-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.43951613,
+        "y": 0.52251995,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "food-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05362903,
+        "y": 0.577252,
+        "width": 0.89314516,
+        "height": 0.02166477
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "food-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.60604333,
+        "width": 0.89233871,
+        "height": 0.12200684
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "food-grid-row-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.64538198,
+        "width": 0.89314516,
+        "height": 0.00142531
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "food-grid-row-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.68586089,
+        "width": 0.89314516,
+        "height": 0.00142531
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "food-grid-column",
+      "type": "line",
+      "bbox": {
+        "x": 0.27701613,
+        "y": 0.60575827,
+        "width": 0.00201613,
+        "height": 0.12257697
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "breakfast-daily-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.29879032,
+        "y": 0.61744584,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "breakfast-sometimes-skip-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.35322581,
+        "y": 0.61744584,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "breakfast-rarely-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.43266129,
+        "y": 0.61744584,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "dinner-before-twenty-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.29879032,
+        "y": 0.65792474,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "dinner-twenty-to-twenty-two-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.36693548,
+        "y": 0.65792474,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "dinner-after-twenty-two-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.44919355,
+        "y": 0.65792474,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "vegetables-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.29879032,
+        "y": 0.69840365,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "salt-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.39072581,
+        "y": 0.69840365,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "snacking-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.48266129,
+        "y": 0.69840365,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "disease-history-section-band",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05362903,
+        "y": 0.74230331,
+        "width": 0.89314516,
+        "height": 0.02166477
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "disease-history-grid-outer",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.77109464,
+        "width": 0.89233871,
+        "height": 0.15421893
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "disease-history-grid-row-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.827252,
+        "width": 0.89314516,
+        "height": 0.00142531
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "disease-history-grid-row-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.87485747,
+        "width": 0.89314516,
+        "height": 0.00142531
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "disease-history-grid-column",
+      "type": "line",
+      "bbox": {
+        "x": 0.2766129,
+        "y": 0.77080958,
+        "width": 0.00201613,
+        "height": 0.15478905
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-disease-response-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.4875,
+        "y": 0.80473204,
+        "width": 0.43790323,
+        "height": 0.00142531
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "medication-response-line",
+      "type": "line",
+      "bbox": {
+        "x": 0.29758065,
+        "y": 0.85917902,
+        "width": 0.62782258,
+        "height": 0.00142531
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-disease-no-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.29879032,
+        "y": 0.78620296,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "current-disease-yes-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.35967742,
+        "y": 0.78620296,
+        "width": 0.01048387,
+        "height": 0.00741163
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "family-hypertension-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.29879032,
+        "y": 0.8891106,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "family-diabetes-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.35725806,
+        "y": 0.8891106,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "family-heart-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.41612903,
+        "y": 0.8891106,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "family-stroke-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.475,
+        "y": 0.8891106,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "family-cancer-checkbox",
+      "type": "rectangle",
+      "bbox": {
+        "x": 0.53346774,
+        "y": 0.8891106,
+        "width": 0.01008065,
+        "height": 0.00712657
+      },
+      "page_number": 1,
+      "essential": true
+    },
+    {
+      "id": "consultation-response-line-1",
+      "type": "line",
+      "bbox": {
+        "x": 0.20846774,
+        "y": 0.95068415,
+        "width": 0.7391129,
+        "height": 0.00142531
+      },
+      "page_number": 1,
+      "essential": false
+    },
+    {
+      "id": "consultation-response-line-2",
+      "type": "line",
+      "bbox": {
+        "x": 0.05403226,
+        "y": 0.96208666,
+        "width": 0.89314516,
+        "height": 0.00114025
+      },
+      "page_number": 1,
+      "essential": false
+    }
+  ],
+  "relationships": [
+    {
+      "kind": "reading_order",
+      "source": "title",
+      "target": "category",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "category",
+      "target": "name-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "name-label",
+      "target": "furigana-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "furigana-label",
+      "target": "entry-date-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "entry-date-label",
+      "target": "birth-date-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "birth-date-label",
+      "target": "age-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "age-label",
+      "target": "age-unit",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "age-unit",
+      "target": "gender-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "gender-label",
+      "target": "gender-options",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "gender-options",
+      "target": "smoking-section-title",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "smoking-section-title",
+      "target": "smoking-question",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "smoking-question",
+      "target": "smoking-options",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "smoking-options",
+      "target": "smoking-amount-field",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "smoking-amount-field",
+      "target": "passive-smoking-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "passive-smoking-label",
+      "target": "passive-smoking-options",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "passive-smoking-options",
+      "target": "quit-smoking-field",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "quit-smoking-field",
+      "target": "drinking-section-title",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "drinking-section-title",
+      "target": "drinking-question",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "drinking-question",
+      "target": "drinking-frequency-options",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "drinking-frequency-options",
+      "target": "drinking-amount-field",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "drinking-amount-field",
+      "target": "alcohol-free-days-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "alcohol-free-days-label",
+      "target": "alcohol-free-days-options",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "alcohol-free-days-options",
+      "target": "drinking-start-age-field",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "drinking-start-age-field",
+      "target": "exercise-sleep-section-title",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "exercise-sleep-section-title",
+      "target": "exercise-question",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "exercise-question",
+      "target": "exercise-field",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "exercise-field",
+      "target": "sleep-question",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "sleep-question",
+      "target": "sleep-options",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "sleep-options",
+      "target": "sleep-hours-field",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "sleep-hours-field",
+      "target": "food-section-title",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "food-section-title",
+      "target": "breakfast-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "breakfast-label",
+      "target": "breakfast-options",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "breakfast-options",
+      "target": "dinner-time-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "dinner-time-label",
+      "target": "dinner-time-options",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "dinner-time-options",
+      "target": "eating-tendency-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "eating-tendency-label",
+      "target": "eating-tendency-options",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "eating-tendency-options",
+      "target": "disease-history-section-title",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "disease-history-section-title",
+      "target": "current-disease-question",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "current-disease-question",
+      "target": "current-disease-options",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "current-disease-options",
+      "target": "medication-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "medication-label",
+      "target": "family-history-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "family-history-label",
+      "target": "family-history-options",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "family-history-options",
+      "target": "consultation-label",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "consultation-label",
+      "target": "footer-instruction",
+      "essential": false
+    },
+    {
+      "kind": "reading_order",
+      "source": "footer-instruction",
+      "target": "page-number",
+      "essential": false
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "name-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "furigana-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "entry-date-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "birth-date-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "age-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "age-unit",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "gender-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "identity-grid-outer",
+      "target": "gender-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "smoking-section-band",
+      "target": "smoking-section-title",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "smoking-grid-outer",
+      "target": "smoking-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "smoking-grid-outer",
+      "target": "smoking-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "smoking-grid-outer",
+      "target": "smoking-amount-field",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "smoking-grid-outer",
+      "target": "passive-smoking-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "smoking-grid-outer",
+      "target": "passive-smoking-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "smoking-grid-outer",
+      "target": "quit-smoking-field",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "drinking-section-band",
+      "target": "drinking-section-title",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "drinking-grid-outer",
+      "target": "drinking-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "drinking-grid-outer",
+      "target": "drinking-frequency-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "drinking-grid-outer",
+      "target": "drinking-amount-field",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "drinking-grid-outer",
+      "target": "alcohol-free-days-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "drinking-grid-outer",
+      "target": "alcohol-free-days-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "drinking-grid-outer",
+      "target": "drinking-start-age-field",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "exercise-sleep-section-band",
+      "target": "exercise-sleep-section-title",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "exercise-sleep-grid-outer",
+      "target": "exercise-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "exercise-sleep-grid-outer",
+      "target": "exercise-field",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "exercise-sleep-grid-outer",
+      "target": "sleep-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "exercise-sleep-grid-outer",
+      "target": "sleep-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "exercise-sleep-grid-outer",
+      "target": "sleep-hours-field",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "food-section-band",
+      "target": "food-section-title",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "food-grid-outer",
+      "target": "breakfast-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "food-grid-outer",
+      "target": "breakfast-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "food-grid-outer",
+      "target": "dinner-time-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "food-grid-outer",
+      "target": "dinner-time-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "food-grid-outer",
+      "target": "eating-tendency-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "food-grid-outer",
+      "target": "eating-tendency-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "disease-history-section-band",
+      "target": "disease-history-section-title",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "disease-history-grid-outer",
+      "target": "current-disease-question",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "disease-history-grid-outer",
+      "target": "current-disease-options",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "disease-history-grid-outer",
+      "target": "medication-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "disease-history-grid-outer",
+      "target": "family-history-label",
+      "essential": true
+    },
+    {
+      "kind": "containment",
+      "source": "disease-history-grid-outer",
+      "target": "family-history-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "name-label",
+      "target": "furigana-label",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "furigana-label",
+      "target": "entry-date-label",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "birth-date-label",
+      "target": "age-label",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "age-label",
+      "target": "age-unit",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "gender-label",
+      "target": "gender-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "smoking-question",
+      "target": "smoking-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "smoking-options",
+      "target": "smoking-amount-field",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "passive-smoking-label",
+      "target": "passive-smoking-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "passive-smoking-options",
+      "target": "quit-smoking-field",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "drinking-question",
+      "target": "drinking-frequency-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "drinking-frequency-options",
+      "target": "drinking-amount-field",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "alcohol-free-days-label",
+      "target": "alcohol-free-days-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "alcohol-free-days-options",
+      "target": "drinking-start-age-field",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "exercise-question",
+      "target": "exercise-field",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "sleep-question",
+      "target": "sleep-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "sleep-options",
+      "target": "sleep-hours-field",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "breakfast-label",
+      "target": "breakfast-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "dinner-time-label",
+      "target": "dinner-time-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "eating-tendency-label",
+      "target": "eating-tendency-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "current-disease-question",
+      "target": "current-disease-options",
+      "essential": true
+    },
+    {
+      "kind": "adjacency",
+      "source": "family-history-label",
+      "target": "family-history-options",
+      "essential": true
+    }
+  ],
+  "essential_text_anchors": [
+    "健康診断・生活習慣 問診票",
+    "喫煙",
+    "たばこを吸いますか。吸う場合は本数と年数をご記入ください。",
+    "受動喫煙",
+    "飲酒",
+    "お酒を飲む頻度と、1回あたりのおおよその量をご記入ください。",
+    "運動・睡眠",
+    "週にどのくらい運動していますか。",
+    "睡眠で十分に休養が取れていますか。",
+    "食事",
+    "治療中の病気・家族歴",
+    "現在、治療中または経過観察中の病気はありますか。",
+    "服薬・サプリメント",
+    "家族歴"
+  ],
+  "expected_page_count": 1,
+  "required_manual_checks": [
+    "no_fatal_text_overlap",
+    "no_text_clipping",
+    "layout_human_usable",
+    "word_open_edit_save"
+  ]
+}
