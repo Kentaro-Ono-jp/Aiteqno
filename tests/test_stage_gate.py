@@ -33,6 +33,7 @@ class StageGateTest(unittest.TestCase):
                 measurement("q07", 70),
                 measurement("q08", 70),
                 measurement("q09", 70),
+                measurement("q10", 70),
             )
         )
 
@@ -53,11 +54,12 @@ class StageGateTest(unittest.TestCase):
                 measurement("q07", 10),
                 measurement("q08", 100),
                 measurement("q09", 100),
+                measurement("q10", 100),
             )
         )
 
         self.assertFalse(result.passed)
-        self.assertEqual(result.average_overall_diagnostic, 82)
+        self.assertEqual(result.average_overall_diagnostic, 83.636364)
         self.assertFalse(result.to_dict()["average_used_for_decision"])
 
     def test_69_99_fails_even_when_every_other_fixture_is_100(self):
@@ -73,6 +75,7 @@ class StageGateTest(unittest.TestCase):
                 measurement("q07", 100),
                 measurement("q08", 100),
                 measurement("q09", 69.99),
+                measurement("q10", 100),
             )
         )
 
@@ -92,6 +95,7 @@ class StageGateTest(unittest.TestCase):
                 measurement("q07", 100, previous=100),
                 measurement("q08", 100, previous=100),
                 measurement("q09", 100, previous=100),
+                measurement("q10", 100, previous=100),
             )
         )
 
@@ -130,6 +134,7 @@ class StageGateTest(unittest.TestCase):
             measurement("q07", 88),
             measurement("q08", 91),
             measurement("q09", 93),
+            measurement("q10", 95),
         )
 
         forward = evaluate_stage_gate(values).to_dict()
@@ -138,7 +143,7 @@ class StageGateTest(unittest.TestCase):
         self.assertEqual(forward, reverse)
         self.assertEqual(
             len({item["artifact_path"] for item in forward["fixtures"]}),
-            10,
+            11,
         )
 
     def test_duplicate_fixture_ids_are_rejected(self):

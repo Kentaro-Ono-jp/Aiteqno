@@ -1,0 +1,50 @@
+{
+  "manifest_version": 1,
+  "fixture_id": "questionnaire-10-health-lifestyle",
+  "role": "generalization_stage_fixture",
+  "source": {
+    "path": "questionnaire-10-health-lifestyle.png",
+    "encoding": "raw",
+    "sha256": "502ce57a54c3fc9982994da1aa64c2c810f3aca1e16d8a13f379b79cbb96fc7d",
+    "pixel_width": 2480,
+    "pixel_height": 3508,
+    "dpi": 300,
+    "color_mode": "RGB",
+    "orientation": "portrait"
+  },
+  "reference": {
+    "path": "questionnaire-10-health-lifestyle.reference.json",
+    "sha256": "18ac7dbc981cd5bdb52d89f6bcd23c62bddd5fa62ff04de3e36bee2fc1d68354"
+  },
+  "license": "MIT",
+  "provenance": "Project-original Japanese health-check and lifestyle questionnaire authored and rasterized for the Aiteqno fixture corpus Issue #93.",
+  "redistribution_allowed": true,
+  "contains_personal_data": false,
+  "review": {
+    "status": "reviewed",
+    "reviewer": "Kentaro Ono (blanket approval); transcription and 100% visual cross-check by Noel",
+    "reviewed_at": "2026-08-30",
+    "reference_revision": 1,
+    "authorization": "User explicitly authorized implementation through Issue #93 closure on 2026-08-30.",
+    "excluded_items": []
+  },
+  "ocr_contract": {
+    "provider": "tesseract",
+    "minimum_major_version": 5,
+    "production_languages": [
+      "jpn"
+    ],
+    "visible_evidence_languages": [
+      "jpn"
+    ],
+    "page_segmentation_mode": 6,
+    "engine_mode": 3,
+    "source_dpi": 300
+  },
+  "quality_contract": {
+    "normalization": "NFKC then remove every Unicode whitespace character",
+    "overall_minimum": 70,
+    "stage_gate": "each active fixture independently meets overall_minimum; averages never compensate",
+    "expected_page_count_is_diagnostic": true
+  }
+}
