@@ -173,11 +173,13 @@ OCR input while the 300-DPI candidate remains diagnostic only. On that fixed
 2px input, the Japanese-only profile passes the +1pp, recovered-set, protected
 literal, trained-data, topology, and multilingual-smoke gates. It is therefore
 the production default and downstream profile; ordered `jpn,eng` remains an
-explicit option. All controls, candidates, and comparisons are retained. The
-end-to-end layer currently remains `fail`. The selected IR's validated topology
-is rendered as five editable native Word tables. A numeric pass is never
-sufficient by itself: essential text, structure, output validity, source
-independence, actual page evidence, and human readability are separate gates.
+explicit option. Public extraction also groups separator-safe adjacent
+same-row regions using source geometry only, improving Japanese context without
+reading fixture identity, OCR text, or confidence. All controls, candidates,
+and comparisons are retained. The selected IR's validated topology is rendered
+as five editable native Word tables. A numeric pass is never sufficient by
+itself: essential text, structure, output validity, source independence, actual
+page evidence, and human readability are separate gates.
 
 ## Development
 

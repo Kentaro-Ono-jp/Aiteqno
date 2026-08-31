@@ -45,6 +45,7 @@ from aiteqno.ports import (
     ImageAssetEncoder,
     OcrBackend,
     OcrOptions,
+    OcrRegionGroupingConfig,
     PngDecoder,
     PreviewRenderError,
     PreviewRenderer,
@@ -56,6 +57,13 @@ DOCUMENT_IR_FILENAME = "document.ir.json"
 RECONSTRUCTED_DOCX_FILENAME = "reconstructed.docx"
 RECONSTRUCTED_PREVIEW_FILENAME = "reconstructed.png"
 ASSET_DIRECTORY_NAME = "assets"
+
+# Public extraction uses only source geometry to give Tesseract enough same-row
+# context. Vertical source separators still prevent unions across table columns.
+PRODUCTION_OCR_REGION_GROUPING = OcrRegionGroupingConfig(
+    enabled=True,
+    maximum_horizontal_gap_height_ratio=2.0,
+)
 
 _DEPENDENCY_ERROR_CODES = frozenset(
     {
@@ -575,6 +583,7 @@ def _extract_to_bundle(
             bundle_writer=runtime.bundle_writer,
             languages=languages,
             ocr_options=OcrOptions(),
+            ocr_region_grouping=PRODUCTION_OCR_REGION_GROUPING,
             enrich_table_topology=True,
         )
     except PngExtractionError as exc:

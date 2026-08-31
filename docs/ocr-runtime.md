@@ -106,6 +106,20 @@ padding version, exact white color, operation order, source/pre-padding/working
 dimensions, Pillow version, raster hashes, and inverse-mapping policy. The
 padding setting is also part of each OCR provenance parameter digest.
 
+## OCR region grouping
+
+The public `extract` and `roundtrip` paths merge adjacent source-detected text
+regions before OCR when they overlap vertically by at least 45 percent and the
+horizontal gap is no greater than twice the taller region. Source-detected
+vertical separators block a merge, so table columns remain independent. This
+rule reads only source geometry: OCR text, confidence, fixture identity,
+filenames, hashes, and fixed page coordinates are not inputs.
+
+The wider same-row crop gives Tesseract enough neighboring context to preserve
+short Japanese labels and logical blocks. Tokens are still mapped back to
+original PNG coordinates, and the existing two-source-pixel crop-padding and
+`jpn`-only production contracts remain unchanged.
+
 ## OCR language profile
 
 The production default is ordered `jpn` only. Issue #57 measured it against the
