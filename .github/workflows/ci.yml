@@ -68,6 +68,7 @@ jobs:
       AITEQNO_STAGE_EIGHT_OUTPUT: build/questionnaire-stage-8
       AITEQNO_STAGE_NINE_OUTPUT: build/questionnaire-stage-9
       AITEQNO_STAGE_TEN_OUTPUT: build/questionnaire-stage-10
+      AITEQNO_QUALITY_FOCUS_ONE_OUTPUT: build/quality-80-focus-1
       AITEQNO_TESSERACT_EXECUTABLE: /usr/bin/tesseract
       AITEQNO_TESSDATA_PREFIX: /usr/share/tesseract-ocr/5/tessdata
       AITEQNO_LIBREOFFICE_EXECUTABLE: /usr/bin/libreoffice
@@ -170,6 +171,12 @@ jobs:
           --suite tests/fixtures/stages/questionnaire-stage-10.json
           --output "$AITEQNO_STAGE_TEN_OUTPUT"
           --expect-state pass
+      - name: Run Quality 80 Focus 1 gate
+        run: >-
+          python scripts/run_stage_suite.py
+          --suite tests/fixtures/focuses/quality-80-focus-1.json
+          --output "$AITEQNO_QUALITY_FOCUS_ONE_OUTPUT"
+          --expect-state pass
       - name: Upload baseline evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -256,5 +263,13 @@ jobs:
         with:
           name: questionnaire-stage-10-${{ github.sha }}
           path: build/questionnaire-stage-10
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload Quality 80 Focus 1 evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: quality-80-focus-1-${{ github.sha }}
+          path: build/quality-80-focus-1
           if-no-files-found: error
           retention-days: 14

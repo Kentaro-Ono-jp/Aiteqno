@@ -45,6 +45,7 @@ from aiteqno.ports import (
     ImageAssetEncoder,
     OcrBackend,
     OcrOptions,
+    OcrRegionGroupingConfig,
     PngDecoder,
     PreviewRenderError,
     PreviewRenderer,
@@ -56,6 +57,18 @@ DOCUMENT_IR_FILENAME = "document.ir.json"
 RECONSTRUCTED_DOCX_FILENAME = "reconstructed.docx"
 RECONSTRUCTED_PREVIEW_FILENAME = "reconstructed.png"
 ASSET_DIRECTORY_NAME = "assets"
+
+# Public OCR regions are short source-detected lines or labels. The profile is
+# independent of OCR text and fixture identity: source geometry determines the
+# same-row crop plan, while a small white margin protects edge glyphs.
+PRODUCTION_OCR_REGION_PADDING_PX = 4
+PRODUCTION_OCR_OPTIONS = OcrOptions(page_segmentation_mode=8)
+PRODUCTION_OCR_REGION_GROUPING = OcrRegionGroupingConfig(
+    enabled=True,
+    minimum_vertical_overlap_ratio=0.45,
+    maximum_horizontal_gap_height_ratio=2.0,
+    block_vertical_separators=True,
+)
 
 _DEPENDENCY_ERROR_CODES = frozenset(
     {
@@ -99,6 +112,8 @@ class CliRuntime:
     bundle_writer: DocumentBundleWriter
     docx_renderer_factory: Callable[[Path], DocxRenderer]
     preview_renderer_factory: Callable[[Path], PreviewRenderer]
+    ocr_options: OcrOptions = OcrOptions()
+    ocr_region_grouping: OcrRegionGroupingConfig = OcrRegionGroupingConfig()
 
 
 def default_runtime() -> CliRuntime:
@@ -112,6 +127,7 @@ def default_runtime() -> CliRuntime:
         ocr_backend=TesseractOcrBackend(
             executable_path=executable,
             tessdata_prefix=tessdata,
+            region_padding_px=PRODUCTION_OCR_REGION_PADDING_PX,
         ),
         asset_encoder=PillowPngAssetEncoder(),
         validator=JsonSchemaDocumentIRValidator(),
@@ -122,6 +138,8 @@ def default_runtime() -> CliRuntime:
         preview_renderer_factory=lambda bundle_root: PillowPreviewRenderer(
             asset_resolver=BundleAssetResolver(bundle_root)
         ),
+        ocr_options=PRODUCTION_OCR_OPTIONS,
+        ocr_region_grouping=PRODUCTION_OCR_REGION_GROUPING,
     )
 
 
@@ -574,7 +592,8 @@ def _extract_to_bundle(
             validator=runtime.validator,
             bundle_writer=runtime.bundle_writer,
             languages=languages,
-            ocr_options=OcrOptions(),
+            ocr_options=runtime.ocr_options,
+            ocr_region_grouping=runtime.ocr_region_grouping,
             enrich_table_topology=True,
         )
     except PngExtractionError as exc:
