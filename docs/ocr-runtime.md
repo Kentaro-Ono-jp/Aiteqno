@@ -89,22 +89,38 @@ added to the portable `OcrOptions` contract.
 
 ## OCR region crop padding
 
-The production Tesseract adapter adds an artificial two-source-pixel white RGB
-border around each structure-provided OCR region crop immediately before the
+The public CLI production profile adds an artificial four-source-pixel white
+RGB border around each structure-provided OCR region crop immediately before the
 engine call. It does not expand the crop's source bbox, change decoded source
 pixels, affect structure extraction, or pad full-page OCR. Tesseract TSV bboxes
-are first clipped in the padded raster, the two-pixel border is subtracted, and
+are first clipped in the padded raster, the four-pixel border is subtracted, and
 the result is clamped to the original crop before its source offset is added.
 Tokens that fall wholly inside the artificial border are discarded. Public
 token bboxes and OCR provenance therefore remain in original PNG pixels.
 
-`region_padding_px=0` is the same-runtime control and
-`region_padding_px=2` is the adopted production candidate. The adapter rejects
+`region_padding_px=0` and the earlier adopted two-pixel profile remain recorded
+in the historical real-runtime experiment. Quality 80 Focus 1 adopts
+`region_padding_px=4` for the public CLI after measuring the unchanged reviewed
+source and evaluator. The adapter rejects
 combining crop padding with the separate 300-DPI experiment so one comparison
 never changes two OCR-input variables. Immutable backend evidence records the
 padding version, exact white color, operation order, source/pre-padding/working
 dimensions, Pillow version, raster hashes, and inverse-mapping policy. The
 padding setting is also part of each OCR provenance parameter digest.
+
+## OCR region grouping
+
+The public `extract` and `roundtrip` paths merge adjacent source-detected text
+regions before OCR when they overlap vertically by at least 45 percent and the
+horizontal gap is no greater than twice the taller region. Source-detected
+vertical separators block a merge, so table columns remain independent. This
+rule reads only source geometry: OCR text, confidence, fixture identity,
+filenames, hashes, and fixed page coordinates are not inputs.
+
+The public profile recognizes each grouped short line with Tesseract PSM 8, a
+four-source-pixel border, OEM 3, no upscale, and ordered `jpn` only. Tokens stay
+mapped to original PNG coordinates. The separate rendered-visible evaluator is
+unchanged and remains fixed at PSM 6.
 
 ## OCR language profile
 

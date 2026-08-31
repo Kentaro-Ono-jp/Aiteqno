@@ -173,11 +173,14 @@ OCR input while the 300-DPI candidate remains diagnostic only. On that fixed
 2px input, the Japanese-only profile passes the +1pp, recovered-set, protected
 literal, trained-data, topology, and multilingual-smoke gates. It is therefore
 the production default and downstream profile; ordered `jpn,eng` remains an
-explicit option. All controls, candidates, and comparisons are retained. The
-end-to-end layer currently remains `fail`. The selected IR's validated topology
-is rendered as five editable native Word tables. A numeric pass is never
-sufficient by itself: essential text, structure, output validity, source
-independence, actual page evidence, and human readability are separate gates.
+explicit option. Quality 80 Focus 1 composes that language decision with a
+four-pixel white border, PSM 8, and separator-safe same-row grouping derived
+only from source geometry. The rendered-visible evaluator remains fixed at
+PSM 6. All controls, candidates, and comparisons are retained. The selected
+IR's validated topology is rendered as five editable native Word tables. A
+numeric pass is never sufficient by itself: essential text, structure, output
+validity, source independence, actual page evidence, and human readability are
+separate gates.
 
 ## Development
 
