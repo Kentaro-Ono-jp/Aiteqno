@@ -40,7 +40,7 @@ DEFAULT_FALLBACK_DPI = 96.0
 DEFAULT_MAX_PNG_BYTES = 25 * 1024 * 1024
 DEFAULT_MAX_PNG_PIXELS = 40_000_000
 STRUCTURE_PROVIDER = "aiteqno.opencv-structure"
-STRUCTURE_PROVIDER_VERSION = "1.1"
+STRUCTURE_PROVIDER_VERSION = "1.2"
 
 _ALGORITHM_PARAMETERS = {
     "algorithm_version": STRUCTURE_PROVIDER_VERSION,
@@ -50,6 +50,7 @@ _ALGORITHM_PARAMETERS = {
     "max_line_thickness_fraction": 0.025,
     "compact_outline_max_fraction": 0.06,
     "compact_outline_min_rectangularity": 0.82,
+    "composite_rectangle_boundary_tolerance_px": 3,
     "circular_outline_min_circularity": 0.82,
     "detail_dense_compact_min_count": 18,
     "filled_band_min_row_coverage": 0.65,
@@ -57,8 +58,9 @@ _ALGORITHM_PARAMETERS = {
     "detail_min_shortest_px": 600,
     "min_image_area_fraction": 0.0025,
     "min_line_fraction": 0.06,
-    "short_tick_max_height_fraction": 0.04,
+    "short_tick_max_height_fraction": 0.05,
     "short_tick_min_group_size": 3,
+    "vertical_single_intersection_partition": True,
     "text_join_fraction": 0.015,
 }
 
@@ -272,6 +274,9 @@ class OpenCvStructureExtractor:
         if detail_profile:
             raw_ticks, tick_mask = _detect_short_axis_ticks(binary, long_lines)
             axis_lines = self._line_candidates([*raw_lines, *raw_ticks], source)
+            partitioned_axis_lines = self._partition_vertical_axis_lines(axis_lines)
+            line_mask = cv2.bitwise_or(line_mask, tick_mask)
+            axis_rectangles = self._rectangle_candidates(line_mask, axis_lines)
             compact_rectangles = self._compact_rectangle_candidates(binary, source)
             circular_rectangles = self._circular_rectangle_candidates(
                 binary,
@@ -282,19 +287,25 @@ class OpenCvStructureExtractor:
                 source,
                 circular_rectangles,
             )
-            lines = [*axis_lines, *diagram_lines]
-            line_mask = cv2.bitwise_or(line_mask, tick_mask)
+            lines = [*partitioned_axis_lines, *diagram_lines]
             line_mask = cv2.bitwise_or(line_mask, diagram_mask)
             dense_compact_controls = len(compact_rectangles) >= int(
                 _ALGORITHM_PARAMETERS["detail_dense_compact_min_count"]
             )
-            rectangles = _merge_rectangle_candidates(
-                rectangles,
-                [
-                    *(compact_rectangles if dense_compact_controls or diagram_lines else ()),
-                    *circular_rectangles,
-                    *self._filled_horizontal_band_candidates(gray, source),
-                ],
+            rectangles = _remove_partitioned_inner_rectangles(
+                _merge_rectangle_candidates(
+                    rectangles,
+                    [
+                        *axis_rectangles,
+                        *(
+                            compact_rectangles
+                            if dense_compact_controls or diagram_lines
+                            else ()
+                        ),
+                        *circular_rectangles,
+                        *self._filled_horizontal_band_candidates(gray, source),
+                    ],
+                )
             )
         else:
             lines = long_lines
@@ -363,6 +374,103 @@ class OpenCvStructureExtractor:
             )
         return sorted(
             candidates,
+            key=lambda item: (
+                item.bbox.y,
+                item.bbox.x,
+                item.orientation.value,
+                item.bbox.height,
+                item.bbox.width,
+            ),
+        )
+
+    def _partition_vertical_axis_lines(
+        self,
+        lines: list[LineCandidate],
+    ) -> list[LineCandidate]:
+        """Partition internal vertical rules for a source-detected two-row grid."""
+
+        horizontals = tuple(
+            line
+            for line in lines
+            if line.orientation is LineOrientation.HORIZONTAL
+        )
+        additions: list[LineCandidate] = []
+        partitioned: set[tuple[LineOrientation, int, int, int, int]] = set()
+        for vertical in lines:
+            if vertical.orientation is not LineOrientation.VERTICAL:
+                continue
+            tolerance = max(3, vertical.bbox.width + 1)
+            crossings = sorted(
+                {
+                    horizontal.start.y
+                    for horizontal in horizontals
+                    if vertical.start.y + tolerance
+                    < horizontal.start.y
+                    < vertical.end.y - tolerance
+                    and horizontal.start.x + tolerance
+                    < vertical.start.x
+                    < horizontal.end.x - tolerance
+                }
+            )
+            if len(crossings) != 1:
+                continue
+            partitioned.add(
+                (
+                    vertical.orientation,
+                    vertical.start.x,
+                    vertical.start.y,
+                    vertical.end.x,
+                    vertical.end.y,
+                )
+            )
+            boundaries = (vertical.start.y, *crossings, vertical.end.y)
+            for start_y, end_y in zip(boundaries, boundaries[1:], strict=False):
+                bbox = PixelBoundingBox(
+                    x=vertical.bbox.x,
+                    y=start_y,
+                    width=vertical.bbox.width,
+                    height=end_y - start_y + 1,
+                )
+                additions.append(
+                    LineCandidate(
+                        orientation=LineOrientation.VERTICAL,
+                        start=PixelPoint(x=vertical.start.x, y=start_y),
+                        end=PixelPoint(x=vertical.end.x, y=end_y),
+                        bbox=bbox,
+                        confidence=vertical.confidence,
+                        provenance=(
+                            self._provenance(
+                                bbox,
+                                "vertical row segment derived from axis intersections",
+                            ),
+                        ),
+                    )
+                )
+
+        retained = [
+            line
+            for line in lines
+            if (
+                line.orientation,
+                line.start.x,
+                line.start.y,
+                line.end.x,
+                line.end.y,
+            )
+            not in partitioned
+        ]
+        unique = {
+            (
+                line.orientation,
+                line.start.x,
+                line.start.y,
+                line.end.x,
+                line.end.y,
+            ): line
+            for line in (*retained, *additions)
+        }
+        return sorted(
+            unique.values(),
             key=lambda item: (
                 item.bbox.y,
                 item.bbox.x,
@@ -1098,7 +1206,7 @@ def _detect_short_axis_ticks(
         if line.orientation is LineOrientation.HORIZONTAL
         and line.end.x - line.start.x + 1 >= width * 0.20
     )
-    by_support: dict[int, list[tuple[int, _RawLine]]] = {}
+    by_support: dict[int, list[tuple[int, _RawLine, bool]]] = {}
     for label in range(1, count):
         x = int(stats[label, cv2.CC_STAT_LEFT])
         y = int(stats[label, cv2.CC_STAT_TOP])
@@ -1141,6 +1249,7 @@ def _detect_short_axis_ticks(
                     bbox=bbox,
                     occupancy=min(1.0, area / max(1, box_width * box_height)),
                 ),
+                _bridges_horizontal_lines(bbox, supporting_lines),
             )
         )
 
@@ -1148,12 +1257,37 @@ def _detect_short_axis_ticks(
     accepted_mask = np.zeros_like(binary)
     minimum_group_size = int(_ALGORITHM_PARAMETERS["short_tick_min_group_size"])
     for values in by_support.values():
-        if len(values) < minimum_group_size:
-            continue
-        for label, raw in values:
+        repeated = len(values) >= minimum_group_size
+        for label, raw, bridges_horizontal_lines in values:
+            if not repeated and not bridges_horizontal_lines:
+                continue
             accepted.append(raw)
             accepted_mask[labels == label] = 255
     return accepted, accepted_mask
+
+
+def _bridges_horizontal_lines(
+    bbox: PixelBoundingBox,
+    horizontal_lines: tuple[LineCandidate, ...],
+) -> bool:
+    """Return whether a short vertical stroke closes two horizontal borders."""
+
+    tolerance = max(3, bbox.width + 1)
+    center_x = bbox.x + (bbox.width - 1) / 2
+    top = bbox.y
+    bottom = bbox.y + bbox.height - 1
+    crossings = sorted(
+        line.start.y
+        for line in horizontal_lines
+        if line.start.x - tolerance <= center_x <= line.end.x + tolerance
+        and top - tolerance <= line.start.y <= bottom + tolerance
+    )
+    if len(crossings) < 2:
+        return False
+    return (
+        abs(crossings[0] - top) <= tolerance
+        and abs(crossings[-1] - bottom) <= tolerance
+    )
 
 
 def _merge_rectangle_candidates(
@@ -1183,6 +1317,116 @@ def _merge_rectangle_candidates(
             item.bbox.width,
         ),
     )
+
+
+def _remove_partitioned_inner_rectangles(
+    candidates: list[RectangleCandidate],
+) -> list[RectangleCandidate]:
+    """Drop composite cell spans while preserving table outers and controls."""
+
+    tolerance = int(_ALGORITHM_PARAMETERS["composite_rectangle_boundary_tolerance_px"])
+    kept = [
+        candidate
+        for candidate in candidates
+        if not _is_partitioned_inner_rectangle(candidate, candidates, tolerance)
+    ]
+    return sorted(
+        kept,
+        key=lambda item: (
+            item.bbox.y,
+            item.bbox.x,
+            item.bbox.height,
+            item.bbox.width,
+        ),
+    )
+
+
+def _is_partitioned_inner_rectangle(
+    candidate: RectangleCandidate,
+    rectangles: list[RectangleCandidate],
+    tolerance: int,
+) -> bool:
+    bbox = candidate.bbox
+    if not any(
+        other is not candidate
+        and _pixel_strictly_contains(other.bbox, bbox, tolerance)
+        for other in rectangles
+    ):
+        return False
+
+    children = tuple(
+        other
+        for other in rectangles
+        if other is not candidate
+        and _pixel_strictly_contains(bbox, other.bbox, tolerance)
+    )
+    horizontal = tuple(
+        (child.bbox.x, child.bbox.x + child.bbox.width)
+        for child in children
+        if abs(child.bbox.y - bbox.y) <= tolerance
+        and abs(
+            child.bbox.y + child.bbox.height - (bbox.y + bbox.height)
+        )
+        <= tolerance
+    )
+    if _pixel_intervals_cover(
+        horizontal,
+        bbox.x,
+        bbox.x + bbox.width,
+        tolerance,
+    ):
+        return True
+
+    vertical = tuple(
+        (child.bbox.y, child.bbox.y + child.bbox.height)
+        for child in children
+        if abs(child.bbox.x - bbox.x) <= tolerance
+        and abs(
+            child.bbox.x + child.bbox.width - (bbox.x + bbox.width)
+        )
+        <= tolerance
+    )
+    return _pixel_intervals_cover(
+        vertical,
+        bbox.y,
+        bbox.y + bbox.height,
+        tolerance,
+    )
+
+
+def _pixel_strictly_contains(
+    container: PixelBoundingBox,
+    item: PixelBoundingBox,
+    tolerance: int,
+) -> bool:
+    return (
+        item.width * item.height < container.width * container.height
+        and item.x >= container.x - tolerance
+        and item.y >= container.y - tolerance
+        and item.x + item.width <= container.x + container.width + tolerance
+        and item.y + item.height <= container.y + container.height + tolerance
+    )
+
+
+def _pixel_intervals_cover(
+    intervals: Iterable[tuple[int, int]],
+    start: int,
+    end: int,
+    tolerance: int,
+) -> bool:
+    ordered = sorted(intervals)
+    if len(ordered) < 2:
+        return False
+    cursor = start
+    for left, right in ordered:
+        if right <= cursor:
+            continue
+        if left > cursor + tolerance:
+            return False
+        cursor = max(cursor, right)
+        if cursor >= end - tolerance:
+            return True
+    return False
 
 
 def _rectangle_duplicate(first: PixelBoundingBox, second: PixelBoundingBox) -> bool:

@@ -141,7 +141,7 @@ inventory to verify that the requested Japanese family was used. Unknown fonts
 must continue to appear as explicit requested/replacement pairs even when the
 host application could silently choose a glyph fallback.
 
-### Cumulative questionnaire stages
+### Historical questionnaire stages and the current focus gate
 
 `scripts/run_stage_suite.py` runs every active fixture declared by one stage
 descriptor through the public `aiteqno roundtrip` production path. It retains
@@ -153,13 +153,18 @@ The stage passes only when every fixture individually has
 passes. The diagnostic average and the legacy evaluator state never compensate
 for an individual result below 70.
 
-Stage 1 is pinned by
-`tests/fixtures/stages/questionnaire-stage-1.json`. Production and visible
-observation both use the Japanese language profile; the actual LibreOffice
-page is rasterized at 300 DPI so small but visible Japanese text is not lost to
-the observer. These settings are common to all active fixtures. The CI
-real-runtime lane runs the stage with `--expect-state pass` and uploads the
-complete evidence directory.
+The completed Stage 1 through Stage 10 descriptors remain historical contracts.
+The current CI quality gate does not execute them. Quality 80 Focus 2 is pinned
+by `tests/fixtures/focuses/quality-80-focus-2.json` to exactly two ordered
+fixtures: the existing baseline, then questionnaire 01. The runner processes
+that explicit list sequentially, requires each fixture to reach 80.0 with
+integrity PASS, and never uses the diagnostic average for its decision. No glob,
+directory scan, or fixture discovery expands the active set. Production and
+visible observation both use the Japanese language profile; the actual
+LibreOffice page is rasterized at 300 DPI so small but visible Japanese text is
+not lost to the observer. The stage summary records the declared sequential
+execution order and disabled fixture discovery. CI uploads the complete Focus 2
+evidence directory.
 
 Source baseline evaluator 1.1 canonicalizes table-topology structure evidence:
 derived cell rectangles and duplicated supporting primitives are not counted

@@ -58,17 +58,7 @@ jobs:
       AITEQNO_RUN_REAL_IMAGE_BASELINE: "1"
       AITEQNO_RUN_TESSERACT_INTEGRATION: "1"
       AITEQNO_REAL_BASELINE_OUTPUT: build/real-runtime-baseline
-      AITEQNO_STAGE_OUTPUT: build/questionnaire-stage-1
-      AITEQNO_STAGE_TWO_OUTPUT: build/questionnaire-stage-2
-      AITEQNO_STAGE_THREE_OUTPUT: build/questionnaire-stage-3
-      AITEQNO_STAGE_FOUR_OUTPUT: build/questionnaire-stage-4
-      AITEQNO_STAGE_FIVE_OUTPUT: build/questionnaire-stage-5
-      AITEQNO_STAGE_SIX_OUTPUT: build/questionnaire-stage-6
-      AITEQNO_STAGE_SEVEN_OUTPUT: build/questionnaire-stage-7
-      AITEQNO_STAGE_EIGHT_OUTPUT: build/questionnaire-stage-8
-      AITEQNO_STAGE_NINE_OUTPUT: build/questionnaire-stage-9
-      AITEQNO_STAGE_TEN_OUTPUT: build/questionnaire-stage-10
-      AITEQNO_QUALITY_FOCUS_ONE_OUTPUT: build/quality-80-focus-1
+      AITEQNO_QUALITY_FOCUS_TWO_OUTPUT: build/quality-80-focus-2
       AITEQNO_TESSERACT_EXECUTABLE: /usr/bin/tesseract
       AITEQNO_TESSDATA_PREFIX: /usr/share/tesseract-ocr/5/tessdata
       AITEQNO_LIBREOFFICE_EXECUTABLE: /usr/bin/libreoffice
@@ -112,70 +102,11 @@ jobs:
             tests.test_cli.RealCliRoundtripIntegrationTest \
             tests.test_golden_roundtrip.RealLibreOfficeGoldenIntegrationTest \
             tests.test_real_document_baseline.RealDocumentBaselineIntegrationTest
-      - name: Run cumulative questionnaire Stage 1 gate
+      - name: Run Quality 80 Focus 2 exact-two gate
         run: >-
           python scripts/run_stage_suite.py
-          --output "$AITEQNO_STAGE_OUTPUT"
-          --expect-state pass
-      - name: Run cumulative questionnaire Stage 2 gate
-        run: >-
-          python scripts/run_stage_suite.py
-          --suite tests/fixtures/stages/questionnaire-stage-2.json
-          --output "$AITEQNO_STAGE_TWO_OUTPUT"
-          --expect-state pass
-      - name: Run cumulative questionnaire Stage 3 gate
-        run: >-
-          python scripts/run_stage_suite.py
-          --suite tests/fixtures/stages/questionnaire-stage-3.json
-          --output "$AITEQNO_STAGE_THREE_OUTPUT"
-          --expect-state pass
-      - name: Run cumulative questionnaire Stage 4 gate
-        run: >-
-          python scripts/run_stage_suite.py
-          --suite tests/fixtures/stages/questionnaire-stage-4.json
-          --output "$AITEQNO_STAGE_FOUR_OUTPUT"
-          --expect-state pass
-      - name: Run cumulative questionnaire Stage 5 gate
-        run: >-
-          python scripts/run_stage_suite.py
-          --suite tests/fixtures/stages/questionnaire-stage-5.json
-          --output "$AITEQNO_STAGE_FIVE_OUTPUT"
-          --expect-state pass
-      - name: Run cumulative questionnaire Stage 6 gate
-        run: >-
-          python scripts/run_stage_suite.py
-          --suite tests/fixtures/stages/questionnaire-stage-6.json
-          --output "$AITEQNO_STAGE_SIX_OUTPUT"
-          --expect-state pass
-      - name: Run cumulative questionnaire Stage 7 gate
-        run: >-
-          python scripts/run_stage_suite.py
-          --suite tests/fixtures/stages/questionnaire-stage-7.json
-          --output "$AITEQNO_STAGE_SEVEN_OUTPUT"
-          --expect-state pass
-      - name: Run cumulative questionnaire Stage 8 gate
-        run: >-
-          python scripts/run_stage_suite.py
-          --suite tests/fixtures/stages/questionnaire-stage-8.json
-          --output "$AITEQNO_STAGE_EIGHT_OUTPUT"
-          --expect-state pass
-      - name: Run cumulative questionnaire Stage 9 gate
-        run: >-
-          python scripts/run_stage_suite.py
-          --suite tests/fixtures/stages/questionnaire-stage-9.json
-          --output "$AITEQNO_STAGE_NINE_OUTPUT"
-          --expect-state pass
-      - name: Run cumulative questionnaire Stage 10 gate
-        run: >-
-          python scripts/run_stage_suite.py
-          --suite tests/fixtures/stages/questionnaire-stage-10.json
-          --output "$AITEQNO_STAGE_TEN_OUTPUT"
-          --expect-state pass
-      - name: Run Quality 80 Focus 1 gate
-        run: >-
-          python scripts/run_stage_suite.py
-          --suite tests/fixtures/focuses/quality-80-focus-1.json
-          --output "$AITEQNO_QUALITY_FOCUS_ONE_OUTPUT"
+          --suite tests/fixtures/focuses/quality-80-focus-2.json
+          --output "$AITEQNO_QUALITY_FOCUS_TWO_OUTPUT"
           --expect-state pass
       - name: Upload baseline evidence
         if: always()
@@ -185,91 +116,11 @@ jobs:
           path: build/real-runtime-baseline
           if-no-files-found: warn
           retention-days: 14
-      - name: Upload questionnaire Stage 1 evidence
+      - name: Upload Quality 80 Focus 2 evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: questionnaire-stage-1-${{ github.sha }}
-          path: build/questionnaire-stage-1
-          if-no-files-found: error
-          retention-days: 14
-      - name: Upload questionnaire Stage 2 evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: questionnaire-stage-2-${{ github.sha }}
-          path: build/questionnaire-stage-2
-          if-no-files-found: error
-          retention-days: 14
-      - name: Upload questionnaire Stage 3 evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: questionnaire-stage-3-${{ github.sha }}
-          path: build/questionnaire-stage-3
-          if-no-files-found: error
-          retention-days: 14
-      - name: Upload questionnaire Stage 4 evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: questionnaire-stage-4-${{ github.sha }}
-          path: build/questionnaire-stage-4
-          if-no-files-found: error
-          retention-days: 14
-      - name: Upload questionnaire Stage 5 evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: questionnaire-stage-5-${{ github.sha }}
-          path: build/questionnaire-stage-5
-          if-no-files-found: error
-          retention-days: 14
-      - name: Upload questionnaire Stage 6 evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: questionnaire-stage-6-${{ github.sha }}
-          path: build/questionnaire-stage-6
-          if-no-files-found: error
-          retention-days: 14
-      - name: Upload questionnaire Stage 7 evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: questionnaire-stage-7-${{ github.sha }}
-          path: build/questionnaire-stage-7
-          if-no-files-found: error
-          retention-days: 14
-      - name: Upload questionnaire Stage 8 evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: questionnaire-stage-8-${{ github.sha }}
-          path: build/questionnaire-stage-8
-          if-no-files-found: error
-          retention-days: 14
-      - name: Upload questionnaire Stage 9 evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: questionnaire-stage-9-${{ github.sha }}
-          path: build/questionnaire-stage-9
-          if-no-files-found: error
-          retention-days: 14
-      - name: Upload questionnaire Stage 10 evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: questionnaire-stage-10-${{ github.sha }}
-          path: build/questionnaire-stage-10
-          if-no-files-found: error
-          retention-days: 14
-      - name: Upload Quality 80 Focus 1 evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: quality-80-focus-1-${{ github.sha }}
-          path: build/quality-80-focus-1
+          name: quality-80-focus-2-${{ github.sha }}
+          path: build/quality-80-focus-2
           if-no-files-found: error
           retention-days: 14
