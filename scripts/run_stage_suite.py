@@ -53,7 +53,7 @@ DEFAULT_SUITE_PATH = (
     REPOSITORY_ROOT / "tests" / "fixtures" / "stages" / "questionnaire-stage-1.json"
 )
 STAGE_RUNNER_NAME = "aiteqno-cumulative-fixture-stage-runner"
-STAGE_RUNNER_VERSION = "1.0"
+STAGE_RUNNER_VERSION = "1.1"
 
 _WORDPROCESSINGML_NAMESPACE = (
     "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
@@ -928,6 +928,12 @@ def run(
             "stage_id": suite.stage_id,
             "suite_sha256": suite.suite_sha256,
             "runner": {"name": STAGE_RUNNER_NAME, "version": STAGE_RUNNER_VERSION},
+            "execution": {
+                "mode": "sequential",
+                "fixture_discovery": False,
+                "active_fixture_count": len(suite.fixtures),
+                "order": [fixture.fixture_id for fixture in suite.fixtures],
+            },
             "runtime": "runtime.json",
             "evaluator": {
                 "name": SOURCE_BASELINE_EVALUATOR_NAME,

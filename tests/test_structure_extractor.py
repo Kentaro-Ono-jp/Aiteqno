@@ -286,6 +286,55 @@ class StructureExtractorTest(unittest.TestCase):
         self.assertEqual(compact_outlines, ())
         self.assertEqual(len(filled_bands), 3)
 
+    def test_two_row_grid_recovers_short_cells_and_row_local_boundaries(self):
+        image = PillowPngDecoder().decode(
+            (
+                QUESTIONNAIRE_FIXTURE_ROOT
+                / "questionnaire-01-general-medicine.png"
+            ).read_bytes()
+        )
+        result = OpenCvStructureExtractor().detect(image)
+
+        identity_outer = PixelBoundingBox(x=67, y=129, width=1107, height=142)
+        cells = {
+            rectangle.bbox
+            for rectangle in result.rectangles
+            if rectangle.bbox != identity_outer
+            and rectangle.bbox.x >= identity_outer.x
+            and rectangle.bbox.y >= identity_outer.y
+            and rectangle.bbox.x + rectangle.bbox.width
+            <= identity_outer.x + identity_outer.width
+            and rectangle.bbox.y + rectangle.bbox.height
+            <= identity_outer.y + identity_outer.height
+        }
+        expected_cells = {
+            PixelBoundingBox(x=67, y=129, width=122, height=72),
+            PixelBoundingBox(x=188, y=129, width=522, height=72),
+            PixelBoundingBox(x=709, y=129, width=126, height=72),
+            PixelBoundingBox(x=834, y=129, width=339, height=72),
+            PixelBoundingBox(x=67, y=200, width=122, height=71),
+            PixelBoundingBox(x=188, y=200, width=84, height=71),
+            PixelBoundingBox(x=271, y=200, width=224, height=71),
+            PixelBoundingBox(x=494, y=200, width=147, height=71),
+            PixelBoundingBox(x=640, y=200, width=70, height=71),
+            PixelBoundingBox(x=709, y=200, width=119, height=71),
+            PixelBoundingBox(x=827, y=200, width=137, height=71),
+            PixelBoundingBox(x=963, y=200, width=210, height=71),
+        }
+
+        self.assertIn(identity_outer, {item.bbox for item in result.rectangles})
+        self.assertEqual(cells, expected_cells)
+        for x in (188, 709):
+            segments = {
+                (line.start.y, line.end.y)
+                for line in result.lines
+                if line.orientation is LineOrientation.VERTICAL
+                and line.start.x == x
+                and line.start.y >= identity_outer.y
+                and line.end.y <= identity_outer.y + identity_outer.height + 3
+            }
+            self.assertEqual(segments, {(129, 200), (200, 273)})
+
     def test_decoder_infers_dpi_and_composites_transparency_on_white(self):
         transparent = Image.new("RGBA", (2, 1), (255, 0, 0, 0))
         transparent.putpixel((1, 0), (0, 0, 0, 255))

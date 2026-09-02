@@ -175,12 +175,14 @@ literal, trained-data, topology, and multilingual-smoke gates. It is therefore
 the production default and downstream profile; ordered `jpn,eng` remains an
 explicit option. Quality 80 Focus 1 composes that language decision with a
 four-pixel white border, PSM 8, and separator-safe same-row grouping derived
-only from source geometry. The rendered-visible evaluator remains fixed at
-PSM 6. All controls, candidates, and comparisons are retained. The selected
-IR's validated topology is rendered as five editable native Word tables. A
-numeric pass is never sufficient by itself: essential text, structure, output
-validity, source independence, actual page evidence, and human readability are
-separate gates.
+only from source geometry. Quality 80 Focus 2 additionally recovers short grid
+ticks, closed cells, and two-row internal boundaries from source geometry. Its
+active set is explicitly pinned to the existing baseline followed by
+questionnaire 01; no directory scan or glob can add later questionnaires. The
+rendered-visible evaluator remains fixed at PSM 6. The selected IR's validated
+topology is rendered as editable native Word tables. A numeric pass is never
+sufficient by itself: package and source-independence integrity remain separate
+gates.
 
 ## Development
 
@@ -199,8 +201,9 @@ Install the development tools and run the same deterministic checks used by CI:
 CI runs deterministic tests on Windows and Linux with Python 3.11 and 3.14
 without depending on machine-global document runtimes. A dedicated Ubuntu 24.04
 job exercises real Tesseract, LibreOffice, Poppler, and Japanese fonts, then
-uploads both the historical experiment evidence and the passing cumulative
-questionnaire Stage 1 evidence.
+runs only the current Quality 80 Focus 2 descriptor in its quality gate. It
+processes the two explicitly listed fixtures sequentially and uploads their
+complete evidence without generating or scoring questionnaires 02 through 10.
 
 ## Migrating from the pre-V1 prototype
 
