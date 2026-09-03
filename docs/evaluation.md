@@ -153,18 +153,22 @@ The stage passes only when every fixture individually has
 passes. The diagnostic average and the legacy evaluator state never compensate
 for an individual result below 70.
 
-The completed Stage 1 through Stage 10 descriptors remain historical contracts.
-The current CI quality gate does not execute them. Quality 80 Focus 2 is pinned
-by `tests/fixtures/focuses/quality-80-focus-2.json` to exactly two ordered
-fixtures: the existing baseline, then questionnaire 01. The runner processes
+The completed Stage 1 through Stage 10 and Quality 80 Focus 1 and 2 descriptors
+remain historical contracts. The current CI quality gate does not execute them.
+Quality 80 Focus 3 is pinned by
+`tests/fixtures/focuses/quality-80-focus-3.json` to exactly three ordered
+fixtures: the existing baseline, questionnaire 01, then questionnaire 02. The runner processes
 that explicit list sequentially, requires each fixture to reach 80.0 with
 integrity PASS, and never uses the diagnostic average for its decision. No glob,
 directory scan, or fixture discovery expands the active set. Production and
 visible observation both use the Japanese language profile; the actual
 LibreOffice page is rasterized at 300 DPI so small but visible Japanese text is
 not lost to the observer. The stage summary records the declared sequential
-execution order and disabled fixture discovery. CI uploads the complete Focus 2
-evidence directory.
+execution order, active fixture count, and disabled fixture discovery. CI uploads
+the complete Focus 3 evidence directory without generating or scoring
+questionnaires 03 through 10. The Focus 3 before measurement already passes for
+all three fixtures, so this focus retains the production quality rules and only
+extends the explicit acceptance contract to questionnaire 02.
 
 Source baseline evaluator 1.1 canonicalizes table-topology structure evidence:
 derived cell rectangles and duplicated supporting primitives are not counted
