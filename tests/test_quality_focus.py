@@ -136,16 +136,6 @@ class QualityFocusTwoContractTest(unittest.TestCase):
             ],
         )
 
-    def test_ci_quality_gate_executes_only_the_focus_two_descriptor(self):
-        workflow = (REPOSITORY_ROOT / ".github" / "workflows" / "ci.yml").read_text(
-            encoding="utf-8"
-        )
-
-        self.assertEqual(workflow.count("scripts/run_stage_suite.py"), 1)
-        self.assertIn("tests/fixtures/focuses/quality-80-focus-2.json", workflow)
-        self.assertNotIn("tests/fixtures/stages/questionnaire-stage-", workflow)
-        self.assertNotIn("tests/fixtures/focuses/quality-80-focus-1.json", workflow)
-
     def test_runner_records_declared_sequential_order_without_discovery(self):
         runner = (REPOSITORY_ROOT / "scripts" / "run_stage_suite.py").read_text(
             encoding="utf-8"

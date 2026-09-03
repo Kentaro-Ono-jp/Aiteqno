@@ -58,7 +58,7 @@ jobs:
       AITEQNO_RUN_REAL_IMAGE_BASELINE: "1"
       AITEQNO_RUN_TESSERACT_INTEGRATION: "1"
       AITEQNO_REAL_BASELINE_OUTPUT: build/real-runtime-baseline
-      AITEQNO_QUALITY_FOCUS_TWO_OUTPUT: build/quality-80-focus-2
+      AITEQNO_QUALITY_FOCUS_THREE_OUTPUT: build/quality-80-focus-3
       AITEQNO_TESSERACT_EXECUTABLE: /usr/bin/tesseract
       AITEQNO_TESSDATA_PREFIX: /usr/share/tesseract-ocr/5/tessdata
       AITEQNO_LIBREOFFICE_EXECUTABLE: /usr/bin/libreoffice
@@ -102,11 +102,11 @@ jobs:
             tests.test_cli.RealCliRoundtripIntegrationTest \
             tests.test_golden_roundtrip.RealLibreOfficeGoldenIntegrationTest \
             tests.test_real_document_baseline.RealDocumentBaselineIntegrationTest
-      - name: Run Quality 80 Focus 2 exact-two gate
+      - name: Run Quality 80 Focus 3 exact-three gate
         run: >-
           python scripts/run_stage_suite.py
-          --suite tests/fixtures/focuses/quality-80-focus-2.json
-          --output "$AITEQNO_QUALITY_FOCUS_TWO_OUTPUT"
+          --suite tests/fixtures/focuses/quality-80-focus-3.json
+          --output "$AITEQNO_QUALITY_FOCUS_THREE_OUTPUT"
           --expect-state pass
       - name: Upload baseline evidence
         if: always()
@@ -116,11 +116,11 @@ jobs:
           path: build/real-runtime-baseline
           if-no-files-found: warn
           retention-days: 14
-      - name: Upload Quality 80 Focus 2 evidence
+      - name: Upload Quality 80 Focus 3 evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: quality-80-focus-2-${{ github.sha }}
-          path: build/quality-80-focus-2
+          name: quality-80-focus-3-${{ github.sha }}
+          path: build/quality-80-focus-3
           if-no-files-found: error
           retention-days: 14
