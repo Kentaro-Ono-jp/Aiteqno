@@ -177,9 +177,9 @@ explicit option. Quality 80 Focus 1 composes that language decision with a
 four-pixel white border, PSM 8, and separator-safe same-row grouping derived
 only from source geometry. Quality 80 Focus 2 additionally recovers short grid
 ticks, closed cells, and two-row internal boundaries from source geometry.
-Quality 80 Focus 3 retains those production rules and explicitly pins its active
-set to the existing baseline, questionnaire 01, then questionnaire 02. No
-directory scan or glob can add later questionnaires. The
+Quality 80 Focus 4 retains those production rules and explicitly pins its active
+set to the existing baseline, questionnaire 01, questionnaire 02, then
+questionnaire 03. No directory scan or glob can add later questionnaires. The
 rendered-visible evaluator remains fixed at PSM 6. The selected IR's validated
 topology is rendered as editable native Word tables. A numeric pass is never
 sufficient by itself: package and source-independence integrity remain separate
@@ -202,9 +202,9 @@ Install the development tools and run the same deterministic checks used by CI:
 CI runs deterministic tests on Windows and Linux with Python 3.11 and 3.14
 without depending on machine-global document runtimes. A dedicated Ubuntu 24.04
 job exercises real Tesseract, LibreOffice, Poppler, and Japanese fonts, then
-runs only the current Quality 80 Focus 3 descriptor in its quality gate. It
-processes the three explicitly listed fixtures sequentially and uploads their
-complete evidence without generating or scoring questionnaires 03 through 10.
+runs only the current Quality 80 Focus 4 descriptor in its quality gate. It
+processes the four explicitly listed fixtures sequentially and uploads their
+complete evidence without generating or scoring questionnaires 04 through 10.
 Each fixture must independently reach overall 80.0 and pass integrity checks;
 the diagnostic average cannot compensate for an individual failure.
 
