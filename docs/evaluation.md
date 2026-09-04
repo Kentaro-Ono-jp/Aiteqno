@@ -153,23 +153,23 @@ The stage passes only when every fixture individually has
 passes. The diagnostic average and the legacy evaluator state never compensate
 for an individual result below 70.
 
-The completed Stage 1 through Stage 10 and Quality 80 Focus 1 through 3 descriptors
+The completed Stage 1 through Stage 10 and Quality 80 Focus 1 through 4 descriptors
 remain historical contracts. The current CI quality gate does not execute them.
-Quality 80 Focus 4 is pinned by
-`tests/fixtures/focuses/quality-80-focus-4.json` to exactly four ordered
-fixtures: the existing baseline, questionnaire 01, questionnaire 02, then
-questionnaire 03. The runner processes that explicit list sequentially,
-requires each fixture to reach 80.0 with integrity PASS, and never uses the
-diagnostic average for its decision. No glob,
-directory scan, or fixture discovery expands the active set. Production and
+Quality 80 Focus 5 is pinned by
+`tests/fixtures/focuses/quality-80-focus-5.json` to exactly five ordered
+fixtures: the existing baseline, questionnaire 01, questionnaire 02,
+questionnaire 03, then questionnaire 04. The runner processes that explicit
+list sequentially, requires each fixture to reach 80.0 with integrity PASS,
+and never uses the diagnostic average for its decision. No glob, directory
+scan, or fixture discovery expands the active set. Production and
 visible observation both use the Japanese language profile; the actual
 LibreOffice page is rasterized at 300 DPI so small but visible Japanese text is
 not lost to the observer. The stage summary records the declared sequential
 execution order, active fixture count, and disabled fixture discovery. CI uploads
-the complete Focus 4 evidence directory without generating or scoring
-questionnaires 04 through 10. The Focus 4 before measurement already passes for
-all four fixtures, so this focus retains the production quality rules and only
-extends the explicit acceptance contract to questionnaire 03.
+the complete Focus 5 evidence directory without generating or scoring
+questionnaires 05 through 10. The Focus 5 before measurement already passes for
+all five fixtures, so this focus retains the production quality rules and only
+extends the explicit acceptance contract to questionnaire 04.
 
 Source baseline evaluator 1.1 canonicalizes table-topology structure evidence:
 derived cell rectangles and duplicated supporting primitives are not counted
