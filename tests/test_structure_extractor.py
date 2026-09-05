@@ -259,8 +259,57 @@ class StructureExtractorTest(unittest.TestCase):
 
         self.assertGreaterEqual(len(compact_outlines), 18)
         self.assertEqual(len(circular_outlines), 2)
-        self.assertEqual(len(diagram_lines), 10)
+        self.assertEqual(len(diagram_lines), 12)
+        self.assertEqual(
+            sum(
+                line.orientation is LineOrientation.DIAGONAL
+                for line in diagram_lines
+            ),
+            8,
+        )
         self.assertEqual(len(filled_bands), 3)
+        self.assertIn(
+            (1117, 1542, 406, 136),
+            {
+                (
+                    rectangle.bbox.x,
+                    rectangle.bbox.y,
+                    rectangle.bbox.width,
+                    rectangle.bbox.height,
+                )
+                for rectangle in result.rectangles
+                if "closed line rectangle" in (rectangle.provenance[0].notes or "")
+            },
+        )
+        self.assertFalse(
+            any(
+                region.bbox.x < outline.bbox.x + outline.bbox.width
+                and region.bbox.x + region.bbox.width > outline.bbox.x
+                and region.bbox.y < outline.bbox.y + outline.bbox.height
+                and region.bbox.y + region.bbox.height > outline.bbox.y
+                for region in result.text_regions
+                for outline in circular_outlines
+            )
+        )
+        self.assertFalse(
+            any(
+                region.bbox.y >= 1500 and region.bbox.height >= 80
+                for region in result.text_regions
+            )
+        )
+        self.assertFalse(
+            any(
+                region.bbox.y < band.bbox.y + band.bbox.height
+                and region.bbox.y + region.bbox.height > band.bbox.y
+                and (
+                    region.bbox.x < band.bbox.x + 10
+                    or region.bbox.x + region.bbox.width
+                    > band.bbox.x + band.bbox.width - 10
+                )
+                for region in result.text_regions
+                for band in filled_bands
+            )
+        )
 
     def test_sparse_compact_controls_do_not_overwhelm_form_structure(self):
         image = PillowPngDecoder().decode(

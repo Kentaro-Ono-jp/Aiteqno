@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "stage_id": "quality-80-focus-6",
+  "parent_issue": 95,
+  "focus_issue": 107,
+  "threshold": 80,
+  "pipeline": {
+    "entrypoint": "aiteqno roundtrip",
+    "languages": [
+      "jpn"
+    ],
+    "preview_dpi": 144
+  },
+  "evaluation": {
+    "evaluator_name": "aiteqno-source-baseline-evaluator",
+    "text_evidence": "rendered_visible",
+    "snapshot_dpi": 300,
+    "visible_ocr_languages": [
+      "jpn"
+    ],
+    "page_segmentation_mode": 6,
+    "engine_mode": 3,
+    "structure_aware_visible_ocr": true
+  },
+  "fixtures": [
+    {
+      "fixture_id": "synthetic-dense-japanese-form-v1",
+      "manifest": "tests/fixtures/baseline/synthetic-dense-japanese-form-v1/manifest.json"
+    },
+    {
+      "fixture_id": "questionnaire-01-general-medicine",
+      "manifest": "tests/fixtures/generalization/japanese-questionnaires-v1/questionnaire-01-general-medicine.manifest.json"
+    },
+    {
+      "fixture_id": "questionnaire-02-fever-respiratory",
+      "manifest": "tests/fixtures/generalization/japanese-questionnaires-v1/questionnaire-02-fever-respiratory.manifest.json"
+    },
+    {
+      "fixture_id": "questionnaire-03-gastroenterology",
+      "manifest": "tests/fixtures/generalization/japanese-questionnaires-v1/questionnaire-03-gastroenterology.manifest.json"
+    },
+    {
+      "fixture_id": "questionnaire-04-orthopedics",
+      "manifest": "tests/fixtures/generalization/japanese-questionnaires-v1/questionnaire-04-orthopedics.manifest.json"
+    },
+    {
+      "fixture_id": "questionnaire-05-dermatology",
+      "manifest": "tests/fixtures/generalization/japanese-questionnaires-v1/questionnaire-05-dermatology.manifest.json"
+    }
+  ]
+}
+

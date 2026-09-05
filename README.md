@@ -177,13 +177,17 @@ explicit option. Quality 80 Focus 1 composes that language decision with a
 four-pixel white border, PSM 8, and separator-safe same-row grouping derived
 only from source geometry. Quality 80 Focus 2 additionally recovers short grid
 ticks, closed cells, and two-row internal boundaries from source geometry.
-Quality 80 Focus 5 retains those production rules and explicitly pins its active
-set to the existing baseline, questionnaire 01, questionnaire 02,
-questionnaire 03, then questionnaire 04. No directory scan or glob can add later
-questionnaires. The rendered-visible evaluator remains fixed at PSM 6. The
-selected IR's validated topology is rendered as editable native Word tables.
-A numeric pass is never sufficient by itself: package and source-independence
-integrity remain separate gates.
+Quality 80 Focus 6 retains those production rules and adds fixture-independent
+shape handling for detailed forms: shorter vertical form edges can close a
+preserved rectangle, circular outlines and filled-band side edges cannot become
+OCR text, diagram strokes are selected by geometric role, and only a
+low-confidence OCR echo overlapping an already preserved compact control is
+omitted. Its active set is pinned to the existing baseline, questionnaire 01,
+questionnaire 02, questionnaire 03, questionnaire 04, then questionnaire 05.
+No directory scan or glob can add later questionnaires. The rendered-visible
+evaluator remains fixed at PSM 6. The selected IR's validated topology is
+rendered as editable native Word tables. A numeric pass is never sufficient by
+itself: package and source-independence integrity remain separate gates.
 
 ## Development
 
@@ -202,9 +206,9 @@ Install the development tools and run the same deterministic checks used by CI:
 CI runs deterministic tests on Windows and Linux with Python 3.11 and 3.14
 without depending on machine-global document runtimes. A dedicated Ubuntu 24.04
 job exercises real Tesseract, LibreOffice, Poppler, and Japanese fonts, then
-runs only the current Quality 80 Focus 5 descriptor in its quality gate. It
-processes the five explicitly listed fixtures sequentially and uploads their
-complete evidence without generating or scoring questionnaires 05 through 10.
+runs only the current Quality 80 Focus 6 descriptor in its quality gate. It
+processes the six explicitly listed fixtures sequentially and uploads their
+complete evidence without generating or scoring questionnaires 06 through 10.
 Each fixture must independently reach overall 80.0 and pass integrity checks;
 the diagnostic average cannot compensate for an individual failure.
 

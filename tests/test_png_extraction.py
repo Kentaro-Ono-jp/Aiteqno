@@ -224,6 +224,61 @@ class PngExtractionPipelineTest(unittest.TestCase):
             )
             self.assertTrue(result.bundle.document_path.is_file())
 
+    def test_low_confidence_text_echo_of_preserved_compact_control_is_omitted(self):
+        text_region = self.structure.text_regions[0]
+        compact_control = replace(
+            self.structure.rectangles[0],
+            bbox=text_region.bbox,
+            provenance=(
+                replace(
+                    self.structure.rectangles[0].provenance[0],
+                    source_bbox_px=text_region.bbox,
+                    notes="compact closed-outline rectangle candidate",
+                ),
+            ),
+        )
+        structure = replace(
+            self.structure,
+            rectangles=(compact_control,),
+            text_regions=(text_region,),
+            image_regions=(),
+        )
+        echo = FakeOcrObservation(
+            text="口",
+            bbox=text_region.bbox,
+            confidence=0.09,
+        )
+        label = FakeOcrObservation(
+            text="KEEP",
+            bbox=text_region.bbox,
+            confidence=0.9,
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = self._extract(
+                Path(temp_dir) / "bundle",
+                structure_extractor=_StaticStructureExtractor(structure),
+                ocr_backend=FakeOcrBackend((echo, label)),
+                ocr_options=OcrOptions(
+                    page_segmentation_mode=6,
+                    timeout_seconds=10,
+                    min_confidence=0.0,
+                ),
+            )
+
+        self.assertEqual(
+            tuple(
+                element.text
+                for element in result.document.pages[0].elements
+                if isinstance(element, TextElement)
+            ),
+            ("KEEP",),
+        )
+        self.assertIn(
+            "ocr_low_confidence_control_echo_omitted",
+            {diagnostic.code for diagnostic in result.diagnostics},
+        )
+
     def test_page_covering_image_is_never_embedded(self):
         page_bbox = PixelBoundingBox(
             x=0,
@@ -429,6 +484,7 @@ class PngExtractionPipelineTest(unittest.TestCase):
         ocr_backend=None,
         asset_encoder=None,
         validator=None,
+        ocr_options=None,
         ocr_region_grouping=OcrRegionGroupingConfig(),
         ocr_region_grouping_observer=None,
     ):
@@ -442,7 +498,8 @@ class PngExtractionPipelineTest(unittest.TestCase):
             validator=validator or JsonSchemaDocumentIRValidator(),
             bundle_writer=FilesystemDocumentBundleWriter(),
             languages=("eng",),
-            ocr_options=OcrOptions(
+            ocr_options=ocr_options
+            or OcrOptions(
                 page_segmentation_mode=6,
                 timeout_seconds=10,
                 min_confidence=0.1,
