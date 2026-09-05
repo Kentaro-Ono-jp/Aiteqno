@@ -148,6 +148,10 @@ class PngExtractionPipelineTest(unittest.TestCase):
             )
 
             for text in texts:
+                self.assertAlmostEqual(
+                    text.style.font_size_pt,
+                    max(1.0, round(text.bbox.height * 0.75, 6)),
+                )
                 self.assertIsNotNone(text.confidence.detection)
                 self.assertIsNotNone(text.confidence.recognition)
                 self.assertEqual(
@@ -246,12 +250,12 @@ class PngExtractionPipelineTest(unittest.TestCase):
         echo = FakeOcrObservation(
             text="口",
             bbox=text_region.bbox,
-            confidence=0.09,
+            confidence=0.24,
         )
         label = FakeOcrObservation(
             text="KEEP",
             bbox=text_region.bbox,
-            confidence=0.9,
+            confidence=0.25,
         )
 
         with tempfile.TemporaryDirectory() as temp_dir:

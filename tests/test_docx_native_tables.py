@@ -484,6 +484,15 @@ class NativeWordTableRendererTest(unittest.TestCase):
         table = reopened.tables[0]
         self.assertEqual(text_content(table.cell(0, 0)._tc), "依頼する処理")
         self.assertEqual(text_content(table.cell(0, 1)._tc), "Alpha Beta")
+        latin_spaces = table.cell(0, 1)._tc.xpath('.//w:r/w:t[text()=" "]')
+        self.assertEqual(len(latin_spaces), 1)
+        latin_space_fonts = latin_spaces[0].getparent().xpath("./w:rPr/w:rFonts")
+        self.assertEqual(len(latin_space_fonts), 1)
+        for channel in ("ascii", "hAnsi", "eastAsia", "cs"):
+            self.assertEqual(
+                latin_space_fonts[0].get(qn(f"w:{channel}")),
+                "Arial",
+            )
         self.assertEqual(text_content(table.cell(1, 0)._tc), "PNG・PDF(26)")
         self.assertEqual(text_content(table.cell(1, 1)._tc), "項目")
         self.assertFalse(table.cell(0, 0)._tc.xpath('.//w:t[text()=" "]'))

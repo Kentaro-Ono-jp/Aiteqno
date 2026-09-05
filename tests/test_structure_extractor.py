@@ -293,6 +293,16 @@ class StructureExtractorTest(unittest.TestCase):
         )
         self.assertFalse(
             any(
+                region.bbox.x < outline.bbox.x + outline.bbox.width
+                and region.bbox.x + region.bbox.width > outline.bbox.x
+                and region.bbox.y < outline.bbox.y + outline.bbox.height
+                and region.bbox.y + region.bbox.height > outline.bbox.y
+                for region in result.text_regions
+                for outline in compact_outlines
+            )
+        )
+        self.assertFalse(
+            any(
                 region.bbox.y >= 1500 and region.bbox.height >= 80
                 for region in result.text_regions
             )

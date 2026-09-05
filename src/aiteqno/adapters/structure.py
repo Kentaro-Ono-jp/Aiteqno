@@ -50,6 +50,7 @@ _ALGORITHM_PARAMETERS = {
     "max_line_thickness_fraction": 0.025,
     "compact_outline_max_fraction": 0.06,
     "compact_outline_min_rectangularity": 0.82,
+    "compact_outline_text_mask": True,
     "composite_rectangle_boundary_tolerance_px": 3,
     "circular_outline_min_circularity": 0.82,
     "diagram_text_mask_thickness_fraction": 0.004,
@@ -294,6 +295,7 @@ class OpenCvStructureExtractor:
             )
             lines = [*partitioned_axis_lines, *diagram_lines]
             line_mask = cv2.bitwise_or(line_mask, diagram_mask)
+            _mask_rectangle_bounds(line_mask, compact_rectangles)
             _mask_rectangle_bounds(line_mask, circular_rectangles)
             _mask_rectangle_vertical_edges(
                 line_mask,

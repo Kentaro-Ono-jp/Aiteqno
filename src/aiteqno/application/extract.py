@@ -73,9 +73,10 @@ from .table_topology import infer_table_topology
 
 
 EXTRACTION_PROVIDER = "aiteqno.png-extraction"
-EXTRACTION_PROVIDER_VERSION = "1.0"
+EXTRACTION_PROVIDER_VERSION = "1.1"
 PAGE_COVERING_IMAGE_FRACTION = 0.85
-LOW_CONFIDENCE_CONTROL_ECHO_THRESHOLD = 0.1
+LOW_CONFIDENCE_CONTROL_ECHO_THRESHOLD = 0.25
+TEXT_FONT_HEIGHT_RATIO = 0.75
 
 _DIAGNOSTIC_CODE_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 _EXTRACTION_STAGES = frozenset(
@@ -783,7 +784,7 @@ def _text_elements(
                 )
             )
         bbox = _point_bbox(token.bbox, image)
-        font_size = max(1.0, round(bbox.height * 0.8, 6))
+        font_size = max(1.0, round(bbox.height * TEXT_FONT_HEIGHT_RATIO, 6))
         elements.append(
             TextElement(
                 id=f"p001-text-{reading_order:04d}",

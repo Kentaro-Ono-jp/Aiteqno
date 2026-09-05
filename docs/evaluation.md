@@ -171,13 +171,17 @@ questionnaires 06 through 10.
 
 The clean Focus 6 before measurement passed the inherited five fixtures but
 measured questionnaire 05 at `75.57`. The adopted source-geometry rules recover
-short vertical form edges, keep circular outlines and filled-band side edges out
-of OCR text, and select diagram strokes by their geometric role. A separate
-application rule omits only low-confidence OCR text that overlaps an already
-preserved compact control outline. These rules do not consult fixture IDs,
-reference hashes, or expected text. The exact-six candidate measurement is
-`80.82 / 80.24 / 85.72 / 87.88 / 81.72 / 80.06`, with every fixture passing
-integrity; these local scores remain runtime observations rather than portable
+short vertical form edges, keep compact and circular outlines plus filled-band
+side edges out of OCR text, and select diagram strokes by their geometric role.
+A separate application rule omits only low-confidence OCR text that overlaps an
+already preserved compact control outline, while the 75-percent text-height
+estimate leaves clearer separation in the rendered document. Layout-only word
+spaces retain the adjacent resolved font rather than introducing a host-default
+Latin font. These rules do not consult fixture IDs, reference hashes, or
+expected text. The exact-six candidate measurements, in declared order, are
+`80.73 / 81.34 / 85.87 / 87.93 / 82.41 / 80.43` on isolated Ubuntu 24.04 and
+`80.82 / 81.49 / 84.53 / 87.67 / 83.64 / 81.01` on Windows. Every fixture
+passes integrity; these scores remain runtime observations rather than portable
 constants.
 
 Source baseline evaluator 1.1 canonicalizes table-topology structure evidence:

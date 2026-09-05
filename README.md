@@ -179,15 +179,18 @@ only from source geometry. Quality 80 Focus 2 additionally recovers short grid
 ticks, closed cells, and two-row internal boundaries from source geometry.
 Quality 80 Focus 6 retains those production rules and adds fixture-independent
 shape handling for detailed forms: shorter vertical form edges can close a
-preserved rectangle, circular outlines and filled-band side edges cannot become
-OCR text, diagram strokes are selected by geometric role, and only a
-low-confidence OCR echo overlapping an already preserved compact control is
-omitted. Its active set is pinned to the existing baseline, questionnaire 01,
-questionnaire 02, questionnaire 03, questionnaire 04, then questionnaire 05.
-No directory scan or glob can add later questionnaires. The rendered-visible
-evaluator remains fixed at PSM 6. The selected IR's validated topology is
-rendered as editable native Word tables. A numeric pass is never sufficient by
-itself: package and source-independence integrity remain separate gates.
+preserved rectangle, compact and circular outline pixels plus filled-band side
+edges cannot become OCR text, and diagram strokes are selected by geometric
+role. The application omits only a low-confidence OCR echo overlapping an
+already preserved compact control, estimates text at 75 percent of its source
+height for clearer rendered separation, and styles layout-only word spaces with
+the adjacent resolved font instead of a host default. Its active set is pinned
+to the existing baseline, questionnaire 01, questionnaire 02, questionnaire 03,
+questionnaire 04, then questionnaire 05. No directory scan or glob can add
+later questionnaires. The rendered-visible evaluator remains fixed at PSM 6.
+The selected IR's validated topology is rendered as editable native Word
+tables. A numeric pass is never sufficient by itself: package and
+source-independence integrity remain separate gates.
 
 ## Development
 
