@@ -1966,7 +1966,7 @@ class RealDocumentBaselineIntegrationTest(unittest.TestCase):
         selected_ir_bytes = (output / "bundle" / "document.ir.json").read_bytes()
         self.assertEqual(
             hashlib.sha256(selected_ir_bytes).hexdigest(),
-            "25fb2b5e8155524528b1425933b4b410a5d28ca405c51413de52ec3fa642054a",
+            "f2a5de7d0911b7a4ad45b5094664e1eabd33cb9f0ef8aee824a494110eb1dbe6",
         )
         selected_document = DocumentIR.from_json(selected_ir_bytes)
         padding_document = DocumentIR.from_json(

@@ -1379,8 +1379,8 @@ class PythonDocxRenderer:
             )
         )
 
-    @staticmethod
     def _append_text_separator(
+        self,
         paragraph: Paragraph,
         previous: TextElement | None,
         current: TextElement,
@@ -1407,7 +1407,18 @@ class PythonDocxRenderer:
             return
         if PythonDocxRenderer._requires_word_space(previous.text, current.text):
             separator = paragraph.add_run(" ")
-            separator.font.size = Pt(font_size)
+            # Keep LibreOffice from materializing a host-default Latin font for
+            # layout spaces that sit between otherwise explicitly styled runs.
+            resolved_font = self._supported_fonts.get(
+                current.style.font_family.casefold()
+            )
+            if resolved_font is None:
+                resolved_font = self._fallback_font
+            self._set_run_font(
+                separator,
+                resolved_font,
+                replace(current.style, font_size_pt=font_size),
+            )
 
     @staticmethod
     def _line_font_size(line: _TextLine) -> float:

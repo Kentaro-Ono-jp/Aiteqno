@@ -40,7 +40,7 @@ DEFAULT_FALLBACK_DPI = 96.0
 DEFAULT_MAX_PNG_BYTES = 25 * 1024 * 1024
 DEFAULT_MAX_PNG_PIXELS = 40_000_000
 STRUCTURE_PROVIDER = "aiteqno.opencv-structure"
-STRUCTURE_PROVIDER_VERSION = "1.2"
+STRUCTURE_PROVIDER_VERSION = "1.3"
 
 _ALGORITHM_PARAMETERS = {
     "algorithm_version": STRUCTURE_PROVIDER_VERSION,
@@ -50,14 +50,19 @@ _ALGORITHM_PARAMETERS = {
     "max_line_thickness_fraction": 0.025,
     "compact_outline_max_fraction": 0.06,
     "compact_outline_min_rectangularity": 0.82,
+    "compact_outline_text_mask": True,
     "composite_rectangle_boundary_tolerance_px": 3,
     "circular_outline_min_circularity": 0.82,
+    "diagram_text_mask_thickness_fraction": 0.004,
+    "diagram_role_split_height_fraction": 0.06,
     "detail_dense_compact_min_count": 18,
     "filled_band_min_row_coverage": 0.65,
+    "filled_band_vertical_edge_mask_fraction": 0.006,
     "detail_min_dpi": 140,
     "detail_min_shortest_px": 600,
     "min_image_area_fraction": 0.0025,
     "min_line_fraction": 0.06,
+    "min_vertical_line_fraction": 0.05,
     "short_tick_max_height_fraction": 0.05,
     "short_tick_min_group_size": 3,
     "vertical_single_intersection_partition": True,
@@ -282,6 +287,7 @@ class OpenCvStructureExtractor:
                 binary,
                 source,
             )
+            filled_bands = self._filled_horizontal_band_candidates(gray, source)
             diagram_lines, diagram_mask = self._diagram_line_candidates(
                 binary,
                 source,
@@ -289,6 +295,25 @@ class OpenCvStructureExtractor:
             )
             lines = [*partitioned_axis_lines, *diagram_lines]
             line_mask = cv2.bitwise_or(line_mask, diagram_mask)
+            _mask_rectangle_bounds(line_mask, compact_rectangles)
+            _mask_rectangle_bounds(line_mask, circular_rectangles)
+            _mask_rectangle_vertical_edges(
+                line_mask,
+                filled_bands,
+                thickness=max(
+                    2,
+                    int(
+                        round(
+                            min(source.pixel_width, source.pixel_height)
+                            * float(
+                                _ALGORITHM_PARAMETERS[
+                                    "filled_band_vertical_edge_mask_fraction"
+                                ]
+                            )
+                        )
+                    ),
+                ),
+            )
             dense_compact_controls = len(compact_rectangles) >= int(
                 _ALGORITHM_PARAMETERS["detail_dense_compact_min_count"]
             )
@@ -303,7 +328,7 @@ class OpenCvStructureExtractor:
                             else ()
                         ),
                         *circular_rectangles,
-                        *self._filled_horizontal_band_candidates(gray, source),
+                        *filled_bands,
                     ],
                 )
             )
@@ -813,7 +838,22 @@ class OpenCvStructureExtractor:
         maximum_length = shortest * 0.21
         search_half_width = max(60, int(round(shortest * 0.075)))
         search_depth = max(120, int(round(source.pixel_height * 0.25)))
-        role_split_offset = source.pixel_height * 0.10
+        role_split_offset = source.pixel_height * float(
+            _ALGORITHM_PARAMETERS["diagram_role_split_height_fraction"]
+        )
+        mask_thickness = max(
+            3,
+            int(
+                round(
+                    shortest
+                    * float(
+                        _ALGORITHM_PARAMETERS[
+                            "diagram_text_mask_thickness_fraction"
+                        ]
+                    )
+                )
+            ),
+        )
 
         for head in heads:
             center_x = head.bbox.x + head.bbox.width // 2
@@ -872,10 +912,22 @@ class OpenCvStructureExtractor:
                 diagonal[f"{level}_{side}"].append((x1, y1, x2, y2, length))
 
             selected = [
-                max(values, key=lambda item: item[4])
-                for values in (*horizontal.values(), *diagonal.values())
+                min(
+                    values,
+                    key=lambda item: (
+                        min(item[1], item[3]),
+                        abs((item[0] + item[2]) / 2 - center_x),
+                        -item[4],
+                    ),
+                )
+                for values in horizontal.values()
                 if values
             ]
+            selected.extend(
+                max(values, key=lambda item: item[4])
+                for values in diagonal.values()
+                if values
+            )
             for x1, y1, x2, y2, length in selected:
                 is_horizontal = abs(y2 - y1) <= 3
                 if is_horizontal:
@@ -922,7 +974,7 @@ class OpenCvStructureExtractor:
                     (start.x, start.y),
                     (end.x, end.y),
                     255,
-                    3,
+                    mask_thickness,
                 )
         return detected, detected_mask
 
@@ -1118,6 +1170,45 @@ def _binarize(gray: np.ndarray) -> np.ndarray:
     return cv2.bitwise_or(otsu, adaptive)
 
 
+def _mask_rectangle_bounds(
+    mask: np.ndarray,
+    rectangles: Iterable[RectangleCandidate],
+) -> None:
+    """Exclude separately preserved closed outlines from text-region detection."""
+
+    height, width = mask.shape
+    for rectangle in rectangles:
+        bbox = rectangle.bbox
+        left = max(0, bbox.x)
+        top = max(0, bbox.y)
+        right = min(width, bbox.x + bbox.width)
+        bottom = min(height, bbox.y + bbox.height)
+        if left < right and top < bottom:
+            mask[top:bottom, left:right] = 255
+
+
+def _mask_rectangle_vertical_edges(
+    mask: np.ndarray,
+    rectangles: Iterable[RectangleCandidate],
+    *,
+    thickness: int,
+) -> None:
+    """Exclude non-semantic side edges while keeping text inside filled bands."""
+
+    height, width = mask.shape
+    for rectangle in rectangles:
+        bbox = rectangle.bbox
+        left = max(0, bbox.x)
+        top = max(0, bbox.y)
+        right = min(width, bbox.x + bbox.width)
+        bottom = min(height, bbox.y + bbox.height)
+        if left >= right or top >= bottom:
+            continue
+        edge_width = min(thickness, max(1, (right - left) // 2))
+        mask[top:bottom, left : left + edge_width] = 255
+        mask[top:bottom, right - edge_width : right] = 255
+
+
 def _detect_raw_lines(binary: np.ndarray) -> tuple[list[_RawLine], np.ndarray]:
     height, width = binary.shape
     detected: list[_RawLine] = []
@@ -1139,10 +1230,14 @@ def _detect_raw_lines(binary: np.ndarray) -> tuple[list[_RawLine], np.ndarray]:
         mask = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel, iterations=1)
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, close_kernel, iterations=1)
         count, labels, stats, _ = cv2.connectedComponentsWithStats(mask, 8)
-        minimum_length = max(
-            12,
-            int(round(axis_length * float(_ALGORITHM_PARAMETERS["min_line_fraction"]))),
+        minimum_fraction = float(
+            _ALGORITHM_PARAMETERS[
+                "min_vertical_line_fraction"
+                if orientation is LineOrientation.VERTICAL
+                else "min_line_fraction"
+            ]
         )
+        minimum_length = max(12, int(round(axis_length * minimum_fraction)))
         maximum_thickness = max(
             5,
             int(round(min(width, height) * float(_ALGORITHM_PARAMETERS["max_line_thickness_fraction"]))),

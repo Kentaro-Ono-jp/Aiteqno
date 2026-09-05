@@ -153,23 +153,36 @@ The stage passes only when every fixture individually has
 passes. The diagnostic average and the legacy evaluator state never compensate
 for an individual result below 70.
 
-The completed Stage 1 through Stage 10 and Quality 80 Focus 1 through 4 descriptors
-remain historical contracts. The current CI quality gate does not execute them.
-Quality 80 Focus 5 is pinned by
-`tests/fixtures/focuses/quality-80-focus-5.json` to exactly five ordered
+The completed Stage 1 through Stage 10 and Quality 80 Focus 1 through 5
+descriptors remain historical contracts. The current CI quality gate does not
+execute them. Quality 80 Focus 6 is pinned by
+`tests/fixtures/focuses/quality-80-focus-6.json` to exactly six ordered
 fixtures: the existing baseline, questionnaire 01, questionnaire 02,
-questionnaire 03, then questionnaire 04. The runner processes that explicit
-list sequentially, requires each fixture to reach 80.0 with integrity PASS,
-and never uses the diagnostic average for its decision. No glob, directory
-scan, or fixture discovery expands the active set. Production and
+questionnaire 03, questionnaire 04, then questionnaire 05. The runner processes
+that explicit list sequentially, requires each fixture to reach 80.0 with
+integrity PASS, and never uses the diagnostic average for its decision. No glob,
+directory scan, or fixture discovery expands the active set. Production and
 visible observation both use the Japanese language profile; the actual
 LibreOffice page is rasterized at 300 DPI so small but visible Japanese text is
 not lost to the observer. The stage summary records the declared sequential
-execution order, active fixture count, and disabled fixture discovery. CI uploads
-the complete Focus 5 evidence directory without generating or scoring
-questionnaires 05 through 10. The Focus 5 before measurement already passes for
-all five fixtures, so this focus retains the production quality rules and only
-extends the explicit acceptance contract to questionnaire 04.
+execution order, active fixture count, and disabled fixture discovery. CI
+uploads the complete Focus 6 evidence directory without generating or scoring
+questionnaires 06 through 10.
+
+The clean Focus 6 before measurement passed the inherited five fixtures but
+measured questionnaire 05 at `75.57`. The adopted source-geometry rules recover
+short vertical form edges, keep compact and circular outlines plus filled-band
+side edges out of OCR text, and select diagram strokes by their geometric role.
+A separate application rule omits only low-confidence OCR text that overlaps an
+already preserved compact control outline, while the 75-percent text-height
+estimate leaves clearer separation in the rendered document. Layout-only word
+spaces retain the adjacent resolved font rather than introducing a host-default
+Latin font. These rules do not consult fixture IDs, reference hashes, or
+expected text. The exact-six candidate measurements, in declared order, are
+`80.73 / 81.34 / 85.87 / 87.93 / 82.41 / 80.43` on isolated Ubuntu 24.04 and
+`80.82 / 81.49 / 84.53 / 87.67 / 83.64 / 81.01` on Windows. Every fixture
+passes integrity; these scores remain runtime observations rather than portable
+constants.
 
 Source baseline evaluator 1.1 canonicalizes table-topology structure evidence:
 derived cell rectangles and duplicated supporting primitives are not counted

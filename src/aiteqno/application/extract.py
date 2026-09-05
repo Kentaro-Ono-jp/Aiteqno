@@ -73,8 +73,10 @@ from .table_topology import infer_table_topology
 
 
 EXTRACTION_PROVIDER = "aiteqno.png-extraction"
-EXTRACTION_PROVIDER_VERSION = "1.0"
+EXTRACTION_PROVIDER_VERSION = "1.1"
 PAGE_COVERING_IMAGE_FRACTION = 0.85
+LOW_CONFIDENCE_CONTROL_ECHO_THRESHOLD = 0.25
+TEXT_FONT_HEIGHT_RATIO = 0.75
 
 _DIAGNOSTIC_CODE_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 _EXTRACTION_STAGES = frozenset(
@@ -307,6 +309,19 @@ def extract_png(
     associated: list[_AssociatedToken] = []
     matched_region_refs: set[str] = set()
     for token in normalized_tokens:
+        if _is_low_confidence_control_echo(token, rectangles):
+            diagnostics.append(
+                ExtractionDiagnostic(
+                    code="ocr_low_confidence_control_echo_omitted",
+                    stage="ocr",
+                    message=(
+                        "low-confidence OCR text duplicating a preserved compact "
+                        "control outline was omitted"
+                    ),
+                    source_ref=token.parent_region_ref,
+                )
+            )
+            continue
         region_ref, region, inferred = _associate_region(token, region_entries)
         associated.append(
             _AssociatedToken(token=token, region_ref=region_ref, region=region)
@@ -769,7 +784,7 @@ def _text_elements(
                 )
             )
         bbox = _point_bbox(token.bbox, image)
-        font_size = max(1.0, round(bbox.height * 0.8, 6))
+        font_size = max(1.0, round(bbox.height * TEXT_FONT_HEIGHT_RATIO, 6))
         elements.append(
             TextElement(
                 id=f"p001-text-{reading_order:04d}",
@@ -999,6 +1014,25 @@ def _intersection_fraction(first: PixelBoundingBox, second: PixelBoundingBox) ->
     bottom = min(first.y + first.height, second.y + second.height)
     intersection = max(0, right - left) * max(0, bottom - top)
     return intersection / (first.width * first.height)
+
+
+def _is_low_confidence_control_echo(
+    token: OcrToken,
+    rectangles: Sequence[RectangleCandidate],
+) -> bool:
+    if (
+        token.confidence is None
+        or token.confidence >= LOW_CONFIDENCE_CONTROL_ECHO_THRESHOLD
+    ):
+        return False
+    return any(
+        any(
+            "compact closed-outline rectangle candidate" in (record.notes or "")
+            for record in rectangle.provenance
+        )
+        and _intersection_fraction(token.bbox, rectangle.bbox) >= 0.5
+        for rectangle in rectangles
+    )
 
 
 def _token_position_key(item: _AssociatedToken) -> tuple[object, ...]:
