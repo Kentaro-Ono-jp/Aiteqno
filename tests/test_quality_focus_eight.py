@@ -11,7 +11,7 @@ from scripts import run_stage_suite as runner
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SUITE_PATH = (
-    Path(__file__).parent / "fixtures" / "focuses" / "quality-80-focus-7.json"
+    Path(__file__).parent / "fixtures" / "focuses" / "quality-80-focus-8.json"
 )
 EXPECTED_IDS = (
     "synthetic-dense-japanese-form-v1",
@@ -21,6 +21,7 @@ EXPECTED_IDS = (
     "questionnaire-04-orthopedics",
     "questionnaire-05-dermatology",
     "questionnaire-06-otorhinolaryngology",
+    "questionnaire-07-ophthalmology",
 )
 EXPECTED_MANIFESTS = (
     "tests/fixtures/baseline/synthetic-dense-japanese-form-v1/manifest.json",
@@ -36,6 +37,8 @@ EXPECTED_MANIFESTS = (
     "questionnaire-05-dermatology.manifest.json",
     "tests/fixtures/generalization/japanese-questionnaires-v1/"
     "questionnaire-06-otorhinolaryngology.manifest.json",
+    "tests/fixtures/generalization/japanese-questionnaires-v1/"
+    "questionnaire-07-ophthalmology.manifest.json",
 )
 EXPECTED_IDENTITIES = (
     (
@@ -66,6 +69,10 @@ EXPECTED_IDENTITIES = (
         "2825b68275a631574eb9616e136e45bc0ee2f1739195eab4ca16c4d572e9f4b1",
         "a826e86eff13172f823a0f70d6f1599165aab717a341b90bc3b73c0eb3562afa",
     ),
+    (
+        "670ec15d9df677482b7122af306e7f6cedc0d3f2befea50a02b1907dcc0d6b66",
+        "6efc969985c532cb6f2ddfbb9a4f29724ae18c7d2e1fdc9e12433ff051dd8f15",
+    ),
 )
 
 
@@ -79,14 +86,14 @@ def measurement(fixture_id, score=80, *, integrity=True, previous=None):
     )
 
 
-class QualityFocusSevenContractTest(unittest.TestCase):
-    def test_descriptor_pins_only_baseline_and_q01_through_q06_in_order(self):
+class QualityFocusEightContractTest(unittest.TestCase):
+    def test_descriptor_pins_only_baseline_and_q01_through_q07_in_order(self):
         descriptor = json.loads(SUITE_PATH.read_text(encoding="utf-8"))
         suite = runner._load_suite(SUITE_PATH)
 
         self.assertEqual(descriptor["parent_issue"], 95)
-        self.assertEqual(descriptor["focus_issue"], 109)
-        self.assertEqual(suite.stage_id, "quality-80-focus-7")
+        self.assertEqual(descriptor["focus_issue"], 111)
+        self.assertEqual(suite.stage_id, "quality-80-focus-8")
         self.assertEqual(suite.threshold, 80)
         self.assertEqual(
             descriptor["fixtures"],
@@ -100,7 +107,7 @@ class QualityFocusSevenContractTest(unittest.TestCase):
     def test_pipeline_and_evaluator_contract_remain_unchanged(self):
         descriptor = json.loads(SUITE_PATH.read_text(encoding="utf-8"))
         previous = json.loads(
-            SUITE_PATH.with_name("quality-80-focus-6.json").read_text(encoding="utf-8")
+            SUITE_PATH.with_name("quality-80-focus-7.json").read_text(encoding="utf-8")
         )
         suite = runner._load_suite(SUITE_PATH)
 
@@ -133,6 +140,7 @@ class QualityFocusSevenContractTest(unittest.TestCase):
                 (1754, 1240, 150),
                 (1654, 2339, 200),
                 (1240, 1754, 150),
+                (2339, 1654, 200),
             ),
         )
         self.assertTrue(all(item.reference.reviewed for item in suite.fixtures))
@@ -147,9 +155,9 @@ class QualityFocusSevenContractTest(unittest.TestCase):
             runner._load_suite(SUITE_PATH)
 
         self.assertEqual(tuple(call.args[1] for call in reader.call_args_list), EXPECTED_IDS)
-        self.assertEqual(reader.call_count, 7)
+        self.assertEqual(reader.call_count, 8)
 
-    def test_all_seven_at_exactly_80_pass(self):
+    def test_all_eight_at_exactly_80_pass(self):
         result = evaluate_stage_gate(
             tuple(measurement(fixture_id) for fixture_id in EXPECTED_IDS),
             threshold=80,
@@ -203,14 +211,14 @@ class QualityFocusSevenContractTest(unittest.TestCase):
                 self.assertFalse(result.passed)
                 self.assertEqual(result.minimum_overall, 80)
 
-    def test_runner_calls_exactly_seven_fixtures_sequentially_and_records_order(self):
+    def test_runner_calls_exactly_eight_fixtures_sequentially_and_records_order(self):
         calling_thread = threading.get_ident()
         calls = []
 
         def run_fixture(fixture, suite, fixture_output, *, previous_overall):
             self.assertEqual(threading.get_ident(), calling_thread)
             self.assertEqual(fixture_output.name, fixture.fixture_id)
-            self.assertEqual(suite.stage_id, "quality-80-focus-7")
+            self.assertEqual(suite.stage_id, "quality-80-focus-8")
             self.assertIsNone(previous_overall)
             calls.append(fixture.fixture_id)
             return measurement(fixture.fixture_id), {
@@ -226,19 +234,19 @@ class QualityFocusSevenContractTest(unittest.TestCase):
             patch.object(runner, "_runtime_record", return_value={}),
             patch.object(runner, "_run_fixture", side_effect=run_fixture) as executor,
         ):
-            output = Path(root) / "focus-seven"
+            output = Path(root) / "focus-eight"
             result = runner.run(SUITE_PATH, output)
             persisted = json.loads((output / "stage-summary.json").read_bytes())
 
         self.assertEqual(tuple(calls), EXPECTED_IDS)
-        self.assertEqual(executor.call_count, 7)
+        self.assertEqual(executor.call_count, 8)
         self.assertEqual(result["state"], "pass")
         self.assertEqual(
             result["execution"],
             {
                 "mode": "sequential",
                 "fixture_discovery": False,
-                "active_fixture_count": 7,
+                "active_fixture_count": 8,
                 "order": list(EXPECTED_IDS),
             },
         )
@@ -258,9 +266,31 @@ class QualityFocusSevenContractTest(unittest.TestCase):
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(RuntimeError, "fixtures outside this stage"):
-                runner.run(SUITE_PATH, Path(root) / "focus-seven", previous_summary=previous)
+                runner.run(SUITE_PATH, Path(root) / "focus-eight", previous_summary=previous)
 
         executor.assert_not_called()
+
+    def test_ci_quality_gate_executes_and_uploads_only_the_focus_eight_descriptor(self):
+        workflow = (REPOSITORY_ROOT / ".github" / "workflows" / "ci.yml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertEqual(workflow.count("scripts/run_stage_suite.py"), 1)
+        self.assertEqual(
+            workflow.count("--suite tests/fixtures/focuses/quality-80-focus-8.json"), 1
+        )
+        self.assertIn("Run Quality 80 Focus 8 exact-eight gate", workflow)
+        self.assertIn("--expect-state pass", workflow)
+        self.assertIn("--output \"$AITEQNO_QUALITY_FOCUS_EIGHT_OUTPUT\"", workflow)
+        self.assertIn("name: quality-80-focus-8-${{ github.sha }}", workflow)
+        self.assertIn("path: build/quality-80-focus-8", workflow)
+        self.assertNotIn("tests/fixtures/stages/questionnaire-stage-", workflow)
+        for previous_focus in range(1, 8):
+            self.assertNotIn(
+                f"tests/fixtures/focuses/quality-80-focus-{previous_focus}.json", workflow
+            )
+        for previous_name in ("ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN"):
+            self.assertNotIn(f"AITEQNO_QUALITY_FOCUS_{previous_name}_OUTPUT", workflow)
 
     def test_production_structure_policy_has_no_active_fixture_identity(self):
         production = (
