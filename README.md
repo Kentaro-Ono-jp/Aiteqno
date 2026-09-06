@@ -184,9 +184,10 @@ edges cannot become OCR text, and diagram strokes are selected by geometric
 role. The application omits only a low-confidence OCR echo overlapping an
 already preserved compact control, estimates text at 75 percent of its source
 height for clearer rendered separation, and styles layout-only word spaces with
-the adjacent resolved font instead of a host default. Its active set is pinned
-to the existing baseline, questionnaire 01, questionnaire 02, questionnaire 03,
-questionnaire 04, then questionnaire 05. No directory scan or glob can add
+the adjacent resolved font instead of a host default. Quality 80 Focus 7 retains
+this production behavior and pins its active set to the existing baseline,
+questionnaire 01, questionnaire 02, questionnaire 03, questionnaire 04,
+questionnaire 05, then questionnaire 06. No directory scan or glob can add
 later questionnaires. The rendered-visible evaluator remains fixed at PSM 6.
 The selected IR's validated topology is rendered as editable native Word
 tables. A numeric pass is never sufficient by itself: package and
@@ -209,9 +210,9 @@ Install the development tools and run the same deterministic checks used by CI:
 CI runs deterministic tests on Windows and Linux with Python 3.11 and 3.14
 without depending on machine-global document runtimes. A dedicated Ubuntu 24.04
 job exercises real Tesseract, LibreOffice, Poppler, and Japanese fonts, then
-runs only the current Quality 80 Focus 6 descriptor in its quality gate. It
-processes the six explicitly listed fixtures sequentially and uploads their
-complete evidence without generating or scoring questionnaires 06 through 10.
+runs only the current Quality 80 Focus 7 descriptor in its quality gate. It
+processes the seven explicitly listed fixtures sequentially and uploads their
+complete evidence without generating or scoring questionnaires 07 through 10.
 Each fixture must independently reach overall 80.0 and pass integrity checks;
 the diagnostic average cannot compensate for an individual failure.
 
