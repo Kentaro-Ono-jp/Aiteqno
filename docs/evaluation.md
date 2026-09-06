@@ -153,12 +153,13 @@ The stage passes only when every fixture individually has
 passes. The diagnostic average and the legacy evaluator state never compensate
 for an individual result below 70.
 
-The completed Stage 1 through Stage 10 and Quality 80 Focus 1 through 6
+The completed Stage 1 through Stage 10 and Quality 80 Focus 1 through 7
 descriptors remain historical contracts. The current CI quality gate does not
-execute them. Quality 80 Focus 7 is pinned by
-`tests/fixtures/focuses/quality-80-focus-7.json` to exactly seven ordered
+execute them. Quality 80 Focus 8 is pinned by
+`tests/fixtures/focuses/quality-80-focus-8.json` to exactly eight ordered
 fixtures: the existing baseline, questionnaire 01, questionnaire 02,
-questionnaire 03, questionnaire 04, questionnaire 05, then questionnaire 06.
+questionnaire 03, questionnaire 04, questionnaire 05, questionnaire 06, then
+questionnaire 07.
 The runner processes that explicit list sequentially, requires each fixture to reach 80.0 with
 integrity PASS, and never uses the diagnostic average for its decision. No glob,
 directory scan, or fixture discovery expands the active set. Production and
@@ -166,8 +167,15 @@ visible observation both use the Japanese language profile; the actual
 LibreOffice page is rasterized at 300 DPI so small but visible Japanese text is
 not lost to the observer. The stage summary records the declared sequential
 execution order, active fixture count, and disabled fixture discovery. CI
-uploads the complete Focus 7 evidence directory without generating or scoring
-questionnaires 07 through 10.
+uploads the complete Focus 8 evidence directory without generating or scoring
+questionnaires 08 through 10.
+
+The clean Focus 8 before measurement at main commit
+`a1b3ac447d3371c84b2f808b84b40f3fde40623e` passed all eight fixtures in declared
+order on Windows: `80.82 / 81.49 / 84.53 / 87.67 / 83.64 / 81.01 / 89.18 / 88.05`,
+with integrity 10/10 for each. Focus 8 therefore adds only the explicit Q07
+contract, tests, CI gate, and documentation; it makes no production or runner
+quality changes and retains the source/reference and evaluator contracts.
 
 The clean Focus 7 before measurement at main commit
 `75e8990410e103a409af9ba9cad75eb2d396fb22` passed all seven fixtures in declared
